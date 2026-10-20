@@ -1,0 +1,24 @@
+{
+  "name": "teamflow-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "TeamFlow: Team collaboration, project management, and visual bug reporting platform",
+  "scripts": {
+    "dev:server": "npm --prefix server run dev",
+    "dev:client": "npm --prefix client run dev",
+    "build:server": "npm --prefix server run build",
+    "build:client": "npm --prefix client run build",
+    "test:server": "npm --prefix server run test",
+    "prisma:generate": "npm --prefix server run prisma:generate",
+    "prisma:migrate": "npm --prefix server run prisma:migrate",
+    "prisma:seed": "npm --prefix server run prisma:seed"
+  },
+  "keywords": [
+    "teamflow",
+    "project-management",
+    "bug-reporting",
+    "full-stack"
+  ],
+  "author": "",
+  "license": "ISC"
+}

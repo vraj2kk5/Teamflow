@@ -1,0 +1,255 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  ADMIN
+  PROJECT_MANAGER
+  MEMBER
+}
+
+enum ProjectStatus {
+  ACTIVE
+  ON_HOLD
+  COMPLETED
+  ARCHIVED
+}
+
+enum IssueType {
+  TASK
+  BUG
+}
+
+enum IssueStatus {
+  TODO
+  IN_PROGRESS
+  IN_REVIEW
+  DONE
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum AttachmentKind {
+  AUDIO
+  VIDEO
+  IMAGE
+}
+
+enum ActivityAction {
+  ISSUE_CREATED
+  ISSUE_UPDATED
+  ASSIGNEE_CHANGED
+  PRIORITY_CHANGED
+  STATUS_CHANGED
+  COMMENT_ADDED
+  ATTACHMENT_ADDED
+  ATTACHMENT_DELETED
+  ISSUE_RESOLVED
+  PROJECT_CREATED
+  PROJECT_UPDATED
+  PROJECT_DELETED
+  MEMBER_ADDED
+  MEMBER_REMOVED
+  ROLE_CHANGED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  avatarUrl    String?
+  jobTitle     String?
+  bio          String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  memberships        OrganizationMembership[]
+  projectMemberships ProjectMembership[]
+  createdProjects    Project[]                @relation("ProjectOwner")
+  reportedIssues     Issue[]                  @relation("IssueReporter")
+  assignedIssues     Issue[]                  @relation("IssueAssignee")
+  comments           Comment[]
+  attachments        Attachment[]
+  activityLogs       ActivityLog[]
+
+  @@map("users")
+}
+
+model Organization {
+  id         String   @id @default(cuid())
+  name       String
+  slug       String   @unique
+  inviteCode String?  @unique
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  memberships  OrganizationMembership[]
+  projects     Project[]
+  issues       Issue[]
+  activityLogs ActivityLog[]
+
+  @@map("organizations")
+}
+
+model OrganizationMembership {
+  id             String   @id @default(cuid())
+  userId         String
+  organizationId String
+  role           Role     @default(MEMBER)
+  createdAt      DateTime @default(now())
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organizationId])
+  @@index([organizationId])
+  @@index([userId])
+  @@map("organization_memberships")
+}
+
+model Project {
+  id             String        @id @default(cuid())
+  organizationId String
+  name           String
+  description    String?
+  status         ProjectStatus @default(ACTIVE)
+  ownerId        String
+  issueSequence  Int           @default(0)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  organization Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  owner        User                @relation("ProjectOwner", fields: [ownerId], references: [id], onDelete: Restrict)
+  memberships  ProjectMembership[]
+  issues       Issue[]
+  activityLogs ActivityLog[]
+
+  @@index([organizationId])
+  @@index([ownerId])
+  @@map("projects")
+}
+
+model ProjectMembership {
+  id        String   @id @default(cuid())
+  projectId String
+  userId    String
+  createdAt DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+  @@index([projectId])
+  @@index([userId])
+  @@map("project_memberships")
+}
+
+model Issue {
+  id             String      @id @default(cuid())
+  projectId      String
+  organizationId String
+  key            String
+  type           IssueType
+  title          String
+  description    String
+  status         IssueStatus @default(TODO)
+  priority       Priority    @default(MEDIUM)
+  reporterId     String
+  assigneeId     String?
+  dueDate        DateTime?
+  estimatedHours Decimal?    @db.Decimal(6, 2)
+
+  // Bug-specific fields
+  stepsToReproduce String?
+  expectedResult   String?
+  actualResult     String?
+  errorLog         String?   @db.Text
+  resolvedAt       DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  project      Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  reporter     User          @relation("IssueReporter", fields: [reporterId], references: [id], onDelete: Restrict)
+  assignee     User?         @relation("IssueAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  comments     Comment[]
+  attachments  Attachment[]
+  activityLogs ActivityLog[]
+
+  @@unique([projectId, key])
+  @@index([projectId, status])
+  @@index([assigneeId])
+  @@index([reporterId])
+  @@index([organizationId, createdAt])
+  @@map("issues")
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  issueId   String
+  authorId  String
+  body      String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  issue  Issue @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  author User  @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([issueId, createdAt])
+  @@index([authorId])
+  @@map("comments")
+}
+
+model Attachment {
+  id               String         @id @default(cuid())
+  issueId          String
+  uploadedById     String
+  originalFilename String
+  mimeType         String
+  kind             AttachmentKind
+  sizeBytes        Int
+  durationSeconds  Int?
+  storageKey       String         @unique
+  createdAt        DateTime       @default(now())
+
+  issue      Issue @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  uploadedBy User  @relation(fields: [uploadedById], references: [id], onDelete: Cascade)
+
+  @@index([issueId])
+  @@index([uploadedById])
+  @@map("attachments")
+}
+
+model ActivityLog {
+  id             String         @id @default(cuid())
+  organizationId String
+  projectId      String?
+  issueId        String?
+  actorId        String
+  action         ActivityAction
+  metadata       Json?
+  createdAt      DateTime       @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  project      Project?     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  issue        Issue?       @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  actor        User         @relation(fields: [actorId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, createdAt])
+  @@index([issueId, createdAt])
+  @@index([actorId, createdAt])
+  @@index([projectId])
+  @@map("activity_logs")
+}
