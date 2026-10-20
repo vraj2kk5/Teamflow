@@ -14,16 +14,19 @@ describe("Auth Integration Tests", () => {
   let authCookie: string;
 
   beforeAll(async () => {
-    // Clean up test data if needed
-    await prisma.user.deleteMany({
-      where: { email: { contains: "example.com" } },
-    });
+    // Clean up test data across tables in foreign key order
+    await prisma.activityLog.deleteMany({});
+    await prisma.comment.deleteMany({});
+    await prisma.attachment.deleteMany({});
+    await prisma.issue.deleteMany({});
+    await prisma.projectMembership.deleteMany({});
+    await prisma.project.deleteMany({});
+    await prisma.organizationMembership.deleteMany({});
+    await prisma.organization.deleteMany({});
+    await prisma.user.deleteMany({});
   });
 
   afterAll(async () => {
-    await prisma.user.deleteMany({
-      where: { email: { contains: "example.com" } },
-    });
     await prisma.$disconnect();
   });
 

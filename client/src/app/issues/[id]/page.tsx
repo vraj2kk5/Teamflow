@@ -31,7 +31,8 @@ import {
   Terminal,
   Paperclip,
 } from "lucide-react";
-import { formatDate, formatDateTime, cn } from "../../../lib/utils";
+import { MediaPlayer } from "../../../components/media/MediaPlayer";
+import { formatDate, formatDateTime } from "../../../lib/utils";
 
 interface IssueDetail {
   id: string;
@@ -423,38 +424,77 @@ export default function IssueDetailPage({
           {/* Media Attachments Section (Visual Bug Reporting) */}
           <Card className="space-y-4">
             <CardHeader className="pb-2 border-b border-slate-800">
-              <CardTitle className="text-base flex items-center gap-2">
-                <Paperclip className="w-4 h-4 text-indigo-400" />
-                <span>Media Attachments ({issue.attachments.length})</span>
+              <CardTitle className="text-base flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Paperclip className="w-4 h-4 text-indigo-400" />
+                  <span>Media Attachments ({issue.attachments.length})</span>
+                </div>
               </CardTitle>
             </CardHeader>
 
             {issue.attachments.length === 0 ? (
               <p className="text-xs text-slate-500 italic py-2">
-                No screen or voice recordings attached yet.
+                No screen or voice recordings or screenshots attached.
               </p>
             ) : (
-              <div className="space-y-3">
-                {issue.attachments.map((att) => (
-                  <div
-                    key={att.id}
-                    className="p-3 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between"
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="p-2 rounded-lg bg-slate-800 text-indigo-400">
-                        <Paperclip className="w-4 h-4" />
+              <div className="space-y-4">
+                {issue.attachments.map((att) => {
+                  const canDeleteAtt =
+                    role === "ADMIN" ||
+                    role === "PROJECT_MANAGER" ||
+                    att.uploadedBy.id === user?.id;
+
+                  return (
+                    <div
+                      key={att.id}
+                      className="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800/80 space-y-3"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold text-white truncate">
+                            {att.originalFilename}
+                          </p>
+                          <p className="text-[11px] text-slate-400">
+                            {att.kind} • {(att.sizeBytes / (1024 * 1024) < 1)
+                              ? `${Math.round(att.sizeBytes / 1024)} KB`
+                              : `${(att.sizeBytes / (1024 * 1024)).toFixed(1)} MB`}
+                            {att.durationSeconds ? ` • ${Math.round(att.durationSeconds)}s` : ""}
+                            {" "}• Uploaded by {att.uploadedBy.name}
+                          </p>
+                        </div>
+                        {canDeleteAtt && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={async () => {
+                              if (!confirm("Are you sure you want to delete this attachment?")) return;
+                              try {
+                                await api.delete(`/attachments/${att.id}`);
+                                toastSuccess("Attachment deleted");
+                                fetchIssue();
+                              } catch (err: unknown) {
+                                if (err instanceof ApiClientError) {
+                                  toastError(err.message, "Failed to delete attachment");
+                                }
+                              }
+                            }}
+                            className="text-rose-400 hover:text-rose-300 hover:bg-rose-950/40 h-7 px-2 text-xs"
+                          >
+                            <Trash2 className="w-3.5 h-3.5 mr-1" />
+                            <span>Delete</span>
+                          </Button>
+                        )}
                       </div>
-                      <div className="min-w-0">
-                        <p className="text-xs font-semibold text-white truncate">
-                          {att.originalFilename}
-                        </p>
-                        <p className="text-[11px] text-slate-400">
-                          {att.kind} • {Math.round(att.sizeBytes / 1024)} KB • Uploaded by {att.uploadedBy.name}
-                        </p>
-                      </div>
+
+                      <MediaPlayer
+                        attachmentId={att.id}
+                        kind={att.kind}
+                        filename={att.originalFilename}
+                        mimeType={att.mimeType}
+                      />
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </Card>
