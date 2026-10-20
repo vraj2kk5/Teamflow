@@ -13,6 +13,9 @@
     "prisma:seed": "tsx prisma/seed.ts",
     "test": "vitest run"
   },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.750.0",
     "@prisma/client": "^6.4.1",
