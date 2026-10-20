@@ -2,7 +2,11 @@ import dotenv from "dotenv";
 import path from "path";
 import { z } from "zod";
 
-// Load environment variables from server/.env if not already set
+// Load environment variables (.env.test if in test mode, otherwise .env)
+const isTest = process.env.NODE_ENV === "test";
+if (isTest) {
+  dotenv.config({ path: path.resolve(process.cwd(), ".env.test") });
+}
 dotenv.config({ path: path.resolve(process.cwd(), ".env") });
 
 const envSchema = z
