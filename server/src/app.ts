@@ -5,6 +5,9 @@ import cookieParser from "cookie-parser";
 import { env } from "./config/env";
 import { errorHandler } from "./middleware/error.middleware";
 import { authRouter } from "./modules/auth/auth.routes";
+import { orgsRouter } from "./modules/orgs/orgs.routes";
+import { projectsRouter } from "./modules/projects/projects.routes";
+import { issuesRouter } from "./modules/issues/issues.routes";
 import { getStorageDriver, LocalDiskDriver } from "./lib/storage";
 import { prisma } from "./lib/prisma";
 import { logger } from "./lib/logger";
@@ -130,6 +133,9 @@ app.get("/api/files/:token", async (req: Request, res: Response, next) => {
 
 // Feature Routes
 app.use("/api/auth", authRouter);
+app.use("/api/organizations", orgsRouter);
+app.use("/api/projects", projectsRouter);
+app.use("/api/issues", issuesRouter);
 
 // Central error handler
 app.use(errorHandler);

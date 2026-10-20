@@ -1,0 +1,909 @@
+"use client";
+
+import React, { useState, useEffect, useCallback, use } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { api, ApiClientError } from "../../../lib/api";
+import { useAuth } from "../../../contexts/AuthContext";
+import { useToast } from "../../../components/ui/Toast";
+import { Button } from "../../../components/ui/Button";
+import { Input } from "../../../components/ui/Input";
+import { Select } from "../../../components/ui/Select";
+import { Textarea } from "../../../components/ui/Textarea";
+import { Card, CardHeader, CardTitle, CardContent } from "../../../components/ui/Card";
+import { Badge } from "../../../components/ui/Badge";
+import { Modal } from "../../../components/ui/Modal";
+import { ConfirmDialog } from "../../../components/ui/ConfirmDialog";
+import { Skeleton } from "../../../components/ui/Skeleton";
+import { Avatar } from "../../../components/ui/Avatar";
+import { EmptyState } from "../../../components/ui/EmptyState";
+import { KanbanBoard } from "../../../components/board/KanbanBoard";
+import { IssueItem } from "../../../components/board/KanbanCard";
+import {
+  FolderKanban,
+  LayoutGrid,
+  List,
+  Bug,
+  Users,
+  Settings,
+  Plus,
+  Trash2,
+  Calendar,
+  CheckCircle2,
+  AlertCircle,
+  Clock,
+  ArrowLeft,
+} from "lucide-react";
+import { cn, formatDate } from "../../../lib/utils";
+
+interface ProjectDetail {
+  id: string;
+  name: string;
+  description?: string | null;
+  status: "ACTIVE" | "ON_HOLD" | "COMPLETED" | "ARCHIVED";
+  ownerId: string;
+  owner: {
+    id: string;
+    name: string;
+    email: string;
+    avatarUrl?: string | null;
+  };
+  memberships: {
+    id: string;
+    user: {
+      id: string;
+      name: string;
+      email: string;
+      avatarUrl?: string | null;
+      jobTitle?: string | null;
+    };
+  }[];
+  stats: {
+    totalIssues: number;
+    doneIssues: number;
+    completionPercentage: number;
+    openBugs: number;
+    overdueCount: number;
+  };
+}
+
+export default function ProjectDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const resolvedParams = use(params);
+  const projectId = resolvedParams.id;
+
+  const router = useRouter();
+  const { user, role } = useAuth();
+  const { success: toastSuccess, error: toastError } = useToast();
+
+  const [project, setProject] = useState<ProjectDetail | null>(null);
+  const [issues, setIssues] = useState<IssueItem[]>([]);
+  const [orgMembers, setOrgMembers] = useState<{ id: string; user: { id: string; name: string; email: string } }[]>([]);
+  const [activeTab, setActiveTab] = useState<"board" | "list" | "bugs" | "members" | "settings">("board");
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Create Issue Modal State
+  const [isIssueModalOpen, setIsIssueModalOpen] = useState(false);
+  const [issueType, setIssueType] = useState<"TASK" | "BUG">("TASK");
+  const [issueTitle, setIssueTitle] = useState("");
+  const [issueDesc, setIssueDesc] = useState("");
+  const [issuePriority, setIssuePriority] = useState<"LOW" | "MEDIUM" | "HIGH" | "CRITICAL">("MEDIUM");
+  const [issueAssigneeId, setIssueAssigneeId] = useState("");
+  const [issueDueDate, setIssueDueDate] = useState("");
+  const [issueEstHours, setIssueEstHours] = useState("");
+  const [isCreatingIssue, setIsCreatingIssue] = useState(false);
+  const [issueFormError, setIssueFormError] = useState("");
+
+  // Add Member Modal State
+  const [isMemberModalOpen, setIsMemberModalOpen] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState("");
+  const [isAddingMember, setIsAddingMember] = useState(false);
+
+  // Settings / Delete State
+  const [editName, setEditName] = useState("");
+  const [editDesc, setEditDesc] = useState("");
+  const [editStatus, setEditStatus] = useState<ProjectDetail["status"]>("ACTIVE");
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const canManage = role === "ADMIN" || (role === "PROJECT_MANAGER" && project?.ownerId === user?.id);
+
+  const fetchProjectData = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const [projData, issuesData] = await Promise.all([
+        api.get<ProjectDetail>(`/projects/${projectId}`),
+        api.get<{ data: IssueItem[] }>("/issues", { projectId, pageSize: 100 }),
+      ]);
+
+      setProject(projData);
+      setEditName(projData.name);
+      setEditDesc(projData.description || "");
+      setEditStatus(projData.status);
+      setIssues(issuesData.data || []);
+    } catch (err: unknown) {
+      if (err instanceof ApiClientError) {
+        toastError(err.message, "Failed to load project");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }, [projectId, toastError]);
+
+  useEffect(() => {
+    fetchProjectData();
+  }, [fetchProjectData]);
+
+  // Load organization members for adding to project
+  const fetchOrgMembers = async () => {
+    if (!project) return;
+    try {
+      const res = await api.get<{ id: string; user: { id: string; name: string; email: string } }[]>(
+        `/organizations/${user?.id ? "current" : "current"}/members`
+      );
+      setOrgMembers(res || []);
+    } catch {
+      // ignore
+    }
+  };
+
+  const handleStatusChange = async (issueId: string, newStatus: IssueItem["status"]) => {
+    // Optimistic UI update
+    setIssues((prev) =>
+      prev.map((i) => (i.id === issueId ? { ...i, status: newStatus } : i))
+    );
+
+    try {
+      await api.patch(`/issues/${issueId}/status`, { status: newStatus });
+      toastSuccess("Status updated");
+    } catch (err: unknown) {
+      // Rollback on failure
+      fetchProjectData();
+      if (err instanceof ApiClientError) {
+        toastError(err.message, "Could not update status");
+      }
+    }
+  };
+
+  const handleCreateIssue = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!issueTitle.trim()) {
+      setIssueFormError("Title is required");
+      return;
+    }
+    if (!issueDesc.trim()) {
+      setIssueFormError("Description is required");
+      return;
+    }
+
+    setIsCreatingIssue(true);
+    setIssueFormError("");
+    try {
+      await api.post("/issues", {
+        projectId,
+        type: issueType,
+        title: issueTitle.trim(),
+        description: issueDesc.trim(),
+        priority: issuePriority,
+        assigneeId: issueAssigneeId || undefined,
+        dueDate: issueDueDate ? new Date(issueDueDate).toISOString() : undefined,
+        estimatedHours: issueEstHours ? parseFloat(issueEstHours) : undefined,
+      });
+
+      toastSuccess(`${issueType === "BUG" ? "Bug report" : "Task"} created!`);
+      setIsIssueModalOpen(false);
+      setIssueTitle("");
+      setIssueDesc("");
+      setIssuePriority("MEDIUM");
+      setIssueAssigneeId("");
+      setIssueDueDate("");
+      setIssueEstHours("");
+      fetchProjectData();
+    } catch (err: unknown) {
+      if (err instanceof ApiClientError) {
+        setIssueFormError(err.message);
+      } else {
+        setIssueFormError("Failed to create issue");
+      }
+    } finally {
+      setIsCreatingIssue(false);
+    }
+  };
+
+  const handleAddMember = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedUserId) return;
+
+    setIsAddingMember(true);
+    try {
+      await api.post(`/projects/${projectId}/members`, { userId: selectedUserId });
+      toastSuccess("Member added to project!");
+      setIsMemberModalOpen(false);
+      setSelectedUserId("");
+      fetchProjectData();
+    } catch (err: unknown) {
+      if (err instanceof ApiClientError) {
+        toastError(err.message, "Failed to add member");
+      }
+    } finally {
+      setIsAddingMember(false);
+    }
+  };
+
+  const handleRemoveMember = async (memberUserId: string) => {
+    try {
+      await api.delete(`/projects/${projectId}/members/${memberUserId}`);
+      toastSuccess("Member removed from project");
+      fetchProjectData();
+    } catch (err: unknown) {
+      if (err instanceof ApiClientError) {
+        toastError(err.message, "Failed to remove member");
+      }
+    }
+  };
+
+  const handleSaveSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSavingSettings(true);
+    try {
+      await api.patch(`/projects/${projectId}`, {
+        name: editName.trim(),
+        description: editDesc.trim() || undefined,
+        status: editStatus,
+      });
+      toastSuccess("Project settings saved");
+      fetchProjectData();
+    } catch (err: unknown) {
+      if (err instanceof ApiClientError) {
+        toastError(err.message, "Failed to update project");
+      }
+    } finally {
+      setIsSavingSettings(false);
+    }
+  };
+
+  const handleDeleteProject = async () => {
+    setIsDeleting(true);
+    try {
+      await api.delete(`/projects/${projectId}`);
+      toastSuccess("Project deleted");
+      router.push("/projects");
+    } catch (err: unknown) {
+      if (err instanceof ApiClientError) {
+        toastError(err.message, "Failed to delete project");
+      }
+    } finally {
+      setIsDeleting(false);
+      setIsDeleteDialogOpen(false);
+    }
+  };
+
+  if (isLoading || !project) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-40 rounded-2xl" />
+        <Skeleton className="h-96 rounded-2xl" />
+      </div>
+    );
+  }
+
+  const bugIssues = issues.filter((i) => i.type === "BUG");
+
+  return (
+    <div className="space-y-6">
+      {/* Back to projects link */}
+      <Link
+        href="/projects"
+        className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        <span>Back to Projects</span>
+      </Link>
+
+      {/* Project Overview Card */}
+      <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-5">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-3">
+              <h1 className="text-2xl font-bold text-white tracking-tight">{project.name}</h1>
+              <Badge
+                variant={
+                  project.status === "ACTIVE"
+                    ? "success"
+                    : project.status === "ON_HOLD"
+                    ? "warning"
+                    : project.status === "COMPLETED"
+                    ? "primary"
+                    : "neutral"
+                }
+              >
+                {project.status.replace("_", " ")}
+              </Badge>
+            </div>
+            {project.description && (
+              <p className="text-sm text-slate-300 max-w-2xl">{project.description}</p>
+            )}
+          </div>
+
+          <div className="flex items-center gap-3">
+            <Button
+              size="md"
+              variant="outline"
+              onClick={() => {
+                setIssueType("TASK");
+                setIsIssueModalOpen(true);
+              }}
+            >
+              <Plus className="w-4 h-4 mr-1" />
+              <span>New Task</span>
+            </Button>
+
+            <Button
+              size="md"
+              variant="primary"
+              onClick={() => {
+                setIssueType("BUG");
+                setIsIssueModalOpen(true);
+              }}
+              className="bg-rose-600 hover:bg-rose-700"
+            >
+              <Bug className="w-4 h-4 mr-1" />
+              <span>Report Bug</span>
+            </Button>
+          </div>
+        </div>
+
+        {/* Health Metrics & Member Avatars */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4 border-t border-slate-800/80">
+          <div className="space-y-1">
+            <span className="text-xs text-slate-400">Completion</span>
+            <div className="text-xl font-bold text-white">{project.stats.completionPercentage}%</div>
+            <div className="w-full h-1.5 rounded-full bg-slate-800 overflow-hidden">
+              <div
+                className="h-full bg-indigo-500 rounded-full"
+                style={{ width: `${project.stats.completionPercentage}%` }}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <span className="text-xs text-slate-400">Total Issues</span>
+            <div className="text-xl font-bold text-white">{project.stats.totalIssues}</div>
+            <span className="text-[11px] text-slate-500">{project.stats.doneIssues} completed</span>
+          </div>
+
+          <div className="space-y-1">
+            <span className="text-xs text-slate-400">Open Bugs</span>
+            <div className="text-xl font-bold text-rose-400">{project.stats.openBugs}</div>
+            <span className="text-[11px] text-slate-500">Requires triage</span>
+          </div>
+
+          <div className="space-y-1">
+            <span className="text-xs text-slate-400">Overdue</span>
+            <div className={cn("text-xl font-bold", project.stats.overdueCount > 0 ? "text-rose-400" : "text-white")}>
+              {project.stats.overdueCount}
+            </div>
+            <span className="text-[11px] text-slate-500">Past target date</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Tabs Bar */}
+      <div className="flex items-center gap-1 border-b border-slate-800 pb-px overflow-x-auto">
+        <button
+          onClick={() => setActiveTab("board")}
+          className={cn(
+            "flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-t-xl transition-all border-b-2",
+            activeTab === "board"
+              ? "border-indigo-500 text-white bg-slate-900/50"
+              : "border-transparent text-slate-400 hover:text-slate-200"
+          )}
+        >
+          <LayoutGrid className="w-4 h-4" />
+          <span>Kanban Board</span>
+          <span className="px-1.5 py-0.5 rounded-full text-xs bg-slate-800 text-slate-300">
+            {issues.length}
+          </span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab("list")}
+          className={cn(
+            "flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-t-xl transition-all border-b-2",
+            activeTab === "list"
+              ? "border-indigo-500 text-white bg-slate-900/50"
+              : "border-transparent text-slate-400 hover:text-slate-200"
+          )}
+        >
+          <List className="w-4 h-4" />
+          <span>List View</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab("bugs")}
+          className={cn(
+            "flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-t-xl transition-all border-b-2",
+            activeTab === "bugs"
+              ? "border-indigo-500 text-white bg-slate-900/50"
+              : "border-transparent text-slate-400 hover:text-slate-200"
+          )}
+        >
+          <Bug className="w-4 h-4 text-rose-400" />
+          <span>Bugs</span>
+          <span className="px-1.5 py-0.5 rounded-full text-xs bg-rose-950/80 text-rose-300 border border-rose-800/80">
+            {bugIssues.length}
+          </span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab("members")}
+          className={cn(
+            "flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-t-xl transition-all border-b-2",
+            activeTab === "members"
+              ? "border-indigo-500 text-white bg-slate-900/50"
+              : "border-transparent text-slate-400 hover:text-slate-200"
+          )}
+        >
+          <Users className="w-4 h-4" />
+          <span>Members</span>
+          <span className="px-1.5 py-0.5 rounded-full text-xs bg-slate-800 text-slate-300">
+            {project.memberships.length}
+          </span>
+        </button>
+
+        {canManage && (
+          <button
+            onClick={() => setActiveTab("settings")}
+            className={cn(
+              "flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-t-xl transition-all border-b-2",
+              activeTab === "settings"
+                ? "border-indigo-500 text-white bg-slate-900/50"
+                : "border-transparent text-slate-400 hover:text-slate-200"
+            )}
+          >
+            <Settings className="w-4 h-4" />
+            <span>Settings</span>
+          </button>
+        )}
+      </div>
+
+      {/* Tab 1: Kanban Board */}
+      {activeTab === "board" && (
+        <KanbanBoard issues={issues} onStatusChange={handleStatusChange} />
+      )}
+
+      {/* Tab 2: List View */}
+      {activeTab === "list" && (
+        <div className="rounded-2xl bg-slate-900 border border-slate-800 overflow-hidden">
+          {issues.length === 0 ? (
+            <EmptyState
+              icon={List}
+              title="No issues created yet"
+              description="Create tasks or bug reports to populate this project"
+              actionLabel="New Task"
+              onAction={() => {
+                setIssueType("TASK");
+                setIsIssueModalOpen(true);
+              }}
+            />
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm text-slate-300">
+                <thead className="bg-slate-950 text-xs uppercase font-semibold text-slate-400 border-b border-slate-800">
+                  <tr>
+                    <th className="px-4 py-3.5">Key</th>
+                    <th className="px-4 py-3.5">Title</th>
+                    <th className="px-4 py-3.5">Type</th>
+                    <th className="px-4 py-3.5">Status</th>
+                    <th className="px-4 py-3.5">Priority</th>
+                    <th className="px-4 py-3.5">Assignee</th>
+                    <th className="px-4 py-3.5">Due Date</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/60">
+                  {issues.map((i) => (
+                    <tr
+                      key={i.id}
+                      onClick={() => router.push(`/issues/${i.id}`)}
+                      className="hover:bg-slate-800/50 transition-colors cursor-pointer"
+                    >
+                      <td className="px-4 py-3 font-mono text-xs text-indigo-400 font-medium">
+                        {i.key}
+                      </td>
+                      <td className="px-4 py-3 font-medium text-white max-w-md truncate">
+                        {i.title}
+                      </td>
+                      <td className="px-4 py-3">
+                        <Badge variant={i.type === "BUG" ? "danger" : "primary"} size="sm">
+                          {i.type}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3">
+                        <Badge
+                          size="sm"
+                          variant={
+                            i.status === "DONE"
+                              ? "success"
+                              : i.status === "IN_PROGRESS"
+                              ? "warning"
+                              : i.status === "IN_REVIEW"
+                              ? "purple"
+                              : "neutral"
+                          }
+                        >
+                          {i.status.replace("_", " ")}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3">
+                        <Badge
+                          size="sm"
+                          variant={
+                            i.priority === "CRITICAL"
+                              ? "danger"
+                              : i.priority === "HIGH"
+                              ? "warning"
+                              : i.priority === "MEDIUM"
+                              ? "primary"
+                              : "neutral"
+                          }
+                        >
+                          {i.priority}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3">
+                        {i.assignee ? (
+                          <div className="flex items-center gap-2">
+                            <Avatar name={i.assignee.name} avatarUrl={i.assignee.avatarUrl} size="sm" />
+                            <span className="text-xs text-slate-300">{i.assignee.name}</span>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-slate-500 italic">Unassigned</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-xs text-slate-400">
+                        {i.dueDate ? formatDate(i.dueDate) : "-"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Tab 3: Bugs View */}
+      {activeTab === "bugs" && (
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <p className="text-sm text-slate-400">
+              Visual bug reports captured for <span className="font-semibold text-white">{project.name}</span>
+            </p>
+            <Button
+              size="sm"
+              variant="primary"
+              className="bg-rose-600 hover:bg-rose-700"
+              onClick={() => {
+                setIssueType("BUG");
+                setIsIssueModalOpen(true);
+              }}
+            >
+              <Bug className="w-3.5 h-3.5 mr-1" />
+              <span>Report Bug</span>
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {bugIssues.length === 0 ? (
+              <div className="col-span-full">
+                <EmptyState
+                  icon={Bug}
+                  title="No bugs reported in this project"
+                  description="All clear! Use 'Report Bug' to submit an issue with screen and voice recording."
+                />
+              </div>
+            ) : (
+              bugIssues.map((bug) => (
+                <Link key={bug.id} href={`/issues/${bug.id}`} className="block group">
+                  <Card variant="interactive" className="h-full border-rose-950/40 hover:border-rose-800/80">
+                    <CardHeader className="pb-2">
+                      <div className="flex items-center gap-2">
+                        <Bug className="w-4 h-4 text-rose-400" />
+                        <span className="text-xs font-mono font-semibold text-slate-400">{bug.key}</span>
+                      </div>
+                      <Badge size="sm" variant={bug.status === "DONE" ? "success" : "danger"}>
+                        {bug.status.replace("_", " ")}
+                      </Badge>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                      <h4 className="text-sm font-semibold text-white group-hover:text-rose-300 transition-colors line-clamp-2">
+                        {bug.title}
+                      </h4>
+                      <p className="text-xs text-slate-400 line-clamp-2">{bug.description}</p>
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Tab 4: Members View */}
+      {activeTab === "members" && (
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <p className="text-sm text-slate-400">
+              Users assigned to work on this project
+            </p>
+            {canManage && (
+              <Button
+                size="sm"
+                onClick={() => {
+                  fetchOrgMembers();
+                  setIsMemberModalOpen(true);
+                }}
+              >
+                <Plus className="w-3.5 h-3.5 mr-1" />
+                <span>Add Member</span>
+              </Button>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {project.memberships.map((m) => (
+              <Card key={m.id} className="p-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Avatar name={m.user.name} avatarUrl={m.user.avatarUrl} size="md" />
+                  <div>
+                    <div className="text-sm font-semibold text-white flex items-center gap-1.5">
+                      <span>{m.user.name}</span>
+                      {m.user.id === project.ownerId && (
+                        <Badge size="sm" variant="warning" className="text-[10px]">
+                          Owner
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="text-xs text-slate-400">{m.user.email}</div>
+                  </div>
+                </div>
+
+                {canManage && m.user.id !== project.ownerId && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => handleRemoveMember(m.user.id)}
+                    className="text-rose-400 hover:bg-rose-950/40 hover:text-rose-300"
+                    title="Remove from project"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                )}
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Tab 5: Settings View (PM/Admin) */}
+      {activeTab === "settings" && canManage && (
+        <div className="max-w-2xl space-y-6">
+          <Card>
+            <form onSubmit={handleSaveSettings}>
+              <CardHeader>
+                <CardTitle>Project Settings</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Input
+                  label="Project Name"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  required
+                />
+                <Textarea
+                  label="Description"
+                  value={editDesc}
+                  onChange={(e) => setEditDesc(e.target.value)}
+                  rows={3}
+                />
+                <Select
+                  label="Project Status"
+                  value={editStatus}
+                  onChange={(e) => setEditStatus(e.target.value as ProjectDetail["status"])}
+                  options={[
+                    { value: "ACTIVE", label: "Active" },
+                    { value: "ON_HOLD", label: "On Hold" },
+                    { value: "COMPLETED", label: "Completed" },
+                    { value: "ARCHIVED", label: "Archived" },
+                  ]}
+                />
+                <div className="pt-2">
+                  <Button type="submit" isLoading={isSavingSettings}>
+                    Save Changes
+                  </Button>
+                </div>
+              </CardContent>
+            </form>
+          </Card>
+
+          <Card className="border-rose-900/60 bg-rose-950/20">
+            <CardHeader>
+              <CardTitle className="text-rose-400">Danger Zone</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <p className="text-xs text-slate-300 leading-relaxed">
+                Deleting this project permanently removes all its tasks, bug reports, comments, attachments, and logs. This action cannot be undone.
+              </p>
+              <Button
+                variant="danger"
+                size="sm"
+                onClick={() => setIsDeleteDialogOpen(true)}
+              >
+                Delete Project
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Create Issue Modal */}
+      <Modal
+        isOpen={isIssueModalOpen}
+        onClose={() => setIsIssueModalOpen(false)}
+        title={issueType === "BUG" ? "Report a Bug" : "Create New Task"}
+        description={`Add a new item to ${project.name}`}
+      >
+        <form onSubmit={handleCreateIssue} className="space-y-4">
+          {issueFormError && (
+            <div className="p-3 rounded-lg bg-rose-950/80 border border-rose-800 text-xs text-rose-300">
+              {issueFormError}
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-3">
+            <Select
+              label="Issue Type"
+              value={issueType}
+              onChange={(e) => setIssueType(e.target.value as "TASK" | "BUG")}
+              options={[
+                { value: "TASK", label: "Task" },
+                { value: "BUG", label: "Bug Report" },
+              ]}
+            />
+            <Select
+              label="Priority"
+              value={issuePriority}
+              onChange={(e) => setIssuePriority(e.target.value as "LOW" | "MEDIUM" | "HIGH" | "CRITICAL")}
+              options={[
+                { value: "LOW", label: "Low" },
+                { value: "MEDIUM", label: "Medium" },
+                { value: "HIGH", label: "High" },
+                { value: "CRITICAL", label: "Critical" },
+              ]}
+            />
+          </div>
+
+          <Input
+            label="Title"
+            placeholder={issueType === "BUG" ? "e.g. Video player fails on mobile Safari" : "e.g. Design authentication pages"}
+            value={issueTitle}
+            onChange={(e) => setIssueTitle(e.target.value)}
+            required
+            autoFocus
+          />
+
+          <Textarea
+            label="Description"
+            placeholder="Detailed requirements or context..."
+            value={issueDesc}
+            onChange={(e) => setIssueDesc(e.target.value)}
+            rows={4}
+            required
+          />
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <Select
+              label="Assignee"
+              value={issueAssigneeId}
+              onChange={(e) => setIssueAssigneeId(e.target.value)}
+            >
+              <option value="">Unassigned</option>
+              {project.memberships.map((m) => (
+                <option key={m.user.id} value={m.user.id}>
+                  {m.user.name}
+                </option>
+              ))}
+            </Select>
+
+            <Input
+              label="Due Date"
+              type="date"
+              value={issueDueDate}
+              onChange={(e) => setIssueDueDate(e.target.value)}
+            />
+
+            <Input
+              label="Est. Hours"
+              type="number"
+              step="0.5"
+              min="0"
+              placeholder="e.g. 4.5"
+              value={issueEstHours}
+              onChange={(e) => setIssueEstHours(e.target.value)}
+            />
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4 border-t border-slate-800">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setIsIssueModalOpen(false)}
+              disabled={isCreatingIssue}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" isLoading={isCreatingIssue}>
+              Create {issueType === "BUG" ? "Bug Report" : "Task"}
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Add Project Member Modal */}
+      <Modal
+        isOpen={isMemberModalOpen}
+        onClose={() => setIsMemberModalOpen(false)}
+        title="Add Member to Project"
+        description={`Select an organization member to grant access to ${project.name}`}
+      >
+        <form onSubmit={handleAddMember} className="space-y-4">
+          <Select
+            label="Select Member"
+            value={selectedUserId}
+            onChange={(e) => setSelectedUserId(e.target.value)}
+            required
+          >
+            <option value="">Choose a team member...</option>
+            {orgMembers
+              .filter((om) => !project.memberships.some((pm) => pm.user.id === om.user.id))
+              .map((om) => (
+                <option key={om.user.id} value={om.user.id}>
+                  {om.user.name} ({om.user.email})
+                </option>
+              ))}
+          </Select>
+
+          <div className="flex justify-end gap-3 pt-4 border-t border-slate-800">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setIsMemberModalOpen(false)}
+              disabled={isAddingMember}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" isLoading={isAddingMember} disabled={!selectedUserId}>
+              Add to Project
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Delete Project Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={isDeleteDialogOpen}
+        onClose={() => setIsDeleteDialogOpen(false)}
+        onConfirm={handleDeleteProject}
+        title={`Delete "${project.name}"?`}
+        message="Are you sure you want to delete this project? All associated tasks, bug reports, and media will be permanently deleted."
+        confirmText="Yes, Delete Project"
+        isLoading={isDeleting}
+      />
+    </div>
+  );
+}
