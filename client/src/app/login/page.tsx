@@ -55,8 +55,28 @@ function LoginForm() {
 
   const fillDemo = (demoEmail: string) => {
     setEmail(demoEmail);
-    setPassword("DemoPassword123!");
+    setPassword("Password123!");
     setFieldErrors({});
+  };
+
+  const loginAsDemo = async (demoEmail: string) => {
+    setEmail(demoEmail);
+    setPassword("Password123!");
+    setFieldErrors({});
+    setIsLoading(true);
+    try {
+      await login(demoEmail, "Password123!");
+      toastSuccess(`Signed in as ${demoEmail.split("@")[0]}!`);
+      router.push(nextUrl);
+    } catch (err: unknown) {
+      if (err instanceof ApiClientError) {
+        toastError(err.message, "Login Failed");
+      } else {
+        toastError("Unable to authenticate.", "Error");
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -122,29 +142,35 @@ function LoginForm() {
               {/* Demo Logins Section */}
               <div className="w-full pt-3 border-t border-slate-800">
                 <p className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold mb-2">
-                  Quick Demo Credentials (Click to autofill)
+                  Quick Demo Credentials (1-Click Sign In)
                 </p>
                 <div className="grid grid-cols-3 gap-2">
                   <button
                     type="button"
-                    onClick={() => fillDemo("admin@teamflow.dev")}
-                    className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-[11px] font-medium text-slate-200 transition-colors"
+                    disabled={isLoading}
+                    onClick={() => loginAsDemo("admin@teamflow.dev")}
+                    className="p-2 rounded-lg bg-slate-800 hover:bg-indigo-600 hover:text-white text-xs font-semibold text-slate-200 transition-all border border-slate-700/60 flex flex-col items-center justify-center gap-0.5 cursor-pointer disabled:opacity-50"
                   >
-                    Admin
+                    <span>Admin</span>
+                    <span className="text-[10px] text-slate-400 font-normal">Full Access</span>
                   </button>
                   <button
                     type="button"
-                    onClick={() => fillDemo("pm@teamflow.dev")}
-                    className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-[11px] font-medium text-slate-200 transition-colors"
+                    disabled={isLoading}
+                    onClick={() => loginAsDemo("pm@teamflow.dev")}
+                    className="p-2 rounded-lg bg-slate-800 hover:bg-indigo-600 hover:text-white text-xs font-semibold text-slate-200 transition-all border border-slate-700/60 flex flex-col items-center justify-center gap-0.5 cursor-pointer disabled:opacity-50"
                   >
-                    PM
+                    <span>PM</span>
+                    <span className="text-[10px] text-slate-400 font-normal">Projects</span>
                   </button>
                   <button
                     type="button"
-                    onClick={() => fillDemo("member@teamflow.dev")}
-                    className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-[11px] font-medium text-slate-200 transition-colors"
+                    disabled={isLoading}
+                    onClick={() => loginAsDemo("member@teamflow.dev")}
+                    className="p-2 rounded-lg bg-slate-800 hover:bg-indigo-600 hover:text-white text-xs font-semibold text-slate-200 transition-all border border-slate-700/60 flex flex-col items-center justify-center gap-0.5 cursor-pointer disabled:opacity-50"
                   >
-                    Member
+                    <span>Member</span>
+                    <span className="text-[10px] text-slate-400 font-normal">Bugs / Dev</span>
                   </button>
                 </div>
               </div>
