@@ -8,6 +8,10 @@ import { authRouter } from "./modules/auth/auth.routes";
 import { orgsRouter } from "./modules/orgs/orgs.routes";
 import { projectsRouter } from "./modules/projects/projects.routes";
 import { issuesRouter } from "./modules/issues/issues.routes";
+import { commentsRouter } from "./modules/comments/comments.routes";
+import { dashboardRouter } from "./modules/dashboard/dashboard.routes";
+import { usersRouter } from "./modules/users/users.routes";
+import { activityRouter } from "./modules/activity/activity.routes";
 import { getStorageDriver, LocalDiskDriver } from "./lib/storage";
 import { prisma } from "./lib/prisma";
 import { logger } from "./lib/logger";
@@ -136,6 +140,10 @@ app.use("/api/auth", authRouter);
 app.use("/api/organizations", orgsRouter);
 app.use("/api/projects", projectsRouter);
 app.use("/api/issues", issuesRouter);
+app.use("/api/comments", commentsRouter);
+app.use("/api/dashboard", dashboardRouter);
+app.use("/api/users", usersRouter);
+app.use("/api/activity", activityRouter);
 
 // Central error handler
 app.use(errorHandler);

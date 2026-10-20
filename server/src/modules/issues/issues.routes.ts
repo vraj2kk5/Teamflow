@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { IssuesController } from "./issues.controller";
+import { CommentsController } from "../comments/comments.controller";
 import { requireAuth } from "../../middleware/auth.middleware";
 import { requireIssueAccess } from "../../middleware/policies";
 
@@ -16,5 +17,9 @@ issuesRouter.patch("/:id/status", requireIssueAccess, IssuesController.updateSta
 issuesRouter.delete("/:id", requireIssueAccess, IssuesController.deleteIssue);
 
 issuesRouter.get("/:id/activity", requireIssueAccess, IssuesController.getActivity);
+
+// Comments on issue
+issuesRouter.get("/:id/comments", requireIssueAccess, CommentsController.getComments);
+issuesRouter.post("/:id/comments", requireIssueAccess, CommentsController.createComment);
 
 export { issuesRouter };
