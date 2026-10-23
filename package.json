@@ -12,7 +12,8 @@
     "test:server": "npm --prefix server run test",
     "prisma:generate": "npm --prefix server run prisma:generate",
     "prisma:migrate": "npm --prefix server run prisma:migrate",
-    "prisma:seed": "npm --prefix server run prisma:seed"
+    "prisma:seed": "npm --prefix server run prisma:seed",
+    "studio": "npm --prefix server run studio"
   },
   "keywords": [
     "teamflow",
