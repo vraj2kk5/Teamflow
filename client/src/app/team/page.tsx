@@ -21,8 +21,6 @@ import {
   Check,
   RefreshCw,
   Trash2,
-  Shield,
-  ShieldAlert,
 } from "lucide-react";
 import { formatDate } from "../../lib/utils";
 
@@ -99,12 +97,12 @@ export default function TeamPage() {
     if (!organization) return;
     setIsRotating(true);
     try {
-      await api.post(`/organizations/${organization.id}/invite-code/rotate`);
-      toastSuccess("Invite code rotated successfully");
+      await api.post(`/organizations/${organization.id}/rotate-invite`);
       await refreshUser();
+      toastSuccess("Invite code rotated successfully");
     } catch (err: unknown) {
       if (err instanceof ApiClientError) {
-        toastError(err.message, "Failed to rotate invite code");
+        toastError(err.message, "Failed to rotate code");
       }
     } finally {
       setIsRotating(false);
@@ -113,16 +111,19 @@ export default function TeamPage() {
 
   const handleAddMember = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!organization || !addEmail.trim()) return;
+    if (!addEmail.trim()) {
+      setAddError("Email is required");
+      return;
+    }
 
     setIsAdding(true);
     setAddError("");
     try {
-      await api.post(`/organizations/${organization.id}/members`, {
+      await api.post(`/organizations/${organization?.id}/members`, {
         email: addEmail.trim(),
         role: addRole,
       });
-      toastSuccess("Member added to organization!");
+      toastSuccess(`Invited ${addEmail} as ${addRole}`);
       setIsAddModalOpen(false);
       setAddEmail("");
       setAddRole("MEMBER");
@@ -139,28 +140,33 @@ export default function TeamPage() {
   };
 
   const handleRoleChange = async (targetUserId: string, newRole: UserRole) => {
-    if (!organization) return;
+    // Optimistic UI update
+    setMembers((prev) =>
+      prev.map((m) => (m.userId === targetUserId ? { ...m, role: newRole } : m))
+    );
+
     try {
-      await api.patch(`/organizations/${organization.id}/members/${targetUserId}`, {
+      await api.patch(`/organizations/${organization?.id}/members/${targetUserId}`, {
         role: newRole,
       });
       toastSuccess("Member role updated");
-      fetchMembers();
     } catch (err: unknown) {
       if (err instanceof ApiClientError) {
-        toastError(err.message, "Could not update member role");
+        toastError(err.message, "Failed to update role");
       }
+      fetchMembers(); // revert on failure
     }
   };
 
   const handleRemoveMember = async () => {
-    if (!organization || !memberToRemove) return;
+    if (!memberToRemove || !organization) return;
+
     setIsRemoving(true);
     try {
       await api.delete(
         `/organizations/${organization.id}/members/${memberToRemove.userId}`
       );
-      toastSuccess("Member removed from organization");
+      toastSuccess(`Removed ${memberToRemove.user.name} from organization`);
       setMemberToRemove(null);
       fetchMembers();
     } catch (err: unknown) {
@@ -177,44 +183,44 @@ export default function TeamPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2.5">
-            <Users className="w-6 h-6 text-indigo-400" />
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2.5">
+            <Users className="w-6 h-6 text-indigo-500 dark:text-indigo-400" />
             <span>Team & Members</span>
           </h1>
-          <p className="text-sm text-slate-400 mt-1">
+          <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
             Manage organization members, assign roles, and share invite codes
           </p>
         </div>
 
         {canAdd && (
           <Button onClick={() => setIsAddModalOpen(true)} size="md">
-            <UserPlus className="w-4 h-4 mr-1" />
+            <UserPlus className="w-4 h-4 mr-1.5" />
             <span>Add Member</span>
           </Button>
         )}
       </div>
 
       {/* Invite Code Card */}
-      <Card className="border-indigo-950/60 bg-gradient-to-r from-indigo-950/40 via-slate-900 to-slate-900">
+      <Card className="bg-gradient-to-r from-indigo-50/90 via-white to-slate-50 dark:from-indigo-950/40 dark:via-slate-900 dark:to-slate-900 border border-indigo-100 dark:border-indigo-950/60 shadow-sm p-5 transition-colors">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <KeyRound className="w-4 h-4 text-indigo-400" />
-              <h3 className="text-sm font-semibold text-white">Organization Invite Code</h3>
+              <KeyRound className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+              <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Organization Invite Code</h3>
             </div>
-            <p className="text-xs text-slate-400 leading-relaxed max-w-xl">
+            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed max-w-xl">
               New team members can enter this code during registration to automatically join{" "}
-              <span className="font-semibold text-white">{organization?.name}</span> as a MEMBER.
+              <span className="font-semibold text-slate-900 dark:text-white">{organization?.name}</span> as a MEMBER.
             </p>
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 font-mono text-sm font-bold text-indigo-300 tracking-wider">
+            <span className="px-3.5 py-1.5 rounded-lg bg-white dark:bg-slate-950 border border-indigo-200 dark:border-slate-800 font-mono text-sm font-bold text-indigo-700 dark:text-indigo-300 tracking-wider shadow-sm">
               {organization?.inviteCode || "None"}
             </span>
 
             <Button size="sm" variant="outline" onClick={handleCopyCode} title="Copy code">
-              {copiedCode ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+              {copiedCode ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
             </Button>
 
             {isAdmin && (
@@ -225,7 +231,7 @@ export default function TeamPage() {
                 isLoading={isRotating}
                 title="Rotate code (invalidates old code)"
               >
-                <RefreshCw className="w-4 h-4 text-slate-400 hover:text-white" />
+                <RefreshCw className="w-4 h-4 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white" />
               </Button>
             )}
           </div>
@@ -233,9 +239,9 @@ export default function TeamPage() {
       </Card>
 
       {/* Members Table */}
-      <Card className="overflow-hidden">
-        <CardHeader className="pb-3 border-b border-slate-800">
-          <CardTitle className="text-base">
+      <Card className="overflow-hidden border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+        <CardHeader className="pb-3 border-b border-slate-100 dark:border-slate-800 flex-row items-center justify-between space-y-0">
+          <CardTitle className="text-base font-semibold text-slate-900 dark:text-white">
             Organization Members ({members.length})
           </CardTitle>
         </CardHeader>
@@ -248,8 +254,8 @@ export default function TeamPage() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm text-slate-300">
-              <thead className="bg-slate-950 text-xs uppercase font-semibold text-slate-400 border-b border-slate-800">
+            <table className="w-full text-left text-sm text-slate-700 dark:text-slate-300">
+              <thead className="bg-slate-50 dark:bg-slate-950/80 text-xs uppercase font-semibold text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
                 <tr>
                   <th className="px-4 py-3.5">Member</th>
                   <th className="px-4 py-3.5">Job Title</th>
@@ -258,14 +264,14 @@ export default function TeamPage() {
                   {isAdmin && <th className="px-4 py-3.5 text-right">Actions</th>}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/60">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
                 {(Array.isArray(members) ? members : []).map((m) => (
-                  <tr key={m.id} className="hover:bg-slate-800/40 transition-colors">
+                  <tr key={m.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <Avatar name={m.user.name} avatarUrl={m.user.avatarUrl} size="md" />
                         <div>
-                          <div className="font-semibold text-white flex items-center gap-1.5">
+                          <div className="font-semibold text-slate-900 dark:text-white flex items-center gap-1.5">
                             <span>{m.user.name}</span>
                             {m.userId === user?.id && (
                               <Badge size="sm" variant="neutral" className="text-[10px]">
@@ -273,13 +279,13 @@ export default function TeamPage() {
                               </Badge>
                             )}
                           </div>
-                          <div className="text-xs text-slate-400">{m.user.email}</div>
+                          <div className="text-xs text-slate-500 dark:text-slate-400">{m.user.email}</div>
                         </div>
                       </div>
                     </td>
 
-                    <td className="px-4 py-3 text-xs text-slate-300">
-                      {m.user.jobTitle || "-"}
+                    <td className="px-4 py-3 text-xs text-slate-600 dark:text-slate-300">
+                      {m.user.jobTitle || "—"}
                     </td>
 
                     <td className="px-4 py-3">
@@ -310,7 +316,7 @@ export default function TeamPage() {
                       )}
                     </td>
 
-                    <td className="px-4 py-3 text-xs text-slate-400">
+                    <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400">
                       {formatDate(m.createdAt)}
                     </td>
 
@@ -321,7 +327,7 @@ export default function TeamPage() {
                             size="sm"
                             variant="ghost"
                             onClick={() => setMemberToRemove(m)}
-                            className="text-rose-400 hover:bg-rose-950/40 hover:text-rose-300"
+                            className="text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-600 dark:hover:text-rose-300"
                             title="Remove member"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -345,62 +351,58 @@ export default function TeamPage() {
         description="Enter the email address of a registered user to add them to this organization"
       >
         <form onSubmit={handleAddMember} className="space-y-4">
-          {addError && (
-            <div className="p-3 rounded-lg bg-rose-950/80 border border-rose-800 text-xs text-rose-300">
-              {addError}
-            </div>
-          )}
-
           <Input
-            label="User's Registered Email"
+            label="User Email"
             type="email"
             placeholder="colleague@example.com"
             value={addEmail}
-            onChange={(e) => setAddEmail(e.target.value)}
-            helperText="The user must already have registered an account on TeamFlow"
+            onChange={(e) => {
+              setAddEmail(e.target.value);
+              setAddError("");
+            }}
+            error={addError}
             required
             autoFocus
           />
 
           <Select
-            label="Role in Organization"
+            label="Organization Role"
             value={addRole}
             onChange={(e) => setAddRole(e.target.value as UserRole)}
             options={[
-              { value: "MEMBER", label: "Member (Can create tasks/bugs & view assigned projects)" },
-              { value: "PROJECT_MANAGER", label: "Project Manager (Can create & manage projects)" },
-              { value: "ADMIN", label: "Admin (Full control over org & settings)" },
+              { value: "MEMBER", label: "Member (Can view & create assigned issues)" },
+              { value: "PROJECT_MANAGER", label: "Project Manager (Can create projects & manage issues)" },
+              { value: "ADMIN", label: "Admin (Full organization control & member management)" },
             ]}
           />
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-slate-800">
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
             <Button
               type="button"
-              variant="ghost"
+              variant="outline"
               onClick={() => setIsAddModalOpen(false)}
               disabled={isAdding}
             >
               Cancel
             </Button>
             <Button type="submit" isLoading={isAdding}>
-              Add Member
+              Add to Organization
             </Button>
           </div>
         </form>
       </Modal>
 
-      {/* Confirm Remove Member Dialog */}
-      {memberToRemove && (
-        <ConfirmDialog
-          isOpen={Boolean(memberToRemove)}
-          onClose={() => setMemberToRemove(null)}
-          onConfirm={handleRemoveMember}
-          title={`Remove ${memberToRemove.user.name}?`}
-          message={`Are you sure you want to remove ${memberToRemove.user.name} from the organization? They will lose access to all projects and their assignments will be cleared.`}
-          confirmText="Yes, Remove"
-          isLoading={isRemoving}
-        />
-      )}
+      {/* Confirm Removal Dialog */}
+      <ConfirmDialog
+        isOpen={!!memberToRemove}
+        onClose={() => setMemberToRemove(null)}
+        onConfirm={handleRemoveMember}
+        title="Remove Team Member"
+        message={`Are you sure you want to remove ${memberToRemove?.user.name} (${memberToRemove?.user.email}) from this organization? They will lose access to all projects and issues in this workspace.`}
+        confirmText="Remove Member"
+        variant="danger"
+        isLoading={isRemoving}
+      />
     </div>
   );
 }

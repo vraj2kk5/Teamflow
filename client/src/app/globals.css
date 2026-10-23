@@ -60,6 +60,12 @@ html.light {
   color-scheme: light;
 }
 
+/* In Light Mode, plain text-white defaults to dark text unless it is on a colored button or badge */
+html:not(.dark) .text-white:not(button):not(.btn):not([class*="bg-indigo-"]):not([class*="bg-rose-"]):not([class*="bg-emerald-"]):not([class*="bg-amber-"]):not([class*="bg-purple-"]),
+html.light .text-white:not(button):not(.btn):not([class*="bg-indigo-"]):not([class*="bg-rose-"]):not([class*="bg-emerald-"]):not([class*="bg-amber-"]):not([class*="bg-purple-"]) {
+  color: #0f172a;
+}
+
 /* Ensure colored accent buttons keep crisp white text in light mode */
 html:not(.dark) .bg-indigo-600,
 html.light .bg-indigo-600,
