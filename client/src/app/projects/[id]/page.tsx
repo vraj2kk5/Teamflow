@@ -124,7 +124,10 @@ export default function ProjectDetailPage({
       setEditName(projData.name);
       setEditDesc(projData.description || "");
       setEditStatus(projData.status);
-      setIssues(issuesData.data || []);
+      const rawIssues = Array.isArray(issuesData)
+        ? issuesData
+        : (issuesData as { data?: IssueItem[] })?.data || [];
+      setIssues(rawIssues);
     } catch (err: unknown) {
       if (err instanceof ApiClientError) {
         toastError(err.message, "Failed to load project");

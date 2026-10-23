@@ -107,7 +107,13 @@ export default function BugReportsPage() {
         pagination: { total: number; page: number; limit: number };
       }>("/issues", params);
 
-      setBugs(res.issues || []);
+      setBugs(
+        Array.isArray(res)
+          ? res
+          : (res as unknown as { data?: BugItem[] })?.data ||
+            (res as unknown as { issues?: BugItem[] })?.issues ||
+            []
+      );
     } catch (err: unknown) {
       if (err instanceof ApiClientError) {
         toastError(err.message, "Failed to load bug reports");

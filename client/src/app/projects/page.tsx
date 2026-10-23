@@ -81,7 +81,7 @@ export default function ProjectsPage() {
         q: search || undefined,
         status: statusFilter || undefined,
       });
-      setProjects(res.data || []);
+      setProjects(Array.isArray(res) ? res : (res as unknown as { data?: ProjectItem[] })?.data || []);
     } catch (err: unknown) {
       if (err instanceof ApiClientError) {
         toastError(err.message, "Failed to load projects");

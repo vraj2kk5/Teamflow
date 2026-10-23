@@ -90,6 +90,11 @@ export const api = {
       );
     }
 
+    // If response is a paginated list with both data and pagination, preserve the envelope
+    if (json.data !== undefined && (json as Record<string, unknown>).pagination !== undefined) {
+      return json as T;
+    }
+
     return (json.data !== undefined ? json.data : json) as T;
   },
 

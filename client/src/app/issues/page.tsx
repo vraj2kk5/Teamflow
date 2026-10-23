@@ -149,7 +149,7 @@ function IssuesView() {
         pageSize: 15,
       });
 
-      setIssues(res.data || []);
+      setIssues(Array.isArray(res) ? res : (res as unknown as { data?: IssueRow[] })?.data || []);
       setTotalPages(res.pagination.totalPages || 1);
       setTotalCount(res.pagination.total || 0);
     } catch (err: unknown) {

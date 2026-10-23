@@ -46,7 +46,7 @@ export default function MyTasksPage() {
         type: filterType || undefined,
         pageSize: 100,
       });
-      setTasks(res.data || []);
+      setTasks(Array.isArray(res) ? res : (res as unknown as { data?: MyTaskItem[] })?.data || []);
     } catch (err: unknown) {
       if (err instanceof ApiClientError) {
         toastError(err.message, "Failed to load assigned tasks");
