@@ -6,11 +6,13 @@ export const registerSchema = z.object({
   password: z.string().min(8, "Password must be at least 8 characters").max(100),
   orgName: z.string().trim().min(2, "Organization name must be at least 2 characters").max(100).optional(),
   inviteCode: z.string().trim().min(4, "Invalid invite code").optional(),
+  rememberMe: z.boolean().optional().default(false),
 });
 
 export const loginSchema = z.object({
   email: z.string().trim().email("Invalid email address").toLowerCase(),
   password: z.string().min(1, "Password is required"),
+  rememberMe: z.boolean().optional().default(false),
 });
 
 export const forgotPasswordSchema = z.object({

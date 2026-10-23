@@ -48,9 +48,11 @@ export const api = {
 
     const customHeaders = (headers as Record<string, string>) || {};
 
-    // Tab-isolated session token support
+    // Tab-isolated session token support with persistent Remember Me fallback
     if (typeof window !== "undefined") {
-      const tabToken = window.sessionStorage.getItem("teamflow_token");
+      const tabToken =
+        window.sessionStorage.getItem("teamflow_token") ||
+        window.localStorage.getItem("teamflow_token");
       if (tabToken && !customHeaders["Authorization"] && !customHeaders["authorization"]) {
         defaultHeaders["Authorization"] = `Bearer ${tabToken}`;
       }
@@ -147,7 +149,9 @@ export const api = {
       xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
 
       if (typeof window !== "undefined") {
-        const tabToken = window.sessionStorage.getItem("teamflow_token");
+        const tabToken =
+          window.sessionStorage.getItem("teamflow_token") ||
+          window.localStorage.getItem("teamflow_token");
         if (tabToken) {
           xhr.setRequestHeader("Authorization", `Bearer ${tabToken}`);
         }
@@ -206,15 +210,23 @@ export const api = {
     });
   },
 
-  setToken(token: string) {
+  setToken(token: string, rememberMe = false) {
     if (typeof window !== "undefined") {
       window.sessionStorage.setItem("teamflow_token", token);
+      if (rememberMe) {
+        window.localStorage.setItem("teamflow_token", token);
+      } else {
+        window.localStorage.removeItem("teamflow_token");
+      }
     }
   },
 
   getToken(): string | null {
     if (typeof window !== "undefined") {
-      return window.sessionStorage.getItem("teamflow_token");
+      return (
+        window.sessionStorage.getItem("teamflow_token") ||
+        window.localStorage.getItem("teamflow_token")
+      );
     }
     return null;
   },
@@ -222,6 +234,7 @@ export const api = {
   clearToken() {
     if (typeof window !== "undefined") {
       window.sessionStorage.removeItem("teamflow_token");
+      window.localStorage.removeItem("teamflow_token");
     }
   },
 };

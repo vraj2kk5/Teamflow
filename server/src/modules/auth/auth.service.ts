@@ -31,9 +31,9 @@ export class AuthService {
     return `TF-${crypto.randomBytes(4).toString("hex").toUpperCase()}`;
   }
 
-  static signToken(payload: TokenPayload): string {
+  static signToken(payload: TokenPayload, expiresIn?: string): string {
     return jwt.sign(payload, env.JWT_SECRET, {
-      expiresIn: env.JWT_EXPIRES_IN as jwt.SignOptions["expiresIn"],
+      expiresIn: (expiresIn || env.JWT_EXPIRES_IN) as jwt.SignOptions["expiresIn"],
     });
   }
 
@@ -173,11 +173,15 @@ export class AuthService {
 
     const activeMembership = user.memberships[0];
 
-    const token = this.signToken({
-      userId: user.id,
-      email: user.email,
-      organizationId: activeMembership.organizationId,
-    });
+    const tokenExpires = input.rememberMe ? "30d" : "1d";
+    const token = this.signToken(
+      {
+        userId: user.id,
+        email: user.email,
+        organizationId: activeMembership.organizationId,
+      },
+      tokenExpires
+    );
 
     return {
       user: {

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, Suspense } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "../../contexts/AuthContext";
@@ -22,8 +22,19 @@ function LoginForm() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedEmail = localStorage.getItem("teamflow_remembered_email");
+      if (savedEmail) {
+        setEmail(savedEmail);
+        setRememberMe(true);
+      }
+    }
+  }, []);
 
   const validate = () => {
     const errs: { email?: string; password?: string } = {};
@@ -40,7 +51,14 @@ function LoginForm() {
 
     setIsLoading(true);
     try {
-      await login(email.trim(), password);
+      await login(email.trim(), password, rememberMe);
+      if (typeof window !== "undefined") {
+        if (rememberMe) {
+          localStorage.setItem("teamflow_remembered_email", email.trim());
+        } else {
+          localStorage.removeItem("teamflow_remembered_email");
+        }
+      }
       toastSuccess("Logged in successfully!");
       router.push(nextUrl);
     } catch (err: unknown) {
@@ -133,6 +151,22 @@ function LoginForm() {
                   </Link>
                 }
               />
+
+              {/* Remember Me Checkbox */}
+              <div className="flex items-center justify-between pt-0.5">
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    disabled={isLoading}
+                    className="w-4 h-4 rounded border-slate-300 dark:border-slate-700 text-indigo-600 focus:ring-indigo-500 dark:bg-slate-900 cursor-pointer accent-indigo-600"
+                  />
+                  <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                    Remember me
+                  </span>
+                </label>
+              </div>
 
               <Button
                 type="submit"

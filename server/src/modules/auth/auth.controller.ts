@@ -11,12 +11,16 @@ import { env } from "../../config/env";
 import { UnauthorizedError } from "../../lib/errors";
 
 export class AuthController {
-  private static setAuthCookie(res: Response, token: string): void {
+  private static setAuthCookie(res: Response, token: string, rememberMe = false): void {
+    const maxAge = rememberMe
+      ? 30 * 24 * 60 * 60 * 1000 // 30 days
+      : 24 * 60 * 60 * 1000; // 1 day
+
     res.cookie("token", token, {
       httpOnly: true,
       secure: env.COOKIE_SECURE,
       sameSite: env.COOKIE_SAMESITE,
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      maxAge,
       path: "/",
     });
   }
@@ -26,7 +30,7 @@ export class AuthController {
       const validated = registerSchema.parse(req.body);
       const result = await AuthService.register(validated);
 
-      AuthController.setAuthCookie(res, result.token);
+      AuthController.setAuthCookie(res, result.token, validated.rememberMe);
 
       res.status(201).json({
         data: {
@@ -46,7 +50,7 @@ export class AuthController {
       const validated = loginSchema.parse(req.body);
       const result = await AuthService.login(validated);
 
-      AuthController.setAuthCookie(res, result.token);
+      AuthController.setAuthCookie(res, result.token, validated.rememberMe);
 
       res.status(200).json({
         data: {
