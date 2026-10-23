@@ -34,17 +34,17 @@ export function ThemeSwitcher() {
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="h-8 px-2.5 rounded-lg border border-slate-800 bg-slate-900/90 hover:bg-slate-800/80 text-slate-300 hover:text-white flex items-center gap-1.5 text-xs font-medium transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        className="h-8 px-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/90 hover:bg-slate-100 dark:hover:bg-slate-800/80 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white flex items-center gap-1.5 text-xs font-medium transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
         title={`Current theme: ${theme} (${resolvedTheme})`}
         aria-label="Toggle theme"
       >
-        <ActiveIcon className="w-3.5 h-3.5 text-indigo-400" />
+        <ActiveIcon className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400" />
         <span className="capitalize hidden sm:inline">{theme}</span>
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-36 rounded-xl bg-slate-900 border border-slate-800 shadow-2xl py-1 text-xs text-slate-200 z-50 animate-in fade-in zoom-in-95 duration-100">
-          <div className="px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400 border-b border-slate-800/80">
+        <div className="absolute right-0 mt-2 w-36 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl py-1 text-xs text-slate-700 dark:text-slate-200 z-50 animate-in fade-in zoom-in-95 duration-100">
+          <div className="px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400 border-b border-slate-100 dark:border-slate-800/80">
             Theme Mode
           </div>
 
@@ -63,16 +63,16 @@ export function ThemeSwitcher() {
                   }}
                   className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-left transition-colors cursor-pointer ${
                     isSelected
-                      ? "bg-indigo-600/20 text-indigo-300 font-semibold"
-                      : "hover:bg-slate-800/70 text-slate-300 hover:text-white"
+                      ? "bg-indigo-50 dark:bg-indigo-600/20 text-indigo-600 dark:text-indigo-300 font-semibold"
+                      : "hover:bg-slate-100 dark:hover:bg-slate-800/70 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
                   }`}
                 >
                   <div className="flex items-center gap-2">
-                    <Icon className={`w-3.5 h-3.5 ${isSelected ? "text-indigo-400" : "text-slate-400"}`} />
+                    <Icon className={`w-3.5 h-3.5 ${isSelected ? "text-indigo-600 dark:text-indigo-400" : "text-slate-400"}`} />
                     <span>{opt.label}</span>
                   </div>
 
-                  {isSelected && <Check className="w-3.5 h-3.5 text-indigo-400" />}
+                  {isSelected && <Check className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />}
                 </button>
               );
             })}

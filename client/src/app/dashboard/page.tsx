@@ -15,16 +15,11 @@ import {
   FolderKanban,
   CheckCircle2,
   Clock,
-  AlertCircle,
   Bug,
   Activity,
-  Flame,
-  Calendar,
-  ArrowRight,
   Sparkles,
-  Users,
 } from "lucide-react";
-import { formatDate, formatDateTime, cn } from "../../lib/utils";
+import { formatDate, cn } from "../../lib/utils";
 
 interface DashboardData {
   stats: {
@@ -131,10 +126,10 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       {/* Welcome Banner */}
-      <div className="p-6 rounded-2xl bg-gradient-to-r from-indigo-950 via-slate-900 to-slate-900 border border-indigo-800/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="p-6 rounded-2xl bg-gradient-to-r from-indigo-50/90 via-white to-slate-50 dark:from-indigo-950/70 dark:via-slate-900 dark:to-slate-900 border border-indigo-100 dark:border-indigo-800/40 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-colors">
         <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
               Welcome back, {user?.name || "Developer"}
             </h1>
             <Badge variant="primary" size="sm">
@@ -142,8 +137,11 @@ export default function DashboardPage() {
               {role}
             </Badge>
           </div>
-          <p className="text-sm text-slate-300">
-            Workspace: <span className="font-semibold text-white">{organization?.name}</span>
+          <p className="text-sm text-slate-600 dark:text-slate-300">
+            Workspace:{" "}
+            <span className="font-semibold text-indigo-600 dark:text-indigo-400">
+              {organization?.name}
+            </span>
           </p>
         </div>
 
@@ -159,7 +157,7 @@ export default function DashboardPage() {
             size="sm"
             variant="primary"
             onClick={() => router.push("/bug-reports/new")}
-            className="bg-rose-600 hover:bg-rose-700"
+            className="bg-rose-600 hover:bg-rose-700 text-white"
           >
             <Bug className="w-3.5 h-3.5 mr-1" />
             <span>Report a Bug</span>
@@ -170,48 +168,84 @@ export default function DashboardPage() {
       {/* Real Stat Cards Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
-          <CardHeader className="pb-1">
-            <CardTitle className="text-xs font-semibold uppercase text-slate-400">Total Projects</CardTitle>
-            <FolderKanban className="w-4 h-4 text-indigo-400" />
+          <CardHeader className="pb-1 border-0">
+            <CardTitle className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400 tracking-wider">
+              Total Projects
+            </CardTitle>
+            <FolderKanban className="w-4 h-4 text-indigo-500 dark:text-indigo-400" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-white">{stats.totalProjects}</div>
-            <p className="text-[11px] text-slate-500 mt-0.5">Active across organization</p>
+          <CardContent className="pt-0">
+            <div className="text-2xl font-bold text-slate-900 dark:text-white">
+              {stats.totalProjects}
+            </div>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+              Active across organization
+            </p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="pb-1">
-            <CardTitle className="text-xs font-semibold uppercase text-slate-400">Open Tasks</CardTitle>
-            <CheckCircle2 className="w-4 h-4 text-amber-400" />
+          <CardHeader className="pb-1 border-0">
+            <CardTitle className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400 tracking-wider">
+              Open Tasks
+            </CardTitle>
+            <CheckCircle2 className="w-4 h-4 text-amber-500 dark:text-amber-400" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-amber-400">{stats.openTasks}</div>
-            <p className="text-[11px] text-slate-500 mt-0.5">{stats.inProgressIssues} in progress</p>
+          <CardContent className="pt-0">
+            <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">
+              {stats.openTasks}
+            </div>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+              {stats.inProgressIssues} in progress
+            </p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="pb-1">
-            <CardTitle className="text-xs font-semibold uppercase text-slate-400">Open Bugs</CardTitle>
-            <Bug className="w-4 h-4 text-rose-400" />
+          <CardHeader className="pb-1 border-0">
+            <CardTitle className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400 tracking-wider">
+              Open Bugs
+            </CardTitle>
+            <Bug className="w-4 h-4 text-rose-500 dark:text-rose-400" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-rose-400">{stats.openBugs}</div>
-            <p className="text-[11px] text-slate-500 mt-0.5">Reported & unresolved</p>
+          <CardContent className="pt-0">
+            <div className="text-2xl font-bold text-rose-600 dark:text-rose-400">
+              {stats.openBugs}
+            </div>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+              Reported & unresolved
+            </p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="pb-1">
-            <CardTitle className="text-xs font-semibold uppercase text-slate-400">Overdue Items</CardTitle>
-            <Clock className={cn("w-4 h-4", stats.overdueIssues > 0 ? "text-rose-400" : "text-slate-400")} />
+          <CardHeader className="pb-1 border-0">
+            <CardTitle className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400 tracking-wider">
+              Overdue Items
+            </CardTitle>
+            <Clock
+              className={cn(
+                "w-4 h-4",
+                stats.overdueIssues > 0
+                  ? "text-rose-500 dark:text-rose-400"
+                  : "text-slate-400"
+              )}
+            />
           </CardHeader>
-          <CardContent>
-            <div className={cn("text-2xl font-bold", stats.overdueIssues > 0 ? "text-rose-400" : "text-white")}>
+          <CardContent className="pt-0">
+            <div
+              className={cn(
+                "text-2xl font-bold",
+                stats.overdueIssues > 0
+                  ? "text-rose-600 dark:text-rose-400"
+                  : "text-slate-900 dark:text-white"
+              )}
+            >
               {stats.overdueIssues}
             </div>
-            <p className="text-[11px] text-slate-500 mt-0.5">{stats.completedIssues} tasks completed</p>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+              {stats.completedIssues} tasks completed
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -222,16 +256,19 @@ export default function DashboardPage() {
         <div className="lg:col-span-2 space-y-6">
           {/* Project Health Progress Breakdown */}
           <Card className="space-y-4">
-            <CardHeader className="pb-2 border-b border-slate-800">
-              <CardTitle className="text-base flex items-center justify-between">
-                <span>Project Progress & Health</span>
-                <Link href="/projects" className="text-xs font-normal text-indigo-400 hover:underline">
-                  View All
-                </Link>
+            <CardHeader className="pb-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+              <CardTitle className="text-base font-semibold text-slate-900 dark:text-white">
+                Project Progress & Health
               </CardTitle>
+              <Link
+                href="/projects"
+                className="text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline"
+              >
+                View All
+              </Link>
             </CardHeader>
 
-            <CardContent className="space-y-4 pt-1">
+            <CardContent className="space-y-3 pt-0">
               {projectHealth.length === 0 ? (
                 <p className="text-xs text-slate-500 italic py-4 text-center">
                   No projects in this organization yet.
@@ -241,12 +278,12 @@ export default function DashboardPage() {
                   <Link
                     key={p.id}
                     href={`/projects/${p.id}`}
-                    className="block p-3.5 rounded-xl bg-slate-950/60 border border-slate-800/80 hover:border-slate-700 transition-colors group"
+                    className="block p-4 rounded-xl bg-slate-50/80 hover:bg-slate-100/90 dark:bg-slate-950/60 dark:hover:bg-slate-900/80 border border-slate-200/90 dark:border-slate-800/80 transition-all group"
                   >
-                    <div className="flex items-center justify-between gap-3 mb-2">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <FolderKanban className="w-4 h-4 text-indigo-400 shrink-0" />
-                        <span className="text-sm font-semibold text-white group-hover:text-indigo-400 transition-colors truncate">
+                    <div className="flex items-center justify-between gap-3 mb-2.5">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <FolderKanban className="w-4 h-4 text-indigo-500 dark:text-indigo-400 shrink-0" />
+                        <span className="text-sm font-semibold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors truncate">
                           {p.name}
                         </span>
                       </div>
@@ -257,23 +294,31 @@ export default function DashboardPage() {
                             {p.openBugs} {p.openBugs === 1 ? "bug" : "bugs"}
                           </Badge>
                         )}
-                        <span className="font-semibold text-white">{p.completionPercentage}%</span>
+                        <span className="font-semibold text-slate-900 dark:text-white">
+                          {p.completionPercentage}%
+                        </span>
                       </div>
                     </div>
 
-                    <div className="w-full h-2 rounded-full bg-slate-800 overflow-hidden">
+                    <div className="w-full h-2 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
                       <div
-                        className="h-full bg-indigo-500 rounded-full transition-all duration-500"
+                        className="h-full bg-indigo-600 dark:bg-indigo-500 rounded-full transition-all duration-500"
                         style={{ width: `${p.completionPercentage}%` }}
                       />
                     </div>
 
-                    <div className="flex justify-between items-center text-[11px] text-slate-400 mt-2">
-                      <span>{p.doneIssues} of {p.totalIssues} issues resolved</span>
+                    <div className="flex justify-between items-center text-[11px] text-slate-500 dark:text-slate-400 mt-2.5">
+                      <span>
+                        {p.doneIssues} of {p.totalIssues} issues resolved
+                      </span>
                       {p.overdueCount > 0 ? (
-                        <span className="text-rose-400 font-semibold">{p.overdueCount} overdue</span>
+                        <span className="text-rose-600 dark:text-rose-400 font-semibold">
+                          {p.overdueCount} overdue
+                        </span>
                       ) : (
-                        <span className="text-slate-500">On schedule</span>
+                        <span className="text-slate-500 dark:text-slate-400">
+                          On schedule
+                        </span>
                       )}
                     </div>
                   </Link>
@@ -284,16 +329,19 @@ export default function DashboardPage() {
 
           {/* My Assigned Work Quick Table */}
           <Card className="space-y-4">
-            <CardHeader className="pb-2 border-b border-slate-800">
-              <CardTitle className="text-base flex items-center justify-between">
-                <span>My Assigned Work</span>
-                <Link href="/my-tasks" className="text-xs font-normal text-indigo-400 hover:underline">
-                  View All
-                </Link>
+            <CardHeader className="pb-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+              <CardTitle className="text-base font-semibold text-slate-900 dark:text-white">
+                My Assigned Work
               </CardTitle>
+              <Link
+                href="/my-tasks"
+                className="text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline"
+              >
+                View All
+              </Link>
             </CardHeader>
 
-            <CardContent className="space-y-2 pt-1">
+            <CardContent className="space-y-2.5 pt-0">
               {myAssignedIssues.length === 0 ? (
                 <p className="text-xs text-slate-500 italic py-4 text-center">
                   You have no pending assigned tasks. Good job!
@@ -303,13 +351,13 @@ export default function DashboardPage() {
                   <Link
                     key={issue.id}
                     href={`/issues/${issue.id}`}
-                    className="flex items-center justify-between p-3 rounded-xl bg-slate-950/60 border border-slate-800/80 hover:border-slate-700 transition-colors group"
+                    className="flex items-center justify-between p-3.5 rounded-xl bg-slate-50/80 hover:bg-slate-100/90 dark:bg-slate-950/60 dark:hover:bg-slate-900/80 border border-slate-200/90 dark:border-slate-800/80 transition-all group"
                   >
                     <div className="flex items-center gap-2.5 min-w-0 pr-2">
-                      <span className="font-mono text-xs font-semibold text-indigo-400 shrink-0">
+                      <span className="font-mono text-xs font-semibold text-indigo-600 dark:text-indigo-400 shrink-0">
                         {issue.key}
                       </span>
-                      <span className="text-sm font-medium text-white group-hover:text-indigo-300 transition-colors truncate">
+                      <span className="text-sm font-medium text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors truncate">
                         {issue.title}
                       </span>
                     </div>
@@ -327,7 +375,9 @@ export default function DashboardPage() {
                       >
                         {issue.priority}
                       </Badge>
-                      <span className="text-xs text-slate-400">{issue.project.name}</span>
+                      <span className="text-xs text-slate-500 dark:text-slate-400">
+                        {issue.project.name}
+                      </span>
                     </div>
                   </Link>
                 ))
@@ -339,19 +389,20 @@ export default function DashboardPage() {
         {/* Right Column: Recent Activity Feed */}
         <div className="space-y-6">
           <Card className="space-y-4">
-            <CardHeader className="pb-2 border-b border-slate-800">
-              <CardTitle className="text-base flex items-center justify-between">
-                <span className="flex items-center gap-2">
-                  <Activity className="w-4 h-4 text-indigo-400" />
-                  <span>Recent Activity</span>
-                </span>
-                <Link href="/activity" className="text-xs font-normal text-indigo-400 hover:underline">
-                  Full Log
-                </Link>
+            <CardHeader className="pb-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+              <CardTitle className="text-base font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+                <Activity className="w-4 h-4 text-indigo-500 dark:text-indigo-400" />
+                <span>Recent Activity</span>
               </CardTitle>
+              <Link
+                href="/activity"
+                className="text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline"
+              >
+                Full Log
+              </Link>
             </CardHeader>
 
-            <CardContent className="space-y-3 pt-1">
+            <CardContent className="space-y-3 pt-0">
               {recentActivity.length === 0 ? (
                 <p className="text-xs text-slate-500 italic py-4 text-center">
                   No recent activity logged.
@@ -360,24 +411,30 @@ export default function DashboardPage() {
                 recentActivity.map((log) => (
                   <div
                     key={log.id}
-                    className="p-2.5 rounded-xl bg-slate-950/50 border border-slate-800/60 space-y-1 text-xs"
+                    className="p-3 rounded-xl bg-slate-50/80 dark:bg-slate-950/50 border border-slate-200/90 dark:border-slate-800/60 space-y-1.5 text-xs transition-colors"
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <Avatar name={log.actor.name} avatarUrl={log.actor.avatarUrl} size="sm" />
-                        <span className="font-semibold text-white">{log.actor.name}</span>
+                        <Avatar
+                          name={log.actor.name}
+                          avatarUrl={log.actor.avatarUrl}
+                          size="sm"
+                        />
+                        <span className="font-semibold text-slate-900 dark:text-white">
+                          {log.actor.name}
+                        </span>
                       </div>
-                      <span className="text-[10px] text-slate-500">
+                      <span className="text-[10px] text-slate-400 dark:text-slate-500">
                         {formatDate(log.createdAt)}
                       </span>
                     </div>
 
-                    <p className="text-slate-300 pl-8">
+                    <p className="text-slate-600 dark:text-slate-300 pl-8">
                       {log.action.replace(/_/g, " ").toLowerCase()}{" "}
                       {log.issue && (
                         <Link
                           href={`/issues/${log.issue.id}`}
-                          className="font-medium text-indigo-400 hover:underline"
+                          className="font-medium text-indigo-600 dark:text-indigo-400 hover:underline"
                         >
                           {log.issue.key}
                         </Link>
@@ -385,7 +442,7 @@ export default function DashboardPage() {
                       {log.project && !log.issue && (
                         <Link
                           href={`/projects/${log.project.id}`}
-                          className="font-medium text-indigo-400 hover:underline"
+                          className="font-medium text-indigo-600 dark:text-indigo-400 hover:underline"
                         >
                           {log.project.name}
                         </Link>

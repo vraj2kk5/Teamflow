@@ -23,15 +23,22 @@ export function Badge({
   return (
     <span
       className={cn(
-        "inline-flex items-center font-medium rounded-full tracking-wide select-none",
+        "inline-flex items-center font-medium rounded-full tracking-wide select-none transition-colors",
         size === "sm" ? "px-2 py-0.5 text-xs" : "px-2.5 py-1 text-xs",
-        variant === "neutral" && "bg-slate-800 text-slate-300 border border-slate-700",
-        variant === "primary" && "bg-indigo-950/80 text-indigo-300 border border-indigo-800",
-        variant === "success" && "bg-emerald-950/80 text-emerald-300 border border-emerald-800",
-        variant === "warning" && "bg-amber-950/80 text-amber-300 border border-amber-800",
-        variant === "danger" && "bg-rose-950/80 text-rose-300 border border-rose-800",
-        variant === "purple" && "bg-purple-950/80 text-purple-300 border border-purple-800",
-        variant === "cyan" && "bg-cyan-950/80 text-cyan-300 border border-cyan-800",
+        variant === "neutral" &&
+          "bg-slate-100 text-slate-700 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700",
+        variant === "primary" &&
+          "bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-950/80 dark:text-indigo-300 dark:border-indigo-800",
+        variant === "success" &&
+          "bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/80 dark:text-emerald-300 dark:border-emerald-800",
+        variant === "warning" &&
+          "bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/80 dark:text-amber-300 dark:border-amber-800",
+        variant === "danger" &&
+          "bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-950/80 dark:text-rose-300 dark:border-rose-800",
+        variant === "purple" &&
+          "bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-950/80 dark:text-purple-300 dark:border-purple-800",
+        variant === "cyan" &&
+          "bg-cyan-50 text-cyan-700 border border-cyan-200 dark:bg-cyan-950/80 dark:text-cyan-300 dark:border-cyan-800",
         className
       )}
       {...props}

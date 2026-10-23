@@ -47,12 +47,12 @@ export function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
   };
 
   return (
-    <header className="h-16 bg-slate-950/80 backdrop-blur-md border-b border-slate-800/80 px-4 sm:px-6 flex items-center justify-between gap-4 sticky top-0 z-30">
+    <header className="h-16 bg-white/90 dark:bg-slate-950/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800/80 px-4 sm:px-6 flex items-center justify-between gap-4 sticky top-0 z-30 transition-colors">
       {/* Mobile Menu & Search */}
       <div className="flex items-center gap-3 flex-1 max-w-lg">
         <button
           onClick={onMenuClick}
-          className="lg:hidden p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-900 transition-colors"
+          className="lg:hidden p-2 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors"
           aria-label="Open mobile menu"
         >
           <Menu className="w-5 h-5" />
@@ -65,7 +65,7 @@ export function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search issues, tasks, bugs... (Press Enter)"
-            className="w-full bg-slate-900/90 border border-slate-800 rounded-lg pl-9 pr-4 py-1.5 text-xs sm:text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+            className="w-full bg-slate-100 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 rounded-lg pl-9 pr-4 py-1.5 text-xs sm:text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
           />
         </form>
       </div>
@@ -78,7 +78,7 @@ export function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
           size="sm"
           variant="outline"
           onClick={() => router.push("/issues?create=true")}
-          className="hidden sm:inline-flex border-slate-700 hover:bg-slate-850"
+          className="hidden sm:inline-flex"
         >
           <Plus className="w-3.5 h-3.5" />
           <span>New Task</span>
@@ -88,10 +88,10 @@ export function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
           size="sm"
           variant="primary"
           onClick={() => router.push("/bug-reports/new")}
-          className="bg-rose-600 hover:bg-rose-700 focus:ring-rose-500"
+          className="bg-rose-600 hover:bg-rose-700 text-white focus:ring-rose-500"
         >
-          <Bug className="w-3.5 h-3.5" />
-          <span>Report a Bug</span>
+          <Bug className="w-3.5 h-3.5 text-white" />
+          <span className="text-white">Report a Bug</span>
         </Button>
 
         {/* User Menu */}
@@ -105,16 +105,16 @@ export function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
           </button>
 
           {isDropdownOpen && (
-            <div className="absolute right-0 mt-2 w-56 rounded-xl bg-slate-900 border border-slate-800 shadow-xl py-1 text-sm text-slate-200 z-50 animate-in fade-in zoom-in-95 duration-150">
-              <div className="px-4 py-3 border-b border-slate-800">
-                <p className="font-semibold text-white truncate">{user?.name}</p>
-                <p className="text-xs text-slate-400 truncate">{user?.email}</p>
+            <div className="absolute right-0 mt-2 w-56 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl py-1 text-sm text-slate-700 dark:text-slate-200 z-50 animate-in fade-in zoom-in-95 duration-150">
+              <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800">
+                <p className="font-semibold text-slate-900 dark:text-white truncate">{user?.name}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{user?.email}</p>
               </div>
 
               <Link
                 href="/profile"
                 onClick={() => setIsDropdownOpen(false)}
-                className="flex items-center gap-2.5 px-4 py-2 hover:bg-slate-800 text-slate-300 hover:text-white transition-colors"
+                className="flex items-center gap-2.5 px-4 py-2 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors"
               >
                 <UserIcon className="w-4 h-4 text-slate-400" />
                 <span>My Profile</span>
@@ -122,7 +122,7 @@ export function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
 
               <button
                 onClick={handleLogout}
-                className="w-full flex items-center gap-2.5 px-4 py-2 hover:bg-rose-950/40 text-rose-400 hover:text-rose-300 transition-colors text-left"
+                className="w-full flex items-center gap-2.5 px-4 py-2 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 transition-colors text-left"
               >
                 <LogOut className="w-4 h-4" />
                 <span>Log out</span>

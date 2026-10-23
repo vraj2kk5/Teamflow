@@ -9,9 +9,9 @@ export function Card({ className, variant = "default", ...props }: CardProps) {
   return (
     <div
       className={cn(
-        "rounded-xl bg-slate-900 border border-slate-800 p-5 shadow-sm text-slate-100",
+        "rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 shadow-sm text-slate-900 dark:text-slate-100 transition-colors",
         variant === "interactive" &&
-          "hover:border-slate-700 hover:shadow-md transition-all cursor-pointer",
+          "hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-md transition-all cursor-pointer",
         className
       )}
       {...props}
@@ -23,28 +23,46 @@ export function CardHeader({
   className,
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("flex items-center justify-between pb-4", className)} {...props} />;
+  return (
+    <div
+      className={cn(
+        "flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800/80",
+        className
+      )}
+      {...props}
+    />
+  );
 }
 
 export function CardTitle({
   className,
   ...props
 }: React.HTMLAttributes<HTMLHeadingElement>) {
-  return <h3 className={cn("text-base font-semibold text-white", className)} {...props} />;
+  return (
+    <h3
+      className={cn("text-base font-semibold text-slate-900 dark:text-white", className)}
+      {...props}
+    />
+  );
 }
 
 export function CardDescription({
   className,
   ...props
 }: React.HTMLAttributes<HTMLParagraphElement>) {
-  return <p className={cn("text-xs text-slate-400 mt-1", className)} {...props} />;
+  return (
+    <p
+      className={cn("text-xs text-slate-500 dark:text-slate-400 mt-1", className)}
+      {...props}
+    />
+  );
 }
 
 export function CardContent({
   className,
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("pt-2", className)} {...props} />;
+  return <div className={cn("pt-3", className)} {...props} />;
 }
 
 export function CardFooter({
@@ -53,7 +71,10 @@ export function CardFooter({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn("flex items-center justify-between pt-4 border-t border-slate-800/80 mt-4", className)}
+      className={cn(
+        "flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-800/80 mt-4",
+        className
+      )}
       {...props}
     />
   );

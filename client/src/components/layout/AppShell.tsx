@@ -26,12 +26,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }, [user, isLoading, isPublicRoute, pathname, router]);
 
   if (isPublicRoute) {
-    return <main className="min-h-screen bg-slate-950 text-slate-100">{children}</main>;
+    return (
+      <main className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
+        {children}
+      </main>
+    );
   }
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 space-y-4">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-6 space-y-4">
         <div className="w-10 h-10 rounded-xl bg-indigo-600 animate-pulse flex items-center justify-center" />
         <Skeleton className="h-4 w-48" />
       </div>
@@ -43,7 +47,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col lg:flex-row">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col lg:flex-row transition-colors">
       {/* Desktop Persistent Sidebar */}
       <div className="hidden lg:block shrink-0 sticky top-0 h-screen">
         <Sidebar />
@@ -56,11 +60,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             className="fixed inset-0 bg-black/80 backdrop-blur-sm"
             onClick={() => setMobileMenuOpen(false)}
           />
-          <div className="relative w-72 max-w-[80vw] h-full bg-slate-950 shadow-2xl flex flex-col">
+          <div className="relative w-72 max-w-[80vw] h-full bg-white dark:bg-slate-950 shadow-2xl flex flex-col">
             <div className="absolute top-4 right-4 z-10">
               <button
                 onClick={() => setMobileMenuOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900"
+                className="p-1 rounded-lg text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-900"
                 aria-label="Close menu"
               >
                 <X className="w-5 h-5" />

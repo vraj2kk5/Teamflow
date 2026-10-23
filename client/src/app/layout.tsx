@@ -18,7 +18,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
-      <body className="bg-slate-950 text-slate-100 min-h-screen transition-colors duration-150">
+      <body className="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen transition-colors duration-150">
         <ThemeProvider>
           <ToastProvider>
             <AuthProvider>
