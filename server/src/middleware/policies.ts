@@ -30,7 +30,7 @@ export async function requireProjectAccess(
       return next(new NotFoundError("Project not found in current organization"));
     }
 
-    if (auth.role !== Role.ADMIN) {
+    if (auth.role === Role.MEMBER) {
       const isMember =
         project.memberships.some((m) => m.userId === auth.userId) ||
         project.ownerId === auth.userId;
@@ -54,7 +54,9 @@ export async function canManageProject(
     const auth = req.auth;
     if (!auth) return next(new ForbiddenError("Authentication required"));
 
-    if (auth.role === Role.ADMIN) return next();
+    if (auth.role === Role.ADMIN || auth.role === Role.PROJECT_MANAGER) {
+      return next();
+    }
 
     const rawId = req.params.id || req.params.projectId;
     const projectId = Array.isArray(rawId) ? rawId[0] : rawId;
@@ -70,11 +72,11 @@ export async function canManageProject(
       return next(new NotFoundError("Project not found in current organization"));
     }
 
-    if (auth.role === Role.PROJECT_MANAGER && project.ownerId === auth.userId) {
+    if (project.ownerId === auth.userId) {
       return next();
     }
 
-    return next(new ForbiddenError("Only organization Admins or the Project Owner can manage this project"));
+    return next(new ForbiddenError("Only organization Admins or Project Managers can manage this project"));
   } catch (err) {
     next(err);
   }

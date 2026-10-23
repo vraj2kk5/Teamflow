@@ -34,6 +34,10 @@ import {
   ShieldAlert,
   Clock,
   ArrowLeft,
+  Copy,
+  Check,
+  KeyRound,
+  RefreshCw,
 } from "lucide-react";
 import { cn, formatDate } from "../../../lib/utils";
 
@@ -43,6 +47,7 @@ interface ProjectDetail {
   description?: string | null;
   status: "ACTIVE" | "ON_HOLD" | "COMPLETED" | "ARCHIVED";
   ownerId: string;
+  inviteCode?: string | null;
   owner: {
     id: string;
     name: string;
@@ -111,8 +116,10 @@ export default function ProjectDetailPage({
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
+  const [isRegeneratingCode, setIsRegeneratingCode] = useState(false);
 
-  const canManage = role === "ADMIN" || (role === "PROJECT_MANAGER" && project?.ownerId === user?.id);
+  const canManage = role === "ADMIN" || role === "PROJECT_MANAGER" || project?.ownerId === user?.id;
 
   const fetchProjectData = useCallback(async () => {
     setIsLoading(true);
@@ -150,14 +157,44 @@ export default function ProjectDetailPage({
 
   // Load organization members for adding to project
   const fetchOrgMembers = async () => {
-    if (!project) return;
     try {
       const res = await api.get<{ id: string; user: { id: string; name: string; email: string } }[]>(
-        `/organizations/${user?.id ? "current" : "current"}/members`
+        "/organizations/current/members"
       );
-      setOrgMembers(res || []);
+      const list = Array.isArray(res) ? res : (res as { data?: { id: string; user: { id: string; name: string; email: string } }[] })?.data || [];
+      setOrgMembers(list);
     } catch {
       // ignore
+    }
+  };
+
+  const handleCopyInviteCode = (code?: string | null) => {
+    const val = code || project?.inviteCode;
+    if (!val) return;
+    navigator.clipboard.writeText(val);
+    setIsCopied(true);
+    toastSuccess("Project invitation code copied to clipboard!");
+    setTimeout(() => setIsCopied(false), 2000);
+  };
+
+  const handleRegenerateInviteCode = async () => {
+    if (!projectId) return;
+    setIsRegeneratingCode(true);
+    try {
+      const res = await api.post<{ inviteCode: string }>(`/projects/${projectId}/regenerate-invite-code`);
+      const newCode = (res as { inviteCode?: string })?.inviteCode || (res as { data?: { inviteCode?: string } })?.data?.inviteCode;
+      if (newCode && project) {
+        setProject({ ...project, inviteCode: newCode });
+      } else {
+        fetchProjectData();
+      }
+      toastSuccess("Project invitation code regenerated!");
+    } catch (err: unknown) {
+      if (err instanceof ApiClientError) {
+        toastError(err.message, "Failed to regenerate invitation code");
+      }
+    } finally {
+      setIsRegeneratingCode(false);
     }
   };
 
@@ -383,6 +420,23 @@ export default function ProjectDetailPage({
             </div>
             {project.description && (
               <p className="text-sm text-slate-600 dark:text-slate-300 max-w-2xl">{project.description}</p>
+            )}
+
+            {project.inviteCode && (
+              <div className="flex items-center gap-2 pt-1 text-xs">
+                <span className="text-slate-500 dark:text-slate-400 font-medium">Invite Code:</span>
+                <span className="font-mono font-bold text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800/80 tracking-wider select-all">
+                  {project.inviteCode}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handleCopyInviteCode()}
+                  className="p-1 rounded-md text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                  title="Copy project invitation code"
+                >
+                  {isCopied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                </button>
+              </div>
             )}
           </div>
 
@@ -693,6 +747,46 @@ export default function ProjectDetailPage({
       {/* Tab 4: Members View */}
       {activeTab === "members" && (
         <div className="space-y-4">
+          {/* Project Invitation Code Banner */}
+          <div className="p-4 rounded-xl bg-indigo-50/70 dark:bg-indigo-950/30 border border-indigo-200/80 dark:border-indigo-800/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-2">
+                <KeyRound className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                <span className="text-sm font-semibold text-slate-900 dark:text-white">Project Invitation Code</span>
+              </div>
+              <p className="text-xs text-slate-600 dark:text-slate-400">
+                Share this code with organization members to let them self-join this project.
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-sm font-bold text-indigo-700 dark:text-indigo-300 px-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-indigo-200 dark:border-indigo-800 tracking-wider shadow-sm select-all">
+                {project.inviteCode || "Generating..."}
+              </span>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => handleCopyInviteCode()}
+                className="border-indigo-300 dark:border-indigo-700"
+              >
+                {isCopied ? <Check className="w-3.5 h-3.5 mr-1 text-emerald-500" /> : <Copy className="w-3.5 h-3.5 mr-1 text-indigo-600 dark:text-indigo-400" />}
+                <span>{isCopied ? "Copied" : "Copy"}</span>
+              </Button>
+              {canManage && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={handleRegenerateInviteCode}
+                  isLoading={isRegeneratingCode}
+                  title="Generate a new invitation code"
+                  className="text-xs"
+                >
+                  <RefreshCw className="w-3.5 h-3.5 mr-1" />
+                  <span>Regenerate</span>
+                </Button>
+              )}
+            </div>
+          </div>
+
           <div className="flex justify-between items-center">
             <p className="text-sm text-slate-600 dark:text-slate-400">
               Users assigned to work on this project
@@ -933,6 +1027,10 @@ export default function ProjectDetailPage({
                 </option>
               ))}
           </Select>
+
+          <p className="text-[11px] text-slate-500 dark:text-slate-400">
+            Admins and Project Managers can assign members directly, or share the Project Invitation Code (<strong>{project.inviteCode}</strong>) for them to join.
+          </p>
 
           <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
             <Button

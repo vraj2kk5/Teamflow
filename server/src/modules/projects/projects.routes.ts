@@ -14,6 +14,7 @@ projectsRouter.post(
   requireOrgRole(Role.ADMIN, Role.PROJECT_MANAGER),
   ProjectsController.createProject
 );
+projectsRouter.post("/join", ProjectsController.joinProject);
 
 projectsRouter.get("/:id", requireProjectAccess, ProjectsController.getProject);
 projectsRouter.patch(
@@ -27,6 +28,13 @@ projectsRouter.delete(
   requireProjectAccess,
   canManageProject,
   ProjectsController.deleteProject
+);
+
+projectsRouter.post(
+  "/:id/regenerate-invite-code",
+  requireProjectAccess,
+  canManageProject,
+  ProjectsController.regenerateInviteCode
 );
 
 projectsRouter.post(

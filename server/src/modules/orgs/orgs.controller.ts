@@ -8,6 +8,14 @@ function param(val: string | string[] | undefined): string {
   return val || "";
 }
 
+function resolveOrgId(req: Request): string {
+  const raw = param(req.params.id);
+  if (!raw || raw === "current") {
+    return req.auth?.organizationId || "";
+  }
+  return raw;
+}
+
 export class OrgsController {
   static async getCurrent(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
@@ -23,7 +31,7 @@ export class OrgsController {
 
   static async update(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const orgId = param(req.params.id);
+      const orgId = resolveOrgId(req);
       const validated = updateOrgSchema.parse(req.body);
       const updated = await OrgsService.updateOrg(orgId, validated, req.auth!.userId);
       res.status(200).json({ data: updated });
@@ -34,7 +42,7 @@ export class OrgsController {
 
   static async getMembers(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const orgId = param(req.params.id);
+      const orgId = resolveOrgId(req);
       const members = await OrgsService.getMembers(orgId);
       res.status(200).json({ data: members });
     } catch (err) {
@@ -44,7 +52,7 @@ export class OrgsController {
 
   static async addMember(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const orgId = param(req.params.id);
+      const orgId = resolveOrgId(req);
       const validated = addMemberSchema.parse(req.body);
       const member = await OrgsService.addMemberByEmail(orgId, validated, req.auth!.userId);
       res.status(201).json({ data: member });
@@ -55,7 +63,7 @@ export class OrgsController {
 
   static async updateMemberRole(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const orgId = param(req.params.id);
+      const orgId = resolveOrgId(req);
       const targetUserId = param(req.params.userId);
       const validated = updateMemberRoleSchema.parse(req.body);
       const updated = await OrgsService.updateMemberRole(
@@ -72,7 +80,7 @@ export class OrgsController {
 
   static async removeMember(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const orgId = param(req.params.id);
+      const orgId = resolveOrgId(req);
       const targetUserId = param(req.params.userId);
       const result = await OrgsService.removeMember(orgId, targetUserId, req.auth!.userId);
       res.status(200).json({ data: result });
@@ -83,7 +91,7 @@ export class OrgsController {
 
   static async rotateInviteCode(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const orgId = param(req.params.id);
+      const orgId = resolveOrgId(req);
       const updated = await OrgsService.rotateInviteCode(orgId);
       res.status(200).json({ data: updated });
     } catch (err) {

@@ -1,9 +1,14 @@
+import crypto from "crypto";
 import { prisma } from "../../lib/prisma";
 import { NotFoundError, BadRequestError } from "../../lib/errors";
 import { CreateProjectInput, UpdateProjectInput } from "./projects.schema";
 import { Role, Prisma } from "@prisma/client";
 
 export class ProjectsService {
+  private static generateInviteCode(): string {
+    return `PRJ-${crypto.randomBytes(4).toString("hex").toUpperCase()}`;
+  }
+
   static async getProjects(
     orgId: string,
     userId: string,
@@ -23,8 +28,9 @@ export class ProjectsService {
       organizationId: orgId,
     };
 
-    // Scoping: Non-admins see only projects they are members of (or created)
-    if (role !== Role.ADMIN) {
+    // Scoping: Regular members see only projects they are members of (or created).
+    // Admins and Project Managers can view and manage organization projects.
+    if (role === Role.MEMBER) {
       where.OR = [
         { ownerId: userId },
         { memberships: { some: { userId } } },
@@ -147,6 +153,16 @@ export class ProjectsService {
       throw new NotFoundError("Project not found");
     }
 
+    // Auto-generate invite code if legacy project lacked one
+    if (!project.inviteCode) {
+      const newCode = this.generateInviteCode();
+      await prisma.project.update({
+        where: { id: project.id },
+        data: { inviteCode: newCode },
+      });
+      project.inviteCode = newCode;
+    }
+
     const now = new Date();
     const totalIssues = project.issues.length;
     const doneIssues = project.issues.filter((i) => i.status === "DONE").length;
@@ -177,6 +193,7 @@ export class ProjectsService {
     input: CreateProjectInput
   ) {
     return prisma.$transaction(async (tx) => {
+      const inviteCode = this.generateInviteCode();
       const project = await tx.project.create({
         data: {
           organizationId: orgId,
@@ -184,6 +201,7 @@ export class ProjectsService {
           description: input.description,
           status: input.status,
           ownerId: creatorId,
+          inviteCode,
         },
       });
 
@@ -202,7 +220,7 @@ export class ProjectsService {
           projectId: project.id,
           actorId: creatorId,
           action: "PROJECT_CREATED",
-          metadata: { name: project.name },
+          metadata: { name: project.name, inviteCode },
         },
       });
 
@@ -232,7 +250,7 @@ export class ProjectsService {
           projectId,
           actorId,
           action: "PROJECT_UPDATED",
-          metadata: { ...input },
+          metadata: { changes: input },
         },
       });
 
@@ -241,13 +259,15 @@ export class ProjectsService {
   }
 
   static async deleteProject(projectId: string, orgId: string, actorId: string) {
+    const project = await prisma.project.findFirst({
+      where: { id: projectId, organizationId: orgId },
+    });
+
+    if (!project) {
+      throw new NotFoundError("Project not found");
+    }
+
     return prisma.$transaction(async (tx) => {
-      const project = await tx.project.findFirst({
-        where: { id: projectId, organizationId: orgId },
-      });
-
-      if (!project) throw new NotFoundError("Project not found");
-
       await tx.project.delete({
         where: { id: projectId },
       });
@@ -265,10 +285,102 @@ export class ProjectsService {
     });
   }
 
+  static async regenerateInviteCode(
+    projectId: string,
+    orgId: string,
+    actorId: string
+  ) {
+    const project = await prisma.project.findFirst({
+      where: { id: projectId, organizationId: orgId },
+    });
+
+    if (!project) {
+      throw new NotFoundError("Project not found");
+    }
+
+    const newCode = this.generateInviteCode();
+
+    const updated = await prisma.project.update({
+      where: { id: projectId },
+      data: { inviteCode: newCode },
+      select: { id: true, inviteCode: true },
+    });
+
+    await prisma.activityLog.create({
+      data: {
+        organizationId: orgId,
+        projectId,
+        actorId,
+        action: "PROJECT_UPDATED",
+        metadata: { action: "REGENERATE_INVITE_CODE", inviteCode: newCode },
+      },
+    });
+
+    return updated;
+  }
+
+  static async joinProjectByInviteCode(
+    orgId: string,
+    userId: string,
+    inviteCode: string
+  ) {
+    const normalizedCode = inviteCode.trim().toUpperCase();
+
+    const project = await prisma.project.findFirst({
+      where: {
+        organizationId: orgId,
+        inviteCode: normalizedCode,
+      },
+      include: {
+        owner: {
+          select: { id: true, name: true, email: true },
+        },
+        memberships: true,
+      },
+    });
+
+    if (!project) {
+      throw new NotFoundError(
+        "Invalid project invitation code or project does not exist in your organization"
+      );
+    }
+
+    const alreadyMember =
+      project.ownerId === userId ||
+      project.memberships.some((m) => m.userId === userId);
+
+    if (!alreadyMember) {
+      await prisma.projectMembership.create({
+        data: {
+          projectId: project.id,
+          userId,
+        },
+      });
+
+      await prisma.activityLog.create({
+        data: {
+          organizationId: orgId,
+          projectId: project.id,
+          actorId: userId,
+          action: "MEMBER_ADDED",
+          metadata: { userId, viaInviteCode: true },
+        },
+      });
+    }
+
+    return {
+      id: project.id,
+      name: project.name,
+      inviteCode: project.inviteCode,
+      alreadyMember,
+    };
+  }
+
   static async addProjectMember(
     projectId: string,
     orgId: string,
-    targetUserId: string
+    targetUserId: string,
+    actorId?: string
   ) {
     // Verify user is an organization member
     const orgMembership = await prisma.organizationMembership.findUnique({
@@ -297,7 +409,7 @@ export class ProjectsService {
       return existing;
     }
 
-    return prisma.projectMembership.create({
+    const membership = await prisma.projectMembership.create({
       data: {
         projectId,
         userId: targetUserId,
@@ -308,6 +420,20 @@ export class ProjectsService {
         },
       },
     });
+
+    if (actorId) {
+      await prisma.activityLog.create({
+        data: {
+          organizationId: orgId,
+          projectId,
+          actorId,
+          action: "MEMBER_ADDED",
+          metadata: { userId: targetUserId },
+        },
+      });
+    }
+
+    return membership;
   }
 
   static async removeProjectMember(projectId: string, targetUserId: string) {

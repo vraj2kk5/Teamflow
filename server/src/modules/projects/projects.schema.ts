@@ -17,6 +17,11 @@ export const addProjectMemberSchema = z.object({
   userId: z.string().cuid("Invalid user ID"),
 });
 
+export const joinProjectSchema = z.object({
+  inviteCode: z.string().trim().min(3, "Invalid project invite code").max(32),
+});
+
 export type CreateProjectInput = z.infer<typeof createProjectSchema>;
 export type UpdateProjectInput = z.infer<typeof updateProjectSchema>;
 export type AddProjectMemberInput = z.infer<typeof addProjectMemberSchema>;
+export type JoinProjectInput = z.infer<typeof joinProjectSchema>;

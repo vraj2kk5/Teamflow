@@ -2,28 +2,26 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { api, ApiClientError } from "../../lib/api";
 import { useAuth } from "../../contexts/AuthContext";
 import { useToast } from "../../components/ui/Toast";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import { Select } from "../../components/ui/Select";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "../../components/ui/Card";
 import { Badge } from "../../components/ui/Badge";
-import { Modal } from "../../components/ui/Modal";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "../../components/ui/Card";
 import { Skeleton } from "../../components/ui/Skeleton";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { Avatar } from "../../components/ui/Avatar";
+import { Modal } from "../../components/ui/Modal";
 import {
   FolderKanban,
   Plus,
   Search,
-  Users,
-  CheckCircle2,
-  AlertCircle,
-  Bug,
-  Calendar,
   ArrowRight,
+  KeyRound,
+  Copy,
 } from "lucide-react";
 
 interface ProjectStats {
@@ -39,6 +37,7 @@ interface ProjectItem {
   name: string;
   description?: string | null;
   status: "ACTIVE" | "ON_HOLD" | "COMPLETED" | "ARCHIVED";
+  inviteCode?: string | null;
   owner: {
     id: string;
     name: string;
@@ -56,6 +55,7 @@ interface ProjectItem {
 }
 
 export default function ProjectsPage() {
+  const router = useRouter();
   const { role } = useAuth();
   const { success: toastSuccess, error: toastError } = useToast();
 
@@ -71,6 +71,12 @@ export default function ProjectsPage() {
   const [status, setStatus] = useState("ACTIVE");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState("");
+
+  // Join Project Modal State
+  const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
+  const [joinCode, setJoinCode] = useState("");
+  const [isJoining, setIsJoining] = useState(false);
+  const [joinError, setJoinError] = useState("");
 
   const canCreate = role === "ADMIN" || role === "PROJECT_MANAGER";
 
@@ -130,26 +136,73 @@ export default function ProjectsPage() {
     }
   };
 
+  const handleJoinProject = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!joinCode.trim()) {
+      setJoinError("Invitation code is required");
+      return;
+    }
+
+    setIsJoining(true);
+    setJoinError("");
+    try {
+      const res = await api.post<{ id: string; name: string; alreadyMember: boolean }>("/projects/join", {
+        inviteCode: joinCode.trim().toUpperCase(),
+      });
+      const data = (res as { data?: { id: string; name: string; alreadyMember: boolean } })?.data || res;
+
+      if (data.alreadyMember) {
+        toastSuccess(`You are already a member of "${data.name}"`);
+      } else {
+        toastSuccess(`Successfully joined project "${data.name}"!`);
+      }
+
+      setIsJoinModalOpen(false);
+      setJoinCode("");
+      router.push(`/projects/${data.id}`);
+    } catch (err: unknown) {
+      if (err instanceof ApiClientError) {
+        setJoinError(err.message);
+      } else {
+        setJoinError("Failed to join project. Check the code and try again.");
+      }
+    } finally {
+      setIsJoining(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2.5">
-            <FolderKanban className="w-6 h-6 text-indigo-400" />
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2.5">
+            <FolderKanban className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
             <span>Projects</span>
           </h1>
-          <p className="text-sm text-slate-400 mt-1">
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
             Manage projects, monitor completion health, and collaborate with your team
           </p>
         </div>
 
-        {canCreate && (
-          <Button onClick={() => setIsModalOpen(true)} size="md">
-            <Plus className="w-4 h-4 mr-1" />
-            <span>New Project</span>
+        <div className="flex items-center gap-2.5">
+          <Button
+            onClick={() => setIsJoinModalOpen(true)}
+            variant="outline"
+            size="md"
+            className="border-slate-300 dark:border-slate-700"
+          >
+            <KeyRound className="w-4 h-4 mr-1 text-indigo-600 dark:text-indigo-400" />
+            <span>Join with Code</span>
           </Button>
-        )}
+
+          {canCreate && (
+            <Button onClick={() => setIsModalOpen(true)} size="md">
+              <Plus className="w-4 h-4 mr-1" />
+              <span>New Project</span>
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Filter and Search Bar */}
@@ -193,11 +246,11 @@ export default function ProjectsPage() {
             search || statusFilter
               ? "No projects match your current filters. Try resetting search or status."
               : role === "MEMBER"
-              ? "You haven't been assigned to any projects yet. Contact your Project Manager or Admin to be added to a project."
+              ? "You haven't been assigned to any projects yet. Enter an invitation code or ask your Project Manager/Admin to add you."
               : "No projects in this organization yet. Create one to get started."
           }
-          actionLabel={canCreate ? "Create Project" : undefined}
-          onAction={canCreate ? () => setIsModalOpen(true) : undefined}
+          actionLabel="Join with Code"
+          onAction={() => setIsJoinModalOpen(true)}
         />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -214,13 +267,31 @@ export default function ProjectsPage() {
                 <div>
                   <CardHeader className="items-start pb-2">
                     <div className="flex-1 pr-2">
-                      <CardTitle className="group-hover:text-indigo-400 transition-colors">
+                      <CardTitle className="group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                         {project.name}
                       </CardTitle>
                       {project.description && (
                         <CardDescription className="line-clamp-2 mt-1">
                           {project.description}
                         </CardDescription>
+                      )}
+
+                      {/* Invite Code Pill */}
+                      {project.inviteCode && (
+                        <div
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            navigator.clipboard.writeText(project.inviteCode!);
+                            toastSuccess(`Copied invite code: ${project.inviteCode}`);
+                          }}
+                          className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-mono font-semibold bg-slate-100 hover:bg-indigo-50 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 hover:text-indigo-600 dark:text-slate-300 dark:hover:text-white transition-colors cursor-pointer mt-2"
+                          title="Click to copy project invite code"
+                        >
+                          <KeyRound className="w-3 h-3 text-indigo-500 shrink-0" />
+                          <span>{project.inviteCode}</span>
+                          <Copy className="w-2.5 h-2.5 text-slate-400 group-hover:text-indigo-400 shrink-0" />
+                        </div>
                       )}
                     </div>
                     <Badge
@@ -242,9 +313,9 @@ export default function ProjectsPage() {
                   <CardContent className="space-y-4 pt-3">
                     {/* Progress Bar */}
                     <div className="space-y-1.5">
-                      <div className="flex justify-between text-xs text-slate-400 font-medium">
+                      <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400 font-medium">
                         <span>Completion</span>
-                        <span className="text-white font-semibold">
+                        <span className="text-slate-900 dark:text-white font-semibold">
                           {project.stats.completionPercentage}%
                         </span>
                       </div>
@@ -263,7 +334,7 @@ export default function ProjectsPage() {
                         <div className="text-[10px] text-slate-400">Issues</div>
                       </div>
                       <div>
-                        <div className="text-rose-400 font-semibold">{project.stats.openBugs}</div>
+                        <div className="text-rose-600 dark:text-rose-400 font-semibold">{project.stats.openBugs}</div>
                         <div className="text-[10px] text-slate-400">Bugs</div>
                       </div>
                       <div>
@@ -294,7 +365,7 @@ export default function ProjectsPage() {
                     )}
                   </div>
 
-                  <span className="flex items-center gap-1 group-hover:text-indigo-400 transition-colors">
+                  <span className="flex items-center gap-1 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                     <span>View Board</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </span>
@@ -305,6 +376,57 @@ export default function ProjectsPage() {
         </div>
       )}
 
+      {/* Join Project with Invitation Code Modal */}
+      <Modal
+        isOpen={isJoinModalOpen}
+        onClose={() => setIsJoinModalOpen(false)}
+        title="Join Project with Invitation Code"
+        description="Enter the unique project code shared by your Project Manager or Admin"
+      >
+        <form onSubmit={handleJoinProject} className="space-y-4">
+          {joinError && (
+            <div className="p-3 rounded-lg bg-rose-50 dark:bg-rose-950/80 border border-rose-200 dark:border-rose-800 text-xs text-rose-700 dark:text-rose-300">
+              {joinError}
+            </div>
+          )}
+
+          <div className="space-y-1.5">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+              Project Invitation Code
+            </label>
+            <div className="relative">
+              <KeyRound className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="e.g. PRJ-82F750C1"
+                value={joinCode}
+                onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+                className="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 pl-10 pr-3.5 py-2 font-mono text-sm uppercase tracking-wider text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                required
+                autoFocus
+              />
+            </div>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400">
+              Entering a valid project code will grant you member access and add it to your assigned projects.
+            </p>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setIsJoinModalOpen(false)}
+              disabled={isJoining}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" isLoading={isJoining}>
+              Join Project
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
       {/* Create Project Modal */}
       <Modal
         isOpen={isModalOpen}
@@ -314,7 +436,7 @@ export default function ProjectsPage() {
       >
         <form onSubmit={handleCreateProject} className="space-y-4">
           {formError && (
-            <div className="p-3 rounded-lg bg-rose-950/80 border border-rose-800 text-xs text-rose-300">
+            <div className="p-3 rounded-lg bg-rose-50 dark:bg-rose-950/80 border border-rose-200 dark:border-rose-800 text-xs text-rose-700 dark:text-rose-300">
               {formError}
             </div>
           )}
@@ -345,7 +467,7 @@ export default function ProjectsPage() {
             ]}
           />
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-slate-800">
+          <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
             <Button
               type="button"
               variant="ghost"

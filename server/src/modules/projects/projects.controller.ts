@@ -4,6 +4,7 @@ import {
   createProjectSchema,
   updateProjectSchema,
   addProjectMemberSchema,
+  joinProjectSchema,
 } from "./projects.schema";
 import { UnauthorizedError } from "../../lib/errors";
 
@@ -62,6 +63,36 @@ export class ProjectsController {
     }
   }
 
+  static async joinProject(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const auth = req.auth!;
+      const validated = joinProjectSchema.parse(req.body);
+      const result = await ProjectsService.joinProjectByInviteCode(
+        auth.organizationId,
+        auth.userId,
+        validated.inviteCode
+      );
+      res.status(200).json({ data: result });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async regenerateInviteCode(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const auth = req.auth!;
+      const projectId = param(req.params.id);
+      const result = await ProjectsService.regenerateInviteCode(
+        projectId,
+        auth.organizationId,
+        auth.userId
+      );
+      res.status(200).json({ data: result });
+    } catch (err) {
+      next(err);
+    }
+  }
+
   static async updateProject(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const auth = req.auth!;
@@ -102,7 +133,8 @@ export class ProjectsController {
       const member = await ProjectsService.addProjectMember(
         projectId,
         auth.organizationId,
-        validated.userId
+        validated.userId,
+        auth.userId
       );
       res.status(201).json({ data: member });
     } catch (err) {
