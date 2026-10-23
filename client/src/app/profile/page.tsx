@@ -23,6 +23,7 @@ import {
   Bug,
   Activity,
   ArrowRight,
+  Lock,
 } from "lucide-react";
 import { formatDate, cn } from "../../lib/utils";
 
@@ -168,10 +169,18 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          <Button size="sm" variant="outline" onClick={() => setIsEditModalOpen(true)}>
-            <Edit3 className="w-3.5 h-3.5 mr-1.5" />
-            <span>Edit Profile</span>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Link href="/settings#password">
+              <Button size="sm" variant="outline">
+                <Lock className="w-3.5 h-3.5 mr-1.5" />
+                <span>Change Password</span>
+              </Button>
+            </Link>
+            <Button size="sm" variant="outline" onClick={() => setIsEditModalOpen(true)}>
+              <Edit3 className="w-3.5 h-3.5 mr-1.5" />
+              <span>Edit Profile</span>
+            </Button>
+          </div>
         </div>
 
         {/* Stats Row */}

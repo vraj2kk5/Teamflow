@@ -4,11 +4,12 @@ import React, { useState } from "react";
 import { api, ApiClientError } from "../../lib/api";
 import { useAuth } from "../../contexts/AuthContext";
 import { useToast } from "../../components/ui/Toast";
-import { Card, CardHeader, CardTitle, CardContent } from "../../components/ui/Card";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
+import { PasswordInput } from "../../components/ui/PasswordInput";
 import { Badge } from "../../components/ui/Badge";
-import { Settings, Building2, Shield, KeyRound, Copy, Check, RefreshCw } from "lucide-react";
+import { Settings, Building2, Shield, KeyRound, Copy, Check, RefreshCw, Lock, CheckCircle2 } from "lucide-react";
 
 export default function SettingsPage() {
   const { user, organization, role, refreshUser } = useAuth();
@@ -18,6 +19,18 @@ export default function SettingsPage() {
   const [isSavingOrg, setIsSavingOrg] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
   const [isRotating, setIsRotating] = useState(false);
+
+  // Change Password State
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [passwordSuccess, setPasswordSuccess] = useState(false);
+  const [pwdErrors, setPwdErrors] = useState<{
+    currentPassword?: string;
+    newPassword?: string;
+    confirmPassword?: string;
+  }>({});
 
   const isAdmin = role === "ADMIN";
 
@@ -62,23 +75,63 @@ export default function SettingsPage() {
     }
   };
 
+  const validatePasswordForm = () => {
+    const errs: typeof pwdErrors = {};
+    if (!currentPassword) errs.currentPassword = "Current password is required";
+    if (!newPassword) errs.newPassword = "New password is required";
+    else if (newPassword.length < 8) errs.newPassword = "Password must be at least 8 characters";
+    if (newPassword !== confirmPassword) {
+      errs.confirmPassword = "New passwords do not match";
+    }
+    setPwdErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validatePasswordForm()) return;
+
+    setIsChangingPassword(true);
+    try {
+      await api.post("/auth/change-password", {
+        currentPassword,
+        newPassword,
+      });
+
+      toastSuccess("Password updated successfully!");
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setPasswordSuccess(true);
+      setTimeout(() => setPasswordSuccess(false), 4000);
+    } catch (err: unknown) {
+      if (err instanceof ApiClientError) {
+        toastError(err.message, "Password Update Failed");
+      } else {
+        toastError("Failed to update password. Please check your current password.", "Error");
+      }
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
   return (
     <div className="max-w-3xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2.5">
-          <Settings className="w-6 h-6 text-indigo-400" />
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2.5">
+          <Settings className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
           <span>Workspace Settings</span>
         </h1>
-        <p className="text-sm text-slate-400 mt-1">
+        <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
           Manage organization settings, credentials, and account details
         </p>
       </div>
 
       {/* Organization Settings (Admin) */}
       <Card>
-        <CardHeader className="pb-3 border-b border-slate-800">
+        <CardHeader className="pb-3 border-b border-slate-200 dark:border-slate-800">
           <CardTitle className="text-base flex items-center gap-2">
-            <Building2 className="w-4 h-4 text-indigo-400" />
+            <Building2 className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
             <span>Organization Details</span>
           </CardTitle>
         </CardHeader>
@@ -95,13 +148,13 @@ export default function SettingsPage() {
             />
 
             <div className="space-y-1.5">
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-400">
                 Organization Slug
               </label>
               <input
                 disabled
                 value={organization?.slug || ""}
-                className="w-full rounded-lg bg-slate-950 border border-slate-800 px-3.5 py-2 text-sm text-slate-400 select-all"
+                className="w-full rounded-lg bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 px-3.5 py-2 text-sm text-slate-500 dark:text-slate-400 select-all"
               />
             </div>
 
@@ -113,17 +166,17 @@ export default function SettingsPage() {
           </form>
 
           {/* Invite Code Section */}
-          <div className="pt-4 border-t border-slate-800 space-y-2">
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400">
+          <div className="pt-4 border-t border-slate-200 dark:border-slate-800 space-y-2">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-400">
               Invite Code
             </label>
             <div className="flex items-center gap-2">
-              <span className="px-3.5 py-2 rounded-lg bg-slate-950 border border-slate-800 font-mono text-sm font-bold text-indigo-300">
+              <span className="px-3.5 py-2 rounded-lg bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 font-mono text-sm font-bold text-indigo-600 dark:text-indigo-300">
                 {organization?.inviteCode || "None"}
               </span>
 
               <Button size="sm" variant="outline" onClick={handleCopyCode}>
-                {copiedCode ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                {copiedCode ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
               </Button>
 
               {isAdmin && (
@@ -134,42 +187,124 @@ export default function SettingsPage() {
                   isLoading={isRotating}
                   title="Rotate code"
                 >
-                  <RefreshCw className="w-4 h-4 text-slate-400 hover:text-white" />
+                  <RefreshCw className="w-4 h-4 text-slate-400 hover:text-slate-900 dark:hover:text-white" />
                 </Button>
               )}
             </div>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               Share this code with colleagues so they can join your workspace as a Member.
             </p>
           </div>
         </CardContent>
       </Card>
 
+      {/* Change Password Card */}
+      <Card id="password">
+        <CardHeader className="pb-3 border-b border-slate-200 dark:border-slate-800">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Lock className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+            <span>Change Password</span>
+          </CardTitle>
+          <CardDescription>
+            Update your account password securely with real-time strength verification
+          </CardDescription>
+        </CardHeader>
+
+        <CardContent className="pt-4">
+          {passwordSuccess && (
+            <div className="mb-4 p-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 flex items-center gap-2 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+              <CheckCircle2 className="w-4 h-4 shrink-0" />
+              <span>Password updated successfully!</span>
+            </div>
+          )}
+
+          <form onSubmit={handleChangePassword} className="space-y-4 max-w-lg">
+            <PasswordInput
+              label="Current Password"
+              placeholder="Enter your current password"
+              value={currentPassword}
+              onChange={(e) => {
+                setCurrentPassword(e.target.value);
+                if (pwdErrors.currentPassword) {
+                  setPwdErrors((prev) => ({ ...prev, currentPassword: undefined }));
+                }
+              }}
+              error={pwdErrors.currentPassword}
+              required
+              autoComplete="current-password"
+              disabled={isChangingPassword}
+            />
+
+            <PasswordInput
+              label="New Password"
+              placeholder="Enter new strong password"
+              value={newPassword}
+              onChange={(e) => {
+                setNewPassword(e.target.value);
+                if (pwdErrors.newPassword) {
+                  setPwdErrors((prev) => ({ ...prev, newPassword: undefined }));
+                }
+              }}
+              error={pwdErrors.newPassword}
+              showConditions
+              required
+              autoComplete="new-password"
+              disabled={isChangingPassword}
+            />
+
+            <PasswordInput
+              label="Confirm New Password"
+              placeholder="Re-enter new password"
+              value={confirmPassword}
+              onChange={(e) => {
+                setConfirmPassword(e.target.value);
+                if (pwdErrors.confirmPassword) {
+                  setPwdErrors((prev) => ({ ...prev, confirmPassword: undefined }));
+                }
+              }}
+              error={pwdErrors.confirmPassword}
+              required
+              autoComplete="new-password"
+              disabled={isChangingPassword}
+            />
+
+            <Button
+              type="submit"
+              size="md"
+              variant="primary"
+              isLoading={isChangingPassword}
+            >
+              <span>Update Password</span>
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+
       {/* Account Info */}
       <Card>
-        <CardHeader className="pb-3 border-b border-slate-800">
+        <CardHeader className="pb-3 border-b border-slate-200 dark:border-slate-800">
           <CardTitle className="text-base flex items-center gap-2">
-            <Shield className="w-4 h-4 text-indigo-400" />
+            <Shield className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
             <span>Account Security & Session</span>
           </CardTitle>
         </CardHeader>
 
         <CardContent className="pt-4 space-y-3 text-sm">
           <div className="flex justify-between items-center py-1">
-            <span className="text-slate-400">Signed in as</span>
-            <span className="font-semibold text-white">{user?.email}</span>
+            <span className="text-slate-600 dark:text-slate-400">Signed in as</span>
+            <span className="font-semibold text-slate-900 dark:text-white">{user?.email}</span>
           </div>
 
           <div className="flex justify-between items-center py-1">
-            <span className="text-slate-400">Organization Role</span>
+            <span className="text-slate-600 dark:text-slate-400">Organization Role</span>
             <Badge variant={role === "ADMIN" ? "danger" : role === "PROJECT_MANAGER" ? "warning" : "neutral"}>
               {role}
             </Badge>
           </div>
 
           <div className="flex justify-between items-center py-1">
-            <span className="text-slate-400">Session Security</span>
-            <span className="text-emerald-400 font-medium">HttpOnly Secure JWT Cookie</span>
+            <span className="text-slate-600 dark:text-slate-400">Session Security</span>
+            <span className="text-emerald-600 dark:text-emerald-400 font-medium">HttpOnly Secure JWT Cookie + Tab-Isolated Session</span>
           </div>
         </CardContent>
       </Card>

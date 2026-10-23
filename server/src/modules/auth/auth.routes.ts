@@ -22,5 +22,8 @@ authRouter.post("/register", authRateLimiter, AuthController.register);
 authRouter.post("/login", authRateLimiter, AuthController.login);
 authRouter.post("/logout", AuthController.logout);
 authRouter.get("/me", requireAuth, AuthController.me);
+authRouter.post("/forgot-password", authRateLimiter, AuthController.forgotPassword);
+authRouter.post("/reset-password", authRateLimiter, AuthController.resetPassword);
+authRouter.post("/change-password", requireAuth, AuthController.changePassword);
 
 export { authRouter };

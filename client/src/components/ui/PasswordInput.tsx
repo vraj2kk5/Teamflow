@@ -46,6 +46,7 @@ export interface PasswordInputProps
   error?: string;
   helperText?: string;
   showConditions?: boolean;
+  rightElement?: React.ReactNode;
 }
 
 export const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputProps>(
@@ -57,6 +58,7 @@ export const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputPro
       helperText,
       value = "",
       showConditions = false,
+      rightElement,
       required,
       id,
       onChange,
@@ -86,14 +88,19 @@ export const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputPro
 
     return (
       <div className="w-full space-y-1.5">
-        {label && (
-          <label
-            htmlFor={inputId}
-            className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300"
-          >
-            {label}
-            {required && <span className="text-rose-500 ml-1">*</span>}
-          </label>
+        {(label || rightElement) && (
+          <div className="flex items-center justify-between gap-2">
+            {label ? (
+              <label
+                htmlFor={inputId}
+                className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300"
+              >
+                {label}
+                {required && <span className="text-rose-500 ml-1">*</span>}
+              </label>
+            ) : <span />}
+            {rightElement}
+          </div>
         )}
 
         <div className="relative">

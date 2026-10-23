@@ -1,6 +1,12 @@
 import { Request, Response, NextFunction } from "express";
 import { AuthService } from "./auth.service";
-import { registerSchema, loginSchema } from "./auth.schema";
+import {
+  registerSchema,
+  loginSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
+  changePasswordSchema,
+} from "./auth.schema";
 import { env } from "../../config/env";
 import { UnauthorizedError } from "../../lib/errors";
 
@@ -78,6 +84,50 @@ export class AuthController {
       }
 
       const result = await AuthService.getMe(auth.userId, auth.organizationId);
+
+      res.status(200).json({
+        data: result,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async forgotPassword(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const validated = forgotPasswordSchema.parse(req.body);
+      const result = await AuthService.forgotPassword(validated);
+
+      res.status(200).json({
+        data: result,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async resetPassword(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const validated = resetPasswordSchema.parse(req.body);
+      const result = await AuthService.resetPassword(validated);
+
+      res.status(200).json({
+        data: result,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async changePassword(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const auth = (req as unknown as { auth?: { userId: string } }).auth;
+      if (!auth?.userId) {
+        throw new UnauthorizedError("Not authenticated");
+      }
+
+      const validated = changePasswordSchema.parse(req.body);
+      const result = await AuthService.changePassword(auth.userId, validated);
 
       res.status(200).json({
         data: result,

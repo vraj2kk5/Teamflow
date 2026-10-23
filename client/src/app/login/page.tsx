@@ -124,6 +124,14 @@ function LoginForm() {
                 required
                 autoComplete="current-password"
                 disabled={isLoading}
+                rightElement={
+                  <Link
+                    href="/forgot-password"
+                    className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline transition-colors"
+                  >
+                    Forgot password?
+                  </Link>
+                }
               />
 
               <Button
