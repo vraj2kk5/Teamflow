@@ -29,9 +29,17 @@ function LoginForm() {
   useEffect(() => {
     if (typeof window !== "undefined") {
       const savedEmail = localStorage.getItem("teamflow_remembered_email");
+      const savedPassword = localStorage.getItem("teamflow_remembered_password");
       if (savedEmail) {
         setEmail(savedEmail);
         setRememberMe(true);
+      }
+      if (savedPassword) {
+        try {
+          setPassword(decodeURIComponent(escape(atob(savedPassword))));
+        } catch {
+          setPassword(savedPassword);
+        }
       }
     }
   }, []);
@@ -55,8 +63,17 @@ function LoginForm() {
       if (typeof window !== "undefined") {
         if (rememberMe) {
           localStorage.setItem("teamflow_remembered_email", email.trim());
+          try {
+            localStorage.setItem(
+              "teamflow_remembered_password",
+              btoa(unescape(encodeURIComponent(password)))
+            );
+          } catch {
+            localStorage.setItem("teamflow_remembered_password", password);
+          }
         } else {
           localStorage.removeItem("teamflow_remembered_email");
+          localStorage.removeItem("teamflow_remembered_password");
         }
       }
       toastSuccess("Logged in successfully!");
@@ -117,6 +134,7 @@ function LoginForm() {
             <CardContent className="space-y-4">
               <Input
                 label="Email Address"
+                name="email"
                 type="email"
                 placeholder="developer@company.com"
                 value={email}
@@ -132,6 +150,7 @@ function LoginForm() {
 
               <PasswordInput
                 label="Password"
+                name="password"
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => {
@@ -158,7 +177,14 @@ function LoginForm() {
                   <input
                     type="checkbox"
                     checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
+                    onChange={(e) => {
+                      const checked = e.target.checked;
+                      setRememberMe(checked);
+                      if (!checked && typeof window !== "undefined") {
+                        localStorage.removeItem("teamflow_remembered_email");
+                        localStorage.removeItem("teamflow_remembered_password");
+                      }
+                    }}
                     disabled={isLoading}
                     className="w-4 h-4 rounded border-slate-300 dark:border-slate-700 text-indigo-600 focus:ring-indigo-500 dark:bg-slate-900 cursor-pointer accent-indigo-600"
                   />
