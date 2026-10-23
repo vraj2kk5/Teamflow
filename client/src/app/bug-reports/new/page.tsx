@@ -81,8 +81,14 @@ export default function NewBugReportPage() {
         const res = await api.get<ProjectOption[]>("/projects");
         const list = Array.isArray(res) ? res : (res as unknown as { data?: ProjectOption[] })?.data || [];
         setProjects(Array.isArray(list) ? list : []);
-        if (list.length > 0 && !projectId) {
-          setProjectId(res[0].id);
+
+        const urlParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+        const queryProjId = urlParams ? urlParams.get("projectId") : null;
+
+        if (queryProjId && list.some((p) => p.id === queryProjId)) {
+          setProjectId(queryProjId);
+        } else if (list.length > 0 && !projectId) {
+          setProjectId(list[0].id);
         }
       } catch (err: unknown) {
         if (err instanceof ApiClientError) {

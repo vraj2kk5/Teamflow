@@ -440,8 +440,8 @@ export default function ProjectDetailPage({
             )}
           </div>
 
-          <div className="flex items-center gap-3">
-            {canManage && (
+          {canManage && (
+            <div className="flex items-center gap-3">
               <Button
                 size="md"
                 variant="outline"
@@ -453,21 +453,8 @@ export default function ProjectDetailPage({
                 <Plus className="w-4 h-4 mr-1" />
                 <span>New Task</span>
               </Button>
-            )}
-
-            <Button
-              size="md"
-              variant="primary"
-              onClick={() => {
-                setIssueType("BUG");
-                setIsIssueModalOpen(true);
-              }}
-              className="bg-rose-600 hover:bg-rose-700"
-            >
-              <Bug className="w-4 h-4 mr-1" />
-              <span>Report Bug</span>
-            </Button>
-          </div>
+            </div>
+          )}
         </div>
 
         {/* Health Metrics & Member Avatars */}
@@ -692,21 +679,18 @@ export default function ProjectDetailPage({
       {/* Tab 3: Bugs View */}
       {activeTab === "bugs" && (
         <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <p className="text-sm text-slate-400">
-              Visual bug reports captured for <span className="font-semibold text-white">{project.name}</span>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <p className="text-sm text-slate-600 dark:text-slate-400">
+              Visual bug reports captured for <span className="font-semibold text-slate-900 dark:text-white">{project.name}</span>
             </p>
             <Button
               size="sm"
-              variant="primary"
-              className="bg-rose-600 hover:bg-rose-700"
-              onClick={() => {
-                setIssueType("BUG");
-                setIsIssueModalOpen(true);
-              }}
+              variant="outline"
+              className="border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:text-rose-600 dark:hover:text-rose-400 hover:border-rose-300 dark:hover:border-rose-800"
+              onClick={() => router.push(`/bug-reports/new?projectId=${project.id}`)}
             >
-              <Bug className="w-3.5 h-3.5 mr-1" />
-              <span>Report Bug</span>
+              <Bug className="w-3.5 h-3.5 mr-1.5 text-rose-500" />
+              <span>Record / Report Bug</span>
             </Button>
           </div>
 
