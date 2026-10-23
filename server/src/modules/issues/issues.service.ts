@@ -1,5 +1,5 @@
 import { prisma } from "../../lib/prisma";
-import { NotFoundError, BadRequestError } from "../../lib/errors";
+import { NotFoundError, BadRequestError, ForbiddenError } from "../../lib/errors";
 import {
   CreateIssueInput,
   UpdateIssueInput,
@@ -190,8 +190,16 @@ export class IssuesService {
   static async createIssue(
     orgId: string,
     reporterId: string,
-    input: CreateIssueInput
+    input: CreateIssueInput,
+    userRole?: Role
   ) {
+    // 0. Permission check: Members cannot add tasks (they can only report bugs)
+    if (input.type === "TASK" && userRole === Role.MEMBER) {
+      throw new ForbiddenError(
+        "Members cannot create tasks. Only Admins and Project Managers can add tasks."
+      );
+    }
+
     // 1. Verify project exists in org
     const project = await prisma.project.findFirst({
       where: { id: input.projectId, organizationId: orgId },

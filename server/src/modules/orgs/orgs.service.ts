@@ -5,7 +5,7 @@ import { Role } from "@prisma/client";
 import { AddMemberInput, UpdateOrgInput } from "./orgs.schema";
 
 export class OrgsService {
-  static async getCurrentOrg(orgId: string) {
+  static async getCurrentOrg(orgId: string, role?: Role) {
     const org = await prisma.organization.findUnique({
       where: { id: orgId },
       include: {

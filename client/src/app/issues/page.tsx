@@ -65,7 +65,8 @@ interface ProjectOption {
 function IssuesView() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user } = useAuth();
+  const { user, role } = useAuth();
+  const canCreateTask = role === "ADMIN" || role === "PROJECT_MANAGER";
   const { success: toastSuccess, error: toastError } = useToast();
 
   // Read URL query params
@@ -243,17 +244,19 @@ function IssuesView() {
         </div>
 
         <div className="flex items-center gap-2.5">
-          <Button
-            size="md"
-            variant="outline"
-            onClick={() => {
-              setModalType("TASK");
-              setIsModalOpen(true);
-            }}
-          >
-            <Plus className="w-4 h-4 mr-1" />
-            <span>New Task</span>
-          </Button>
+          {canCreateTask && (
+            <Button
+              size="md"
+              variant="outline"
+              onClick={() => {
+                setModalType("TASK");
+                setIsModalOpen(true);
+              }}
+            >
+              <Plus className="w-4 h-4 mr-1" />
+              <span>New Task</span>
+            </Button>
+          )}
 
           <Button
             size="md"
@@ -422,8 +425,14 @@ function IssuesView() {
               ? "No issues match your selected filters. Try clearing some criteria."
               : "No issues exist in this organization yet. Create a task or report a bug."
           }
-          actionLabel={hasActiveFilters ? "Reset Filters" : "Create Task"}
-          onAction={hasActiveFilters ? handleResetFilters : () => setIsModalOpen(true)}
+          actionLabel={hasActiveFilters ? "Reset Filters" : canCreateTask ? "Create Task" : "Report Bug"}
+          onAction={
+            hasActiveFilters
+              ? handleResetFilters
+              : canCreateTask
+              ? () => { setModalType("TASK"); setIsModalOpen(true); }
+              : () => router.push("/bug-reports/new")
+          }
         />
       ) : (
         <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
@@ -572,14 +581,25 @@ function IssuesView() {
               ))}
             </Select>
 
-            <Select
-              label="Type"
-              value={modalType}
-              onChange={(e) => setModalType(e.target.value as "TASK" | "BUG")}
-            >
-              <option value="TASK">Task</option>
-              <option value="BUG">Bug Report</option>
-            </Select>
+            {canCreateTask ? (
+              <Select
+                label="Type"
+                value={modalType}
+                onChange={(e) => setModalType(e.target.value as "TASK" | "BUG")}
+              >
+                <option value="TASK">Task</option>
+                <option value="BUG">Bug Report</option>
+              </Select>
+            ) : (
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+                  Type
+                </label>
+                <div className="px-3.5 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-sm font-semibold text-rose-600 dark:text-rose-400 border border-slate-200 dark:border-slate-700">
+                  Bug Report
+                </div>
+              </div>
+            )}
           </div>
 
           <Input

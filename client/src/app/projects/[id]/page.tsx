@@ -441,17 +441,19 @@ export default function ProjectDetailPage({
           </div>
 
           <div className="flex items-center gap-3">
-            <Button
-              size="md"
-              variant="outline"
-              onClick={() => {
-                setIssueType("TASK");
-                setIsIssueModalOpen(true);
-              }}
-            >
-              <Plus className="w-4 h-4 mr-1" />
-              <span>New Task</span>
-            </Button>
+            {canManage && (
+              <Button
+                size="md"
+                variant="outline"
+                onClick={() => {
+                  setIssueType("TASK");
+                  setIsIssueModalOpen(true);
+                }}
+              >
+                <Plus className="w-4 h-4 mr-1" />
+                <span>New Task</span>
+              </Button>
+            )}
 
             <Button
               size="md"
@@ -595,9 +597,9 @@ export default function ProjectDetailPage({
               icon={List}
               title="No issues created yet"
               description="Create tasks or bug reports to populate this project"
-              actionLabel="New Task"
+              actionLabel={canManage ? "New Task" : "Report Bug"}
               onAction={() => {
-                setIssueType("TASK");
+                setIssueType(canManage ? "TASK" : "BUG");
                 setIsIssueModalOpen(true);
               }}
             />
@@ -916,15 +918,26 @@ export default function ProjectDetailPage({
           )}
 
           <div className="grid grid-cols-2 gap-3">
-            <Select
-              label="Issue Type"
-              value={issueType}
-              onChange={(e) => setIssueType(e.target.value as "TASK" | "BUG")}
-              options={[
-                { value: "TASK", label: "Task" },
-                { value: "BUG", label: "Bug Report" },
-              ]}
-            />
+            {canManage ? (
+              <Select
+                label="Issue Type"
+                value={issueType}
+                onChange={(e) => setIssueType(e.target.value as "TASK" | "BUG")}
+                options={[
+                  { value: "TASK", label: "Task" },
+                  { value: "BUG", label: "Bug Report" },
+                ]}
+              />
+            ) : (
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+                  Issue Type
+                </label>
+                <div className="px-3.5 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-sm font-semibold text-rose-600 dark:text-rose-400 border border-slate-200 dark:border-slate-700">
+                  Bug Report
+                </div>
+              </div>
+            )}
             <Select
               label="Priority"
               value={issuePriority}

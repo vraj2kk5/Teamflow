@@ -165,7 +165,8 @@ export default function SettingsPage() {
             )}
           </form>
 
-          {/* Invite Code Section */}
+          {/* Invite Code Section - ONLY Admin can access */}
+          {isAdmin && organization?.inviteCode && (
           <div className="pt-4 border-t border-slate-200 dark:border-slate-800 space-y-2">
             <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-400">
               Invite Code
@@ -195,6 +196,7 @@ export default function SettingsPage() {
               Share this code with colleagues so they can join your workspace as a Member.
             </p>
           </div>
+          )}
         </CardContent>
       </Card>
 

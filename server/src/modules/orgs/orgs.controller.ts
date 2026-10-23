@@ -22,7 +22,7 @@ export class OrgsController {
       const orgId = req.auth?.organizationId;
       if (!orgId) throw new UnauthorizedError();
 
-      const org = await OrgsService.getCurrentOrg(orgId);
+      const org = await OrgsService.getCurrentOrg(orgId, req.auth?.role);
       res.status(200).json({ data: org });
     } catch (err) {
       next(err);

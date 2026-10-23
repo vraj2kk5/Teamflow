@@ -3,23 +3,24 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useAuth } from "../../contexts/AuthContext";
+import { Button } from "../ui/Button";
+import { Avatar } from "../ui/Avatar";
+import { ThemeSwitcher } from "../ui/ThemeSwitcher";
+import { NotificationBell } from "../ui/NotificationBell";
 import {
+  Menu,
   Search,
   Plus,
   Bug,
   LogOut,
-  User as UserIcon,
-  Menu,
+  User,
+  Settings,
 } from "lucide-react";
-import { useAuth } from "../../contexts/AuthContext";
-import { Avatar } from "../ui/Avatar";
-import { Button } from "../ui/Button";
-import { ThemeSwitcher } from "../ui/ThemeSwitcher";
-import { NotificationBell } from "../ui/NotificationBell";
 
 export function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
   const router = useRouter();
-  const { user, logout } = useAuth();
+  const { user, logout, role } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -53,7 +54,7 @@ export function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
         <button
           onClick={onMenuClick}
           className="lg:hidden p-2 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors"
-          aria-label="Open mobile menu"
+          aria-label="Toggle navigation"
         >
           <Menu className="w-5 h-5" />
         </button>
@@ -74,15 +75,19 @@ export function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
       <div className="flex items-center gap-2 sm:gap-3">
         <NotificationBell />
         <ThemeSwitcher />
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => router.push("/issues?create=true")}
-          className="hidden sm:inline-flex"
-        >
-          <Plus className="w-3.5 h-3.5" />
-          <span>New Task</span>
-        </Button>
+
+        {/* Only Admins and Project Managers can create tasks */}
+        {role !== "MEMBER" && (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => router.push("/issues?create=true")}
+            className="hidden sm:inline-flex border-slate-300 dark:border-slate-700"
+          >
+            <Plus className="w-3.5 h-3.5 mr-1" />
+            <span>New Task</span>
+          </Button>
+        )}
 
         <Button
           size="sm"
@@ -114,18 +119,29 @@ export function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
               <Link
                 href="/profile"
                 onClick={() => setIsDropdownOpen(false)}
-                className="flex items-center gap-2.5 px-4 py-2 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors"
+                className="flex items-center gap-2 px-4 py-2 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               >
-                <UserIcon className="w-4 h-4 text-slate-400" />
+                <User className="w-4 h-4 text-slate-400" />
                 <span>My Profile</span>
               </Link>
 
+              <Link
+                href="/settings"
+                onClick={() => setIsDropdownOpen(false)}
+                className="flex items-center gap-2 px-4 py-2 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              >
+                <Settings className="w-4 h-4 text-slate-400" />
+                <span>Workspace Settings</span>
+              </Link>
+
+              <div className="border-t border-slate-100 dark:border-slate-800 my-1" />
+
               <button
                 onClick={handleLogout}
-                className="w-full flex items-center gap-2.5 px-4 py-2 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 transition-colors text-left"
+                className="w-full flex items-center gap-2 px-4 py-2 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors text-left"
               >
                 <LogOut className="w-4 h-4" />
-                <span>Log out</span>
+                <span>Sign Out</span>
               </button>
             </div>
           )}

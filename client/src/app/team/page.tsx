@@ -200,7 +200,8 @@ export default function TeamPage() {
         )}
       </div>
 
-      {/* Invite Code Card */}
+      {/* Invite Code Card - ONLY Admin can access */}
+      {isAdmin && organization?.inviteCode && (
       <Card className="bg-gradient-to-r from-indigo-50/90 via-white to-slate-50 dark:from-indigo-950/40 dark:via-slate-900 dark:to-slate-900 border border-indigo-100 dark:border-indigo-950/60 shadow-sm p-5 transition-colors">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
@@ -237,6 +238,7 @@ export default function TeamPage() {
           </div>
         </div>
       </Card>
+      )}
 
       {/* Members Table */}
       <Card className="overflow-hidden border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
