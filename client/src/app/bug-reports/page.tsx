@@ -82,7 +82,8 @@ export default function BugReportsPage() {
     async function loadProjects() {
       try {
         const res = await api.get<ProjectOption[]>("/projects");
-        setProjects(res);
+        const list = Array.isArray(res) ? res : (res as unknown as { data?: ProjectOption[] })?.data || [];
+        setProjects(Array.isArray(list) ? list : []);
       } catch {
         // silent fallback
       }
@@ -247,7 +248,7 @@ export default function BugReportsPage() {
             className="text-xs"
           >
             <option value="ALL">All Projects</option>
-            {projects.map((p) => (
+            {(Array.isArray(projects) ? projects : []).map((p) => (
               <option key={p.id} value={p.id}>
                 {p.name}
               </option>

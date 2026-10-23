@@ -123,9 +123,10 @@ function IssuesView() {
   // Fetch Projects List for select filter
   useEffect(() => {
     api.get<{ data: ProjectOption[] }>("/projects").then((res) => {
-      setProjects(res.data || []);
-      if (res.data?.length > 0 && !modalProjId) {
-        setModalProjId(res.data[0].id);
+      const list = Array.isArray(res) ? res : (res as unknown as { data?: ProjectOption[] })?.data || [];
+      setProjects(Array.isArray(list) ? list : []);
+      if (list.length > 0 && !modalProjId) {
+        setModalProjId(list[0].id);
       }
     }).catch(() => {});
   }, [modalProjId]);
@@ -295,7 +296,7 @@ function IssuesView() {
               className="w-40"
             >
               <option value="">All Projects</option>
-              {projects.map((p) => (
+              {(Array.isArray(projects) ? projects : []).map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.name}
                 </option>
@@ -564,7 +565,7 @@ function IssuesView() {
               onChange={(e) => setModalProjId(e.target.value)}
               required
             >
-              {projects.map((p) => (
+              {(Array.isArray(projects) ? projects : []).map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.name}
                 </option>

@@ -135,7 +135,7 @@ export default function MyTasksPage() {
         />
       ) : (
         <div className="space-y-3">
-          {tasks.map((task) => {
+          {(Array.isArray(tasks) ? tasks : []).map((task) => {
             const isOverdue =
               task.dueDate &&
               new Date(task.dueDate) < new Date() &&

@@ -73,7 +73,8 @@ export default function TeamPage() {
       const res = await api.get<{ data: OrgMember[] }>(
         `/organizations/${organization.id}/members`
       );
-      setMembers(res.data || []);
+      const list = Array.isArray(res) ? res : (res as unknown as { data?: OrgMember[] })?.data || [];
+      setMembers(Array.isArray(list) ? list : []);
     } catch (err: unknown) {
       if (err instanceof ApiClientError) {
         toastError(err.message, "Failed to load team members");
@@ -258,7 +259,7 @@ export default function TeamPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60">
-                {members.map((m) => (
+                {(Array.isArray(members) ? members : []).map((m) => (
                   <tr key={m.id} className="hover:bg-slate-800/40 transition-colors">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">

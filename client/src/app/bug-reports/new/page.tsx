@@ -79,8 +79,9 @@ export default function NewBugReportPage() {
       setIsLoadingProjects(true);
       try {
         const res = await api.get<ProjectOption[]>("/projects");
-        setProjects(res);
-        if (res.length > 0 && !projectId) {
+        const list = Array.isArray(res) ? res : (res as unknown as { data?: ProjectOption[] })?.data || [];
+        setProjects(Array.isArray(list) ? list : []);
+        if (list.length > 0 && !projectId) {
           setProjectId(res[0].id);
         }
       } catch (err: unknown) {
@@ -384,7 +385,7 @@ export default function NewBugReportPage() {
                   disabled={!!createdIssue || isSubmitting}
                   required
                 >
-                  {projects.map((p) => (
+                  {(Array.isArray(projects) ? projects : []).map((p) => (
                     <option key={p.id} value={p.id}>
                       {p.name} ({p.key})
                     </option>

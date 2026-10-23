@@ -55,7 +55,8 @@ export default function ActivityPage() {
         pageSize: 25,
       });
 
-      setLogs(res.data || []);
+      const list = Array.isArray(res) ? res : (res as unknown as { data?: ActivityLogItem[] })?.data || [];
+      setLogs(Array.isArray(list) ? list : []);
       setTotalPages(res.pagination.totalPages || 1);
       setTotalCount(res.pagination.total || 0);
     } catch (err: unknown) {
@@ -103,7 +104,7 @@ export default function ActivityPage() {
             />
           ) : (
             <div className="divide-y divide-slate-800/60">
-              {logs.map((log) => (
+              {(Array.isArray(logs) ? logs : []).map((log) => (
                 <div key={log.id} className="py-3.5 flex items-start gap-3.5 text-xs">
                   <Avatar name={log.actor.name} avatarUrl={log.actor.avatarUrl} size="md" />
 
