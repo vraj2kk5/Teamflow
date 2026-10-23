@@ -8,7 +8,12 @@ import { Topbar } from "./Topbar";
 import { Skeleton } from "../ui/Skeleton";
 import { X } from "lucide-react";
 
-const publicRoutes = ["/login", "/register"];
+const publicRoutes = [
+  "/login",
+  "/register",
+  "/forgot-password",
+  "/reset-password",
+];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -16,7 +21,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const isPublicRoute = publicRoutes.includes(pathname);
+  const isPublicRoute = publicRoutes.some(
+    (route) => pathname === route || pathname?.startsWith(route + "/")
+  );
 
   useEffect(() => {
     if (!isLoading && !user && !isPublicRoute) {
