@@ -4,6 +4,7 @@
   "private": true,
   "description": "TeamFlow: Team collaboration, project management, and visual bug reporting platform",
   "scripts": {
+    "dev": "concurrently -n \"server,client\" -c \"blue.bold,green.bold\" \"npm run dev:server\" \"npm run dev:client\"",
     "dev:server": "npm --prefix server run dev",
     "dev:client": "npm --prefix client run dev",
     "build:server": "npm --prefix server run build",
@@ -20,5 +21,8 @@
     "full-stack"
   ],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "concurrently": "^10.0.6"
+  }
 }
