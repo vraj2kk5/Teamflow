@@ -453,15 +453,15 @@ export class IssuesService {
         },
       });
 
-      if (input.assigneeId && input.assigneeId !== existing.assigneeId && input.assigneeId !== actorId) {
+      if (existing.assigneeId && existing.assigneeId !== actorId) {
         await tx.notification.create({
           data: {
-            userId: input.assigneeId,
+            userId: existing.assigneeId,
             actorId,
-            title: "Task Assigned to You",
-            message: `You were assigned to ${updated.key}: "${updated.title}"`,
+            title: "Task Status Updated",
+            message: `${updated.key}: "${updated.title}" was moved to ${input.status}`,
             link: `/issues/${updated.id}`,
-            type: "ASSIGNMENT",
+            type: "STATUS_CHANGED",
           },
         });
       }

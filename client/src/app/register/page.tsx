@@ -7,6 +7,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import { useToast } from "../../components/ui/Toast";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
+import { PasswordInput } from "../../components/ui/PasswordInput";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "../../components/ui/Card";
 import { Briefcase, ArrowRight, Building, KeyRound } from "lucide-react";
 import { ApiClientError } from "../../lib/api";
@@ -165,13 +166,16 @@ export default function RegisterPage() {
                 autoComplete="email"
               />
 
-              <Input
-                label="Password (min 8 chars)"
-                type="password"
-                placeholder="••••••••"
+              <PasswordInput
+                label="Password"
+                placeholder="Create a strong password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (fieldErrors.password) setFieldErrors((prev) => ({ ...prev, password: undefined }));
+                }}
                 error={fieldErrors.password}
+                showConditions
                 required
                 autoComplete="new-password"
               />

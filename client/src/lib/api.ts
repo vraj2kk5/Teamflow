@@ -46,11 +46,21 @@ export const api = {
       "X-Requested-With": "XMLHttpRequest",
     };
 
+    const customHeaders = (headers as Record<string, string>) || {};
+
+    // Tab-isolated session token support
+    if (typeof window !== "undefined") {
+      const tabToken = window.sessionStorage.getItem("teamflow_token");
+      if (tabToken && !customHeaders["Authorization"] && !customHeaders["authorization"]) {
+        defaultHeaders["Authorization"] = `Bearer ${tabToken}`;
+      }
+    }
+
     const config: RequestInit = {
       ...customConfig,
       headers: {
         ...defaultHeaders,
-        ...(headers as Record<string, string>),
+        ...customHeaders,
       },
       credentials: "include",
     };
@@ -121,7 +131,7 @@ export const api = {
   },
 
   /**
-   * Upload file with true XMLHttpRequest progress tracking as mandated by Section 9
+   * Upload file with true XMLHttpRequest progress tracking
    */
   uploadWithProgress<T>(
     endpoint: string,
@@ -135,6 +145,13 @@ export const api = {
       xhr.open("POST", url, true);
       xhr.withCredentials = true;
       xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+
+      if (typeof window !== "undefined") {
+        const tabToken = window.sessionStorage.getItem("teamflow_token");
+        if (tabToken) {
+          xhr.setRequestHeader("Authorization", `Bearer ${tabToken}`);
+        }
+      }
 
       if (xhr.upload && onProgress) {
         xhr.upload.onprogress = (event) => {
@@ -187,5 +204,24 @@ export const api = {
 
       xhr.send(formData);
     });
+  },
+
+  setToken(token: string) {
+    if (typeof window !== "undefined") {
+      window.sessionStorage.setItem("teamflow_token", token);
+    }
+  },
+
+  getToken(): string | null {
+    if (typeof window !== "undefined") {
+      return window.sessionStorage.getItem("teamflow_token");
+    }
+    return null;
+  },
+
+  clearToken() {
+    if (typeof window !== "undefined") {
+      window.sessionStorage.removeItem("teamflow_token");
+    }
   },
 };

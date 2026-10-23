@@ -32,13 +32,19 @@ export async function requireAuth(
   next: NextFunction
 ): Promise<void> {
   try {
-    let token: string | undefined = req.cookies?.token;
+    let token: string | undefined;
 
-    if (!token && req.headers.authorization) {
+    // Prioritize explicit Authorization header (for tab-isolated sessions)
+    if (req.headers.authorization) {
       const parts = req.headers.authorization.split(" ");
       if (parts.length === 2 && parts[0] === "Bearer") {
         token = parts[1];
       }
+    }
+
+    // Fall back to shared cookie if header is not present
+    if (!token) {
+      token = req.cookies?.token;
     }
 
     if (!token) {

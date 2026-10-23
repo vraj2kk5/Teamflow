@@ -76,15 +76,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [refreshUser]);
 
   const login = async (email: string, password: string) => {
-    const data = await api.post<{
+    const res = await api.post<{
       user: User;
       organization: Organization;
       role: UserRole;
+      token?: string;
     }>("/auth/login", { email, password });
 
-    setUser(data.user);
-    setOrganization(data.organization);
-    setRole(data.role);
+    if (res.token) {
+      api.setToken(res.token);
+    }
+
+    setUser(res.user);
+    setOrganization(res.organization);
+    setRole(res.role);
     await refreshUser();
   };
 
@@ -95,15 +100,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     orgName?: string,
     inviteCode?: string
   ) => {
-    const data = await api.post<{
+    const res = await api.post<{
       user: User;
       organization: Organization;
       role: UserRole;
+      token?: string;
     }>("/auth/register", { name, email, password, orgName, inviteCode });
 
-    setUser(data.user);
-    setOrganization(data.organization);
-    setRole(data.role);
+    if (res.token) {
+      api.setToken(res.token);
+    }
+
+    setUser(res.user);
+    setOrganization(res.organization);
+    setRole(res.role);
     await refreshUser();
   };
 
@@ -111,6 +121,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await api.post("/auth/logout");
     } finally {
+      api.clearToken();
       setUser(null);
       setOrganization(null);
       setRole(null);

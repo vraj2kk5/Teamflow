@@ -83,7 +83,7 @@ export class AttachmentsService {
       );
     }
 
-    let resolvedMime = detected.mime;
+    let resolvedMime: string = detected.mime;
 
     // WebM recordings from MediaRecorder share EBML container format and are detected as video/webm or video/x-matroska
     if (clientMime.startsWith("audio/webm") && (resolvedMime === "video/webm" || resolvedMime === "video/x-matroska")) {

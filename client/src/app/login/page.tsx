@@ -7,6 +7,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import { useToast } from "../../components/ui/Toast";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
+import { PasswordInput } from "../../components/ui/PasswordInput";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "../../components/ui/Card";
 import { Briefcase, ArrowRight } from "lucide-react";
 import { ApiClientError } from "../../lib/api";
@@ -111,9 +112,8 @@ function LoginForm() {
                 disabled={isLoading}
               />
 
-              <Input
+              <PasswordInput
                 label="Password"
-                type="password"
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => {
