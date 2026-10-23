@@ -13,6 +13,7 @@ import { attachmentsRouter } from "./modules/attachments/attachments.routes";
 import { dashboardRouter } from "./modules/dashboard/dashboard.routes";
 import { usersRouter } from "./modules/users/users.routes";
 import { activityRouter } from "./modules/activity/activity.routes";
+import { notificationsRouter } from "./modules/notifications/notifications.routes";
 import { getStorageDriver, LocalDiskDriver } from "./lib/storage";
 import { prisma } from "./lib/prisma";
 import { logger } from "./lib/logger";
@@ -146,6 +147,7 @@ app.use("/api/comments", commentsRouter);
 app.use("/api/dashboard", dashboardRouter);
 app.use("/api/users", usersRouter);
 app.use("/api/activity", activityRouter);
+app.use("/api/notifications", notificationsRouter);
 
 // Central error handler
 app.use(errorHandler);

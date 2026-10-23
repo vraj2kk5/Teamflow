@@ -82,6 +82,8 @@ model User {
   comments           Comment[]
   attachments        Attachment[]
   activityLogs       ActivityLog[]
+  notifications      Notification[]           @relation("UserNotifications")
+  sentNotifications  Notification[]           @relation("ActorNotifications")
 
   @@map("users")
 }
@@ -252,4 +254,30 @@ model ActivityLog {
   @@index([actorId, createdAt])
   @@index([projectId])
   @@map("activity_logs")
+}
+
+enum NotificationType {
+  ASSIGNMENT
+  ISSUE_CREATED
+  COMMENT_ADDED
+  STATUS_CHANGED
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  actorId   String?
+  title     String
+  message   String
+  link      String?
+  isRead    Boolean          @default(false)
+  type      NotificationType @default(ASSIGNMENT)
+  createdAt DateTime         @default(now())
+
+  user  User  @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
+  actor User? @relation("ActorNotifications", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([userId, isRead])
+  @@index([userId, createdAt])
+  @@map("notifications")
 }

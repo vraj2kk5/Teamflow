@@ -274,6 +274,19 @@ export class IssuesService {
         },
       });
 
+      if (issue.assigneeId && issue.assigneeId !== reporterId) {
+        await tx.notification.create({
+          data: {
+            userId: issue.assigneeId,
+            actorId: reporterId,
+            title: "New Task Assigned",
+            message: `${issue.reporter.name} assigned you to ${issue.key}: "${issue.title}"`,
+            link: `/issues/${issue.id}`,
+            type: "ASSIGNMENT",
+          },
+        });
+      }
+
       return issue;
     });
   }
@@ -379,6 +392,19 @@ export class IssuesService {
         });
       }
 
+      if (input.assigneeId && input.assigneeId !== existing.assigneeId && input.assigneeId !== actorId) {
+        await tx.notification.create({
+          data: {
+            userId: input.assigneeId,
+            actorId,
+            title: "Task Assigned to You",
+            message: `You were assigned to ${updated.key}: "${updated.title}"`,
+            link: `/issues/${updated.id}`,
+            type: "ASSIGNMENT",
+          },
+        });
+      }
+
       return updated;
     });
   }
@@ -426,6 +452,19 @@ export class IssuesService {
           metadata: { from: existing.status, to: input.status },
         },
       });
+
+      if (input.assigneeId && input.assigneeId !== existing.assigneeId && input.assigneeId !== actorId) {
+        await tx.notification.create({
+          data: {
+            userId: input.assigneeId,
+            actorId,
+            title: "Task Assigned to You",
+            message: `You were assigned to ${updated.key}: "${updated.title}"`,
+            link: `/issues/${updated.id}`,
+            type: "ASSIGNMENT",
+          },
+        });
+      }
 
       return updated;
     });

@@ -77,6 +77,22 @@ export class CommentsService {
         },
       });
 
+      const recipients = [issue.reporterId, issue.assigneeId].filter(
+        (id): id is string => Boolean(id) && id !== authorId
+      );
+      for (const recipientId of new Set(recipients)) {
+        await tx.notification.create({
+          data: {
+            userId: recipientId,
+            actorId: authorId,
+            title: `New Comment on ${issue.key}`,
+            message: `${comment.author.name}: "${input.body.substring(0, 50)}${input.body.length > 50 ? '...' : ''}"`,
+            link: `/issues/${issue.id}`,
+            type: "COMMENT_ADDED",
+          },
+        });
+      }
+
       return comment;
     });
   }
