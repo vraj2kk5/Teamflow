@@ -14,6 +14,7 @@ import {
 import { useAuth } from "../../contexts/AuthContext";
 import { Avatar } from "../ui/Avatar";
 import { Button } from "../ui/Button";
+import { ThemeSwitcher } from "../ui/ThemeSwitcher";
 
 export function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
   const router = useRouter();
@@ -70,6 +71,7 @@ export function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
 
       {/* Action Buttons & Profile */}
       <div className="flex items-center gap-2 sm:gap-3">
+        <ThemeSwitcher />
         <Button
           size="sm"
           variant="outline"
