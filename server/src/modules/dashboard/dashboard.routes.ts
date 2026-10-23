@@ -7,5 +7,6 @@ const dashboardRouter = Router();
 dashboardRouter.use(requireAuth);
 
 dashboardRouter.get("/", DashboardController.getMetrics);
+dashboardRouter.get("/analytics", DashboardController.getAnalytics);
 
 export { dashboardRouter };

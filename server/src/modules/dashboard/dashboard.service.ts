@@ -209,4 +209,275 @@ export class DashboardService {
       myAssignedIssues,
     };
   }
+
+  static async getAnalytics(
+    orgId: string,
+    userId: string,
+    role: Role,
+    days: number = 7
+  ) {
+    const validDays = [7, 14, 30].includes(days) ? days : 7;
+    const now = new Date();
+    const startDate = new Date();
+    startDate.setDate(now.getDate() - (validDays - 1));
+    startDate.setHours(0, 0, 0, 0);
+
+    const issueWhere: Prisma.IssueWhereInput = {
+      organizationId: orgId,
+    };
+
+    if (role !== Role.ADMIN) {
+      issueWhere.project = {
+        OR: [
+          { ownerId: userId },
+          { memberships: { some: { userId } } },
+        ],
+      };
+    }
+
+    // 1. Fetch organization members to have full roster
+    const orgMembers = await prisma.organizationMembership.findMany({
+      where: { organizationId: orgId },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            avatarUrl: true,
+            jobTitle: true,
+          },
+        },
+      },
+    });
+
+    // 2. Fetch completed issues in the window
+    const completedIssues = await prisma.issue.findMany({
+      where: {
+        ...issueWhere,
+        status: "DONE",
+        OR: [
+          { resolvedAt: { gte: startDate } },
+          {
+            AND: [
+              { resolvedAt: null },
+              { updatedAt: { gte: startDate } },
+            ],
+          },
+        ],
+      },
+      include: {
+        assignee: {
+          select: { id: true, name: true, avatarUrl: true, email: true },
+        },
+        reporter: {
+          select: { id: true, name: true, avatarUrl: true },
+        },
+        project: {
+          select: { id: true, name: true },
+        },
+      },
+      orderBy: { updatedAt: "desc" },
+    });
+
+    // 3. Fetch active issues (TODO, IN_PROGRESS, IN_REVIEW) per user
+    const activeIssues = await prisma.issue.findMany({
+      where: {
+        ...issueWhere,
+        status: { not: "DONE" },
+        assigneeId: { not: null },
+      },
+      select: {
+        id: true,
+        assigneeId: true,
+      },
+    });
+
+    const activeCountsByUser: Record<string, number> = {};
+    for (const item of activeIssues) {
+      if (item.assigneeId) {
+        activeCountsByUser[item.assigneeId] = (activeCountsByUser[item.assigneeId] || 0) + 1;
+      }
+    }
+
+    // 4. Generate daily date buckets
+    const timeline: Array<{
+      date: string;
+      label: string;
+      tasksCount: number;
+      bugsCount: number;
+      totalCount: number;
+      items: Array<{
+        id: string;
+        key: string;
+        title: string;
+        type: string;
+        priority: string;
+        resolvedAt: string;
+        assignee: { id: string; name: string; avatarUrl: string | null; email: string } | null;
+        reporter: { id: string; name: string; avatarUrl: string | null };
+        project: { id: string; name: string };
+      }>;
+    }> = [];
+
+    const dateMap = new Map<
+      string,
+      {
+        tasks: number;
+        bugs: number;
+        items: Array<{
+          id: string;
+          key: string;
+          title: string;
+          type: string;
+          priority: string;
+          resolvedAt: string;
+          assignee: { id: string; name: string; avatarUrl: string | null; email: string } | null;
+          reporter: { id: string; name: string; avatarUrl: string | null };
+          project: { id: string; name: string };
+        }>;
+      }
+    >();
+
+    for (let i = 0; i < validDays; i++) {
+      const d = new Date(startDate);
+      d.setDate(startDate.getDate() + i);
+      const dateKey = d.toISOString().split("T")[0]; // YYYY-MM-DD
+      const label = d.toLocaleDateString("en-US", {
+        weekday: "short",
+        month: "short",
+        day: "numeric",
+      });
+      dateMap.set(dateKey, { tasks: 0, bugs: 0, items: [] });
+      timeline.push({
+        date: dateKey,
+        label,
+        tasksCount: 0,
+        bugsCount: 0,
+        totalCount: 0,
+        items: [],
+      });
+    }
+
+    // 5. Populate timeline with completed issues
+    const formattedCompleted = completedIssues.map((issue) => {
+      const completionDate = issue.resolvedAt || issue.updatedAt;
+      const dateKey = completionDate.toISOString().split("T")[0];
+      const itemData = {
+        id: issue.id,
+        key: issue.key,
+        title: issue.title,
+        type: issue.type,
+        priority: issue.priority,
+        resolvedAt: completionDate.toISOString(),
+        assignee: issue.assignee,
+        reporter: issue.reporter,
+        project: issue.project,
+      };
+
+      const bucket = dateMap.get(dateKey);
+      if (bucket) {
+        if (issue.type === "BUG") {
+          bucket.bugs++;
+        } else {
+          bucket.tasks++;
+        }
+        bucket.items.push(itemData);
+      }
+
+      return itemData;
+    });
+
+    for (const t of timeline) {
+      const b = dateMap.get(t.date);
+      if (b) {
+        t.tasksCount = b.tasks;
+        t.bugsCount = b.bugs;
+        t.totalCount = b.tasks + b.bugs;
+        t.items = b.items;
+      }
+    }
+
+    // 6. Aggregate by member
+    type MemberStat = {
+      user: {
+        id: string;
+        name: string;
+        avatarUrl: string | null;
+        email: string;
+        jobTitle: string | null;
+      };
+      role: Role;
+      completedCount: number;
+      tasksCount: number;
+      bugsCount: number;
+      activeCount: number;
+      completedIssues: typeof formattedCompleted;
+    };
+
+    const memberStatsMap = new Map<string, MemberStat>();
+
+    // Initialize with org members
+    for (const m of orgMembers) {
+      memberStatsMap.set(m.user.id, {
+        user: m.user,
+        role: m.role,
+        completedCount: 0,
+        tasksCount: 0,
+        bugsCount: 0,
+        activeCount: activeCountsByUser[m.user.id] || 0,
+        completedIssues: [],
+      });
+    }
+
+    // Fill completed items per member
+    const unassignedCompleted: typeof formattedCompleted = [];
+    for (const item of formattedCompleted) {
+      if (item.assignee) {
+        let stats = memberStatsMap.get(item.assignee.id);
+        if (!stats) {
+          stats = {
+            user: { ...item.assignee, jobTitle: null },
+            role: Role.MEMBER,
+            completedCount: 0,
+            tasksCount: 0,
+            bugsCount: 0,
+            activeCount: activeCountsByUser[item.assignee.id] || 0,
+            completedIssues: [],
+          };
+          memberStatsMap.set(item.assignee.id, stats);
+        }
+        stats.completedCount++;
+        if (item.type === "BUG") stats.bugsCount++;
+        else stats.tasksCount++;
+        stats.completedIssues.push(item);
+      } else {
+        unassignedCompleted.push(item);
+      }
+    }
+
+    const memberStats = Array.from(memberStatsMap.values()).sort(
+      (a, b) => b.completedCount - a.completedCount || b.activeCount - a.activeCount
+    );
+
+    const totalTasks = formattedCompleted.filter((i) => i.type === "TASK").length;
+    const totalBugs = formattedCompleted.filter((i) => i.type === "BUG").length;
+    const activeContributors = memberStats.filter((m) => m.completedCount > 0).length;
+
+    return {
+      timeframeDays: validDays,
+      startDate: startDate.toISOString(),
+      endDate: now.toISOString(),
+      summary: {
+        totalCompleted: formattedCompleted.length,
+        tasksCompleted: totalTasks,
+        bugsResolved: totalBugs,
+        activeContributors,
+      },
+      timeline,
+      memberStats,
+      unassignedCompleted,
+      recentCompleted: formattedCompleted.slice(0, 50),
+    };
+  }
 }

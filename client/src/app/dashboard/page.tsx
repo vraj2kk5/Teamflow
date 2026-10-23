@@ -20,6 +20,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { formatDate, cn } from "../../lib/utils";
+import { TeamActivityChart } from "../../components/dashboard/TeamActivityChart";
 
 interface DashboardData {
   stats: {
@@ -249,6 +250,9 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Team Work & Completion Analytics Graph */}
+      <TeamActivityChart />
 
       {/* Main Split: Project Health & Assigned Work vs Activity Feed */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
