@@ -19,24 +19,24 @@ export default function GlobalErrorPage({
 
   return (
     <div className="min-h-[70vh] flex items-center justify-center p-4">
-      <div className="max-w-md w-full p-8 rounded-2xl bg-slate-900 border border-slate-800 text-center space-y-5 shadow-2xl">
-        <div className="w-14 h-14 rounded-2xl bg-rose-950/80 border border-rose-800/80 text-rose-400 flex items-center justify-center mx-auto">
+      <div className="max-w-md w-full p-8 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center space-y-5 shadow-xl">
+        <div className="w-14 h-14 rounded-2xl bg-rose-50 dark:bg-rose-950/80 border border-rose-200 dark:border-rose-800/80 text-rose-600 dark:text-rose-400 flex items-center justify-center mx-auto">
           <AlertTriangle className="w-7 h-7" />
         </div>
 
         <div className="space-y-2">
-          <h2 className="text-xl font-bold text-white tracking-tight">
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
             Something went wrong
           </h2>
-          <p className="text-xs text-slate-400 leading-relaxed">
+          <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
             An unexpected error occurred while rendering this page. You can try reloading or return to the dashboard.
           </p>
         </div>
 
         {error.message && (
-          <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 text-left">
+          <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-left">
             <span className="text-[10px] font-mono text-slate-500 uppercase">Error Details:</span>
-            <p className="text-xs font-mono text-rose-300 mt-0.5 break-words">
+            <p className="text-xs font-mono text-rose-600 dark:text-rose-300 mt-0.5 break-words">
               {error.message}
             </p>
           </div>

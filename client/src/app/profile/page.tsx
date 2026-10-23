@@ -144,7 +144,7 @@ export default function ProfilePage() {
           <div className="flex items-center gap-5">
             <Avatar name={profile.name} avatarUrl={profile.avatarUrl} size="xl" className="ring-4 ring-slate-800" />
             <div className="space-y-1">
-              <h1 className="text-2xl font-bold text-white tracking-tight">{profile.name}</h1>
+              <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">{profile.name}</h1>
               <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400">
                 <span className="flex items-center gap-1.5">
                   <Mail className="w-3.5 h-3.5 text-slate-400" />
@@ -153,7 +153,7 @@ export default function ProfilePage() {
                 {profile.jobTitle && (
                   <span className="flex items-center gap-1.5">
                     <Briefcase className="w-3.5 h-3.5 text-indigo-400" />
-                    <span className="text-slate-300 font-medium">{profile.jobTitle}</span>
+                    <span className="text-slate-700 dark:text-slate-300 font-medium">{profile.jobTitle}</span>
                   </span>
                 )}
                 <span className="flex items-center gap-1.5">
@@ -162,7 +162,7 @@ export default function ProfilePage() {
                 </span>
               </div>
               {profile.bio && (
-                <p className="text-xs text-slate-300 pt-1 leading-relaxed max-w-xl">
+                <p className="text-xs text-slate-600 dark:text-slate-300 pt-1 leading-relaxed max-w-xl">
                   {profile.bio}
                 </p>
               )}
@@ -184,9 +184,9 @@ export default function ProfilePage() {
         </div>
 
         {/* Stats Row */}
-        <div className="grid grid-cols-3 gap-4 pt-6 mt-6 border-t border-slate-800 text-center">
+        <div className="grid grid-cols-3 gap-4 pt-6 mt-6 border-t border-slate-200 dark:border-slate-800 text-center">
           <div>
-            <div className="text-2xl font-bold text-white">{profile.stats.assignedCount}</div>
+            <div className="text-2xl font-bold text-slate-900 dark:text-white">{profile.stats.assignedCount}</div>
             <div className="text-xs text-slate-400 mt-0.5">Assigned Tasks</div>
           </div>
           <div>
@@ -213,7 +213,7 @@ export default function ProfilePage() {
             )}
           >
             <span>Assigned Tasks</span>
-            <span className="px-1.5 py-0.5 rounded-full text-xs bg-slate-800 text-slate-300">
+            <span className="px-1.5 py-0.5 rounded-full text-xs bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
               {assignedIssues.length}
             </span>
           </button>
@@ -228,7 +228,7 @@ export default function ProfilePage() {
             )}
           >
             <span>Reported Issues</span>
-            <span className="px-1.5 py-0.5 rounded-full text-xs bg-slate-800 text-slate-300">
+            <span className="px-1.5 py-0.5 rounded-full text-xs bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
               {reportedIssues.length}
             </span>
           </button>
@@ -244,13 +244,13 @@ export default function ProfilePage() {
               <Link
                 key={issue.id}
                 href={`/issues/${issue.id}`}
-                className="flex items-center justify-between p-3 rounded-xl bg-slate-950/60 border border-slate-800/80 hover:border-slate-700 transition-colors group"
+                className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800/80 hover:border-indigo-400 dark:hover:border-slate-700 transition-colors group"
               >
                 <div className="flex items-center gap-2.5 min-w-0 pr-2">
                   <span className="font-mono text-xs font-semibold text-indigo-400 shrink-0">
                     {issue.key}
                   </span>
-                  <span className="text-sm font-medium text-white group-hover:text-indigo-300 transition-colors truncate">
+                  <span className="text-sm font-medium text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-300 transition-colors truncate">
                     {issue.title}
                   </span>
                 </div>

@@ -248,7 +248,7 @@ export default function ProjectsPage() {
                           {project.stats.completionPercentage}%
                         </span>
                       </div>
-                      <div className="w-full h-2 rounded-full bg-slate-800 overflow-hidden">
+                      <div className="w-full h-2 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
                         <div
                           className="h-full bg-indigo-500 rounded-full transition-all duration-500"
                           style={{ width: `${project.stats.completionPercentage}%` }}
@@ -257,9 +257,9 @@ export default function ProjectsPage() {
                     </div>
 
                     {/* Stats Row */}
-                    <div className="grid grid-cols-3 gap-2 py-2 px-3 rounded-lg bg-slate-950/60 border border-slate-800/80 text-center text-xs">
+                    <div className="grid grid-cols-3 gap-2 py-2 px-3 rounded-lg bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800/80 text-center text-xs">
                       <div>
-                        <div className="text-white font-semibold">{project.stats.totalIssues}</div>
+                        <div className="text-slate-900 dark:text-white font-semibold">{project.stats.totalIssues}</div>
                         <div className="text-[10px] text-slate-400">Issues</div>
                       </div>
                       <div>
@@ -267,7 +267,7 @@ export default function ProjectsPage() {
                         <div className="text-[10px] text-slate-400">Bugs</div>
                       </div>
                       <div>
-                        <div className={project.stats.overdueCount > 0 ? "text-rose-400 font-semibold" : "text-slate-400 font-semibold"}>
+                        <div className={project.stats.overdueCount > 0 ? "text-rose-600 dark:text-rose-400 font-semibold" : "text-slate-600 dark:text-slate-400 font-semibold"}>
                           {project.stats.overdueCount}
                         </div>
                         <div className="text-[10px] text-slate-400">Overdue</div>
@@ -276,7 +276,7 @@ export default function ProjectsPage() {
                   </CardContent>
                 </div>
 
-                <CardFooter className="pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
+                <CardFooter className="pt-3 border-t border-slate-200 dark:border-slate-800/80 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
                   <div className="flex items-center -space-x-1.5 overflow-hidden">
                     {project.memberships.slice(0, 4).map((m) => (
                       <Avatar
@@ -284,11 +284,11 @@ export default function ProjectsPage() {
                         name={m.user.name}
                         avatarUrl={m.user.avatarUrl}
                         size="sm"
-                        className="ring-2 ring-slate-900"
+                        className="ring-2 ring-white dark:ring-slate-900"
                       />
                     ))}
                     {project.memberships.length > 4 && (
-                      <span className="w-6 h-6 rounded-full bg-slate-800 text-[10px] flex items-center justify-center font-bold text-slate-300 ring-2 ring-slate-900">
+                      <span className="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 text-[10px] flex items-center justify-center font-bold text-slate-700 dark:text-slate-300 ring-2 ring-white dark:ring-slate-900">
                         +{project.memberships.length - 4}
                       </span>
                     )}

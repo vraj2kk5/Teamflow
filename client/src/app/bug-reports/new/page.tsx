@@ -507,7 +507,7 @@ export default function NewBugReportPage() {
               placeholder="Paste terminal errors, API response failures, or stack traces here..."
               rows={4}
               disabled={!!createdIssue || isSubmitting}
-              className="w-full rounded-xl bg-slate-950 border border-slate-800 p-3 text-xs font-mono text-rose-300 placeholder-slate-600 focus:outline-none focus:border-indigo-500"
+              className="w-full rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-3 text-xs font-mono text-rose-600 dark:text-rose-300 placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:border-indigo-500"
             />
           </div>
         </Card>
@@ -565,10 +565,10 @@ export default function NewBugReportPage() {
               {attachedFiles.map((item) => (
                 <div
                   key={item.id}
-                  className="p-3 rounded-xl bg-slate-950 border border-slate-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs"
+                  className="p-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs"
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="p-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300">
+                    <div className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300">
                       {item.kind === "AUDIO" ? (
                         <Mic className="w-4 h-4 text-amber-400" />
                       ) : item.kind === "VIDEO" ? (

@@ -167,16 +167,16 @@ export default function BugReportsPage() {
 
       {/* Summary KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="p-4 border-slate-800 bg-slate-900/60">
+        <Card className="p-4 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 shadow-sm">
           <div className="flex items-center justify-between text-slate-400 text-xs">
             <span>Total Bugs</span>
             <Bug className="w-4 h-4 text-slate-500" />
           </div>
-          <p className="text-2xl font-bold text-white mt-2">{totalBugs}</p>
+          <p className="text-2xl font-bold text-slate-900 dark:text-white mt-2">{totalBugs}</p>
           <span className="text-[11px] text-slate-500">Across current projects</span>
         </Card>
 
-        <Card className="p-4 border-slate-800 bg-slate-900/60">
+        <Card className="p-4 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 shadow-sm">
           <div className="flex items-center justify-between text-amber-400 text-xs">
             <span>Open & In Progress</span>
             <Clock className="w-4 h-4 text-amber-500" />
@@ -185,7 +185,7 @@ export default function BugReportsPage() {
           <span className="text-[11px] text-slate-500">Awaiting resolution</span>
         </Card>
 
-        <Card className="p-4 border-rose-950/80 bg-rose-950/20">
+        <Card className="p-4 border-rose-200 dark:border-rose-950/80 bg-rose-50/70 dark:bg-rose-950/20 shadow-sm">
           <div className="flex items-center justify-between text-rose-400 text-xs">
             <span>Critical Severity</span>
             <ShieldAlert className="w-4 h-4 text-rose-500" />
@@ -194,7 +194,7 @@ export default function BugReportsPage() {
           <span className="text-[11px] text-rose-400/80">Requires immediate fix</span>
         </Card>
 
-        <Card className="p-4 border-indigo-950/80 bg-indigo-950/20">
+        <Card className="p-4 border-indigo-200 dark:border-indigo-950/80 bg-indigo-50/70 dark:bg-indigo-950/20 shadow-sm">
           <div className="flex items-center justify-between text-indigo-400 text-xs">
             <span>Visual Evidence</span>
             <Video className="w-4 h-4 text-indigo-400" />
@@ -205,7 +205,7 @@ export default function BugReportsPage() {
       </div>
 
       {/* Filter and Search Bar */}
-      <Card className="p-4 bg-slate-900/40 border-slate-800/80 space-y-3">
+      <Card className="p-4 bg-white dark:bg-slate-900/40 border-slate-200 dark:border-slate-800/80 space-y-3 shadow-sm">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
           <div className="relative">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
@@ -214,7 +214,7 @@ export default function BugReportsPage() {
               placeholder="Search title or description..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+              className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg pl-9 pr-3 py-2 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-indigo-500"
             />
           </div>
 
@@ -256,13 +256,13 @@ export default function BugReportsPage() {
           </Select>
         </div>
 
-        <div className="flex items-center gap-2 pt-1 border-t border-slate-800/60">
-          <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-300 hover:text-white">
+        <div className="flex items-center gap-2 pt-1 border-t border-slate-200 dark:border-slate-800/60">
+          <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white">
             <input
               type="checkbox"
               checked={hasMediaOnly}
               onChange={(e) => setHasMediaOnly(e.target.checked)}
-              className="rounded border-slate-700 bg-slate-900 text-indigo-600 focus:ring-0"
+              className="rounded border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-indigo-600 focus:ring-0"
             />
             <span>Only show bugs with media attachments (screen recording, audio, screenshots)</span>
           </label>
@@ -301,7 +301,7 @@ export default function BugReportsPage() {
               <Link
                 key={bug.id}
                 href={`/issues/${bug.id}`}
-                className="group block p-4 rounded-xl bg-slate-900/60 border border-slate-800/90 hover:border-slate-700 hover:bg-slate-900 transition-all shadow-sm"
+                className="group block p-4 rounded-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/90 hover:border-rose-400 dark:hover:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-900 transition-all shadow-sm"
               >
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                   {/* Left info */}

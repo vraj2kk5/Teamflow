@@ -116,7 +116,7 @@ export function ImageDropzone({
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
+        <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
           Screenshots & Diagrams ({images.length}/{maxFiles})
         </label>
         <span className="text-[11px] text-slate-500">
@@ -125,7 +125,7 @@ export function ImageDropzone({
       </div>
 
       {error && (
-        <div className="p-3 rounded-lg bg-rose-950/80 border border-rose-800 text-xs text-rose-300 flex items-start gap-2">
+        <div className="p-3 rounded-lg bg-rose-50 dark:bg-rose-950/80 border border-rose-200 dark:border-rose-800 text-xs text-rose-700 dark:text-rose-300 flex items-start gap-2">
           <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
           <span>{error}</span>
         </div>
@@ -137,7 +137,7 @@ export function ImageDropzone({
           onDragOver={(e) => e.preventDefault()}
           onDrop={handleDrop}
           onClick={() => inputRef.current?.click()}
-          className="border-2 border-dashed border-slate-800 hover:border-indigo-500/60 rounded-xl p-5 text-center cursor-pointer transition-colors bg-slate-900/40 hover:bg-slate-900/80 group"
+          className="border-2 border-dashed border-slate-300 dark:border-slate-800 hover:border-indigo-500 dark:hover:border-indigo-500/60 rounded-xl p-5 text-center cursor-pointer transition-colors bg-slate-50/60 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 group"
         >
           <input
             ref={inputRef}
@@ -150,14 +150,14 @@ export function ImageDropzone({
             }}
           />
           <div className="flex flex-col items-center justify-center gap-1.5">
-            <div className="p-2 rounded-xl bg-slate-800 text-slate-400 group-hover:text-indigo-400 transition-colors">
+            <div className="p-2 rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
               <Upload className="w-5 h-5" />
             </div>
-            <p className="text-xs font-semibold text-slate-200">
+            <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">
               Drop screenshot here, or{" "}
-              <span className="text-indigo-400 underline">browse files</span>
+              <span className="text-indigo-600 dark:text-indigo-400 underline">browse files</span>
             </p>
-            <p className="text-[11px] text-slate-500">
+            <p className="text-[11px] text-slate-500 dark:text-slate-400">
               PNG, JPG, WebP, GIF up to {maxSizeMb} MB each
             </p>
           </div>
@@ -170,7 +170,7 @@ export function ImageDropzone({
           {previews.map((preview, index) => (
             <div
               key={preview.id}
-              className="relative group rounded-xl overflow-hidden border border-slate-800 bg-slate-950 aspect-video flex items-center justify-center"
+              className="relative group rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-950 aspect-video flex items-center justify-center"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img

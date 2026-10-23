@@ -75,17 +75,17 @@ export default function ActivityPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2.5">
-          <Activity className="w-6 h-6 text-indigo-400" />
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2.5">
+          <Activity className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
           <span>Audit & Activity Feed</span>
         </h1>
-        <p className="text-sm text-slate-400 mt-1">
+        <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
           Complete transparent timeline of events across your organization ({totalCount} total entries)
         </p>
       </div>
 
       <Card>
-        <CardHeader className="pb-3 border-b border-slate-800">
+        <CardHeader className="pb-3 border-b border-slate-200 dark:border-slate-800">
           <CardTitle className="text-base">Organization Activity Timeline</CardTitle>
         </CardHeader>
 
@@ -103,21 +103,21 @@ export default function ActivityPage() {
               description="Actions performed across projects, issues, and memberships will appear here."
             />
           ) : (
-            <div className="divide-y divide-slate-800/60">
+            <div className="divide-y divide-slate-100 dark:divide-slate-800/60">
               {(Array.isArray(logs) ? logs : []).map((log) => (
                 <div key={log.id} className="py-3.5 flex items-start gap-3.5 text-xs">
                   <Avatar name={log.actor.name} avatarUrl={log.actor.avatarUrl} size="md" />
 
                   <div className="flex-1 space-y-1">
                     <div className="flex items-center justify-between">
-                      <span className="font-semibold text-white">{log.actor.name}</span>
+                      <span className="font-semibold text-slate-900 dark:text-white">{log.actor.name}</span>
                       <span className="text-[11px] text-slate-500" title={formatDateTime(log.createdAt)}>
                         {formatDateTime(log.createdAt)}
                       </span>
                     </div>
 
-                    <p className="text-slate-300 leading-relaxed">
-                      <span className="font-medium text-indigo-400">
+                    <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
+                      <span className="font-medium text-indigo-600 dark:text-indigo-400">
                         {log.action.replace(/_/g, " ").toLowerCase()}
                       </span>{" "}
                       {log.issue && (
@@ -125,7 +125,7 @@ export default function ActivityPage() {
                           on issue{" "}
                           <Link
                             href={`/issues/${log.issue.id}`}
-                            className="font-semibold text-white hover:text-indigo-300 transition-colors"
+                            className="font-semibold text-slate-900 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-300 transition-colors"
                           >
                             [{log.issue.key}] {log.issue.title}
                           </Link>
@@ -136,7 +136,7 @@ export default function ActivityPage() {
                           on project{" "}
                           <Link
                             href={`/projects/${log.project.id}`}
-                            className="font-semibold text-white hover:text-indigo-300 transition-colors"
+                            className="font-semibold text-slate-900 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-300 transition-colors"
                           >
                             {log.project.name}
                           </Link>
@@ -151,7 +151,7 @@ export default function ActivityPage() {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="p-4 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400 mt-4">
+            <div className="p-4 border-t border-slate-200 dark:border-slate-800/80 flex items-center justify-between text-xs text-slate-600 dark:text-slate-400 mt-4">
               <span>
                 Page {page} of {totalPages}
               </span>

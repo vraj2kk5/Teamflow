@@ -355,18 +355,18 @@ export default function ProjectDetailPage({
       {/* Back to projects link */}
       <Link
         href="/projects"
-        className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors"
+        className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors"
       >
         <ArrowLeft className="w-4 h-4" />
         <span>Back to Projects</span>
       </Link>
 
       {/* Project Overview Card */}
-      <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-5">
+      <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-5">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold text-white tracking-tight">{project.name}</h1>
+              <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">{project.name}</h1>
               <Badge
                 variant={
                   project.status === "ACTIVE"
@@ -382,7 +382,7 @@ export default function ProjectDetailPage({
               </Badge>
             </div>
             {project.description && (
-              <p className="text-sm text-slate-300 max-w-2xl">{project.description}</p>
+              <p className="text-sm text-slate-600 dark:text-slate-300 max-w-2xl">{project.description}</p>
             )}
           </div>
 
@@ -415,11 +415,11 @@ export default function ProjectDetailPage({
         </div>
 
         {/* Health Metrics & Member Avatars */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4 border-t border-slate-800/80">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4 border-t border-slate-200 dark:border-slate-800/80">
           <div className="space-y-1">
-            <span className="text-xs text-slate-400">Completion</span>
-            <div className="text-xl font-bold text-white">{project.stats.completionPercentage}%</div>
-            <div className="w-full h-1.5 rounded-full bg-slate-800 overflow-hidden">
+            <span className="text-xs text-slate-500 dark:text-slate-400">Completion</span>
+            <div className="text-xl font-bold text-slate-900 dark:text-white">{project.stats.completionPercentage}%</div>
+            <div className="w-full h-1.5 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
               <div
                 className="h-full bg-indigo-500 rounded-full"
                 style={{ width: `${project.stats.completionPercentage}%` }}
@@ -428,20 +428,20 @@ export default function ProjectDetailPage({
           </div>
 
           <div className="space-y-1">
-            <span className="text-xs text-slate-400">Total Issues</span>
-            <div className="text-xl font-bold text-white">{project.stats.totalIssues}</div>
+            <span className="text-xs text-slate-500 dark:text-slate-400">Total Issues</span>
+            <div className="text-xl font-bold text-slate-900 dark:text-white">{project.stats.totalIssues}</div>
             <span className="text-[11px] text-slate-500">{project.stats.doneIssues} completed</span>
           </div>
 
           <div className="space-y-1">
-            <span className="text-xs text-slate-400">Open Bugs</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400">Open Bugs</span>
             <div className="text-xl font-bold text-rose-400">{project.stats.openBugs}</div>
             <span className="text-[11px] text-slate-500">Requires triage</span>
           </div>
 
           <div className="space-y-1">
-            <span className="text-xs text-slate-400">Overdue</span>
-            <div className={cn("text-xl font-bold", project.stats.overdueCount > 0 ? "text-rose-400" : "text-white")}>
+            <span className="text-xs text-slate-500 dark:text-slate-400">Overdue</span>
+            <div className={cn("text-xl font-bold", project.stats.overdueCount > 0 ? "text-rose-600 dark:text-rose-400" : "text-slate-900 dark:text-white")}>
               {project.stats.overdueCount}
             </div>
             <span className="text-[11px] text-slate-500">Past target date</span>
@@ -450,19 +450,19 @@ export default function ProjectDetailPage({
       </div>
 
       {/* Tabs Bar */}
-      <div className="flex items-center gap-1 border-b border-slate-800 pb-px overflow-x-auto">
+      <div className="flex items-center gap-1 border-b border-slate-200 dark:border-slate-800 pb-px overflow-x-auto">
         <button
           onClick={() => setActiveTab("board")}
           className={cn(
             "flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-t-xl transition-all border-b-2",
             activeTab === "board"
-              ? "border-indigo-500 text-white bg-slate-900/50"
-              : "border-transparent text-slate-400 hover:text-slate-200"
+              ? "border-indigo-600 text-indigo-600 dark:text-white bg-indigo-50/60 dark:bg-slate-900/50"
+              : "border-transparent text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200"
           )}
         >
           <LayoutGrid className="w-4 h-4" />
           <span>Kanban Board</span>
-          <span className="px-1.5 py-0.5 rounded-full text-xs bg-slate-800 text-slate-300">
+          <span className="px-1.5 py-0.5 rounded-full text-xs bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
             {issues.length}
           </span>
         </button>
@@ -472,8 +472,8 @@ export default function ProjectDetailPage({
           className={cn(
             "flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-t-xl transition-all border-b-2",
             activeTab === "list"
-              ? "border-indigo-500 text-white bg-slate-900/50"
-              : "border-transparent text-slate-400 hover:text-slate-200"
+              ? "border-indigo-600 text-indigo-600 dark:text-white bg-indigo-50/60 dark:bg-slate-900/50"
+              : "border-transparent text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200"
           )}
         >
           <List className="w-4 h-4" />
@@ -485,8 +485,8 @@ export default function ProjectDetailPage({
           className={cn(
             "flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-t-xl transition-all border-b-2",
             activeTab === "bugs"
-              ? "border-indigo-500 text-white bg-slate-900/50"
-              : "border-transparent text-slate-400 hover:text-slate-200"
+              ? "border-indigo-600 text-indigo-600 dark:text-white bg-indigo-50/60 dark:bg-slate-900/50"
+              : "border-transparent text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200"
           )}
         >
           <Bug className="w-4 h-4 text-rose-400" />
@@ -501,13 +501,13 @@ export default function ProjectDetailPage({
           className={cn(
             "flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-t-xl transition-all border-b-2",
             activeTab === "members"
-              ? "border-indigo-500 text-white bg-slate-900/50"
-              : "border-transparent text-slate-400 hover:text-slate-200"
+              ? "border-indigo-600 text-indigo-600 dark:text-white bg-indigo-50/60 dark:bg-slate-900/50"
+              : "border-transparent text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200"
           )}
         >
           <Users className="w-4 h-4" />
           <span>Members</span>
-          <span className="px-1.5 py-0.5 rounded-full text-xs bg-slate-800 text-slate-300">
+          <span className="px-1.5 py-0.5 rounded-full text-xs bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
             {project.memberships.length}
           </span>
         </button>
@@ -518,8 +518,8 @@ export default function ProjectDetailPage({
             className={cn(
               "flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-t-xl transition-all border-b-2",
               activeTab === "settings"
-                ? "border-indigo-500 text-white bg-slate-900/50"
-                : "border-transparent text-slate-400 hover:text-slate-200"
+                ? "border-indigo-600 text-indigo-600 dark:text-white bg-indigo-50/60 dark:bg-slate-900/50"
+                : "border-transparent text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200"
             )}
           >
             <Settings className="w-4 h-4" />
@@ -535,7 +535,7 @@ export default function ProjectDetailPage({
 
       {/* Tab 2: List View */}
       {activeTab === "list" && (
-        <div className="rounded-2xl bg-slate-900 border border-slate-800 overflow-hidden">
+        <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
           {issues.length === 0 ? (
             <EmptyState
               icon={List}
@@ -549,8 +549,8 @@ export default function ProjectDetailPage({
             />
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm text-slate-300">
-                <thead className="bg-slate-950 text-xs uppercase font-semibold text-slate-400 border-b border-slate-800">
+              <table className="w-full text-left text-sm text-slate-700 dark:text-slate-300">
+                <thead className="bg-slate-50 dark:bg-slate-950 text-xs uppercase font-semibold text-slate-600 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
                   <tr>
                     <th className="px-4 py-3.5">Key</th>
                     <th className="px-4 py-3.5">Title</th>
@@ -561,17 +561,17 @@ export default function ProjectDetailPage({
                     <th className="px-4 py-3.5">Due Date</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/60">
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
                   {issues.map((i) => (
                     <tr
                       key={i.id}
                       onClick={() => router.push(`/issues/${i.id}`)}
-                      className="hover:bg-slate-800/50 transition-colors cursor-pointer"
+                      className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer"
                     >
                       <td className="px-4 py-3 font-mono text-xs text-indigo-400 font-medium">
                         {i.key}
                       </td>
-                      <td className="px-4 py-3 font-medium text-white max-w-md truncate">
+                      <td className="px-4 py-3 font-medium text-slate-900 dark:text-white max-w-md truncate">
                         {i.title}
                       </td>
                       <td className="px-4 py-3">
@@ -666,7 +666,7 @@ export default function ProjectDetailPage({
             ) : (
               bugIssues.map((bug) => (
                 <Link key={bug.id} href={`/issues/${bug.id}`} className="block group">
-                  <Card variant="interactive" className="h-full border-rose-950/40 hover:border-rose-800/80">
+                  <Card variant="interactive" className="h-full border-slate-200 dark:border-rose-950/40 hover:border-rose-400 dark:hover:border-rose-800/80 bg-white dark:bg-slate-900">
                     <CardHeader className="pb-2">
                       <div className="flex items-center gap-2">
                         <Bug className="w-4 h-4 text-rose-400" />
@@ -677,7 +677,7 @@ export default function ProjectDetailPage({
                       </Badge>
                     </CardHeader>
                     <CardContent className="space-y-2">
-                      <h4 className="text-sm font-semibold text-white group-hover:text-rose-300 transition-colors line-clamp-2">
+                      <h4 className="text-sm font-semibold text-slate-900 dark:text-white group-hover:text-rose-600 dark:group-hover:text-rose-300 transition-colors line-clamp-2">
                         {bug.title}
                       </h4>
                       <p className="text-xs text-slate-400 line-clamp-2">{bug.description}</p>
@@ -694,7 +694,7 @@ export default function ProjectDetailPage({
       {activeTab === "members" && (
         <div className="space-y-4">
           <div className="flex justify-between items-center">
-            <p className="text-sm text-slate-400">
+            <p className="text-sm text-slate-600 dark:text-slate-400">
               Users assigned to work on this project
             </p>
             {canManage && (
@@ -717,7 +717,7 @@ export default function ProjectDetailPage({
                 <div className="flex items-center gap-3">
                   <Avatar name={m.user.name} avatarUrl={m.user.avatarUrl} size="md" />
                   <div>
-                    <div className="text-sm font-semibold text-white flex items-center gap-1.5">
+                    <div className="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-1.5">
                       <span>{m.user.name}</span>
                       {m.user.id === project.ownerId && (
                         <Badge size="sm" variant="warning" className="text-[10px]">
@@ -725,7 +725,7 @@ export default function ProjectDetailPage({
                         </Badge>
                       )}
                     </div>
-                    <div className="text-xs text-slate-400">{m.user.email}</div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400">{m.user.email}</div>
                   </div>
                 </div>
 
@@ -787,12 +787,12 @@ export default function ProjectDetailPage({
             </form>
           </Card>
 
-          <Card className="border-rose-900/60 bg-rose-950/20">
+          <Card className="border-rose-200 dark:border-rose-900/60 bg-rose-50/50 dark:bg-rose-950/20">
             <CardHeader>
-              <CardTitle className="text-rose-400">Danger Zone</CardTitle>
+              <CardTitle className="text-rose-700 dark:text-rose-400">Danger Zone</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <p className="text-xs text-slate-300 leading-relaxed">
+              <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
                 Deleting this project permanently removes all its tasks, bug reports, comments, attachments, and logs. This action cannot be undone.
               </p>
               <Button
@@ -816,7 +816,7 @@ export default function ProjectDetailPage({
       >
         <form onSubmit={handleCreateIssue} className="space-y-4">
           {issueFormError && (
-            <div className="p-3 rounded-lg bg-rose-950/80 border border-rose-800 text-xs text-rose-300">
+            <div className="p-3 rounded-lg bg-rose-50 dark:bg-rose-950/80 border border-rose-200 dark:border-rose-800 text-xs text-rose-700 dark:text-rose-300">
               {issueFormError}
             </div>
           )}
@@ -894,7 +894,7 @@ export default function ProjectDetailPage({
             />
           </div>
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-slate-800">
+          <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
             <Button
               type="button"
               variant="ghost"
@@ -934,7 +934,7 @@ export default function ProjectDetailPage({
               ))}
           </Select>
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-slate-800">
+          <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
             <Button
               type="button"
               variant="ghost"

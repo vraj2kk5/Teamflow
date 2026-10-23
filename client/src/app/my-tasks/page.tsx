@@ -79,11 +79,11 @@ export default function MyTasksPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2.5">
-            <CheckSquare className="w-6 h-6 text-indigo-400" />
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2.5">
+            <CheckSquare className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
             <span>My Tasks</span>
           </h1>
-          <p className="text-sm text-slate-400 mt-1">
+          <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
             Issues and visual bug reports assigned specifically to you ({tasks.length} tasks)
           </p>
         </div>
@@ -144,16 +144,16 @@ export default function MyTasksPage() {
             return (
               <Card
                 key={task.id}
-                className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-slate-700 transition-colors"
+                className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-indigo-400 dark:hover:border-slate-700 shadow-sm transition-colors"
               >
                 <div className="flex items-start gap-3 min-w-0">
                   <div className="mt-0.5">
                     {task.type === "BUG" ? (
-                      <span className="p-1 rounded bg-rose-950/80 text-rose-400 border border-rose-800/80 block">
+                      <span className="p-1 rounded bg-rose-50 text-rose-600 border border-rose-200 dark:bg-rose-950/80 dark:text-rose-400 dark:border-rose-800/80 block">
                         <Bug className="w-4 h-4" />
                       </span>
                     ) : (
-                      <span className="p-1 rounded bg-indigo-950/80 text-indigo-400 border border-indigo-800/80 block">
+                      <span className="p-1 rounded bg-indigo-50 text-indigo-600 border border-indigo-200 dark:bg-indigo-950/80 dark:text-indigo-400 dark:border-indigo-800/80 block">
                         <CheckCircle2 className="w-4 h-4" />
                       </span>
                     )}
@@ -161,7 +161,7 @@ export default function MyTasksPage() {
 
                   <div className="space-y-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="font-mono text-xs font-bold text-indigo-400">{task.key}</span>
+                      <span className="font-mono text-xs font-bold text-indigo-600 dark:text-indigo-400">{task.key}</span>
                       <span className="text-xs text-slate-500">•</span>
                       <span className="text-xs text-slate-400 font-medium">{task.project.name}</span>
                       <Badge
@@ -180,7 +180,7 @@ export default function MyTasksPage() {
 
                     <Link
                       href={`/issues/${task.id}`}
-                      className="block text-sm font-semibold text-white hover:text-indigo-300 transition-colors truncate"
+                      className="block text-sm font-semibold text-slate-900 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-300 transition-colors truncate"
                     >
                       {task.title}
                     </Link>
@@ -216,7 +216,7 @@ export default function MyTasksPage() {
 
                   <Link
                     href={`/issues/${task.id}`}
-                    className="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
+                    className="p-2 text-slate-400 hover:text-slate-700 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                     title="View details"
                   >
                     <ArrowRight className="w-4 h-4" />

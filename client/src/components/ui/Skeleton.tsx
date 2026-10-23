@@ -13,7 +13,7 @@ export function Skeleton({
   return (
     <div
       className={cn(
-        "animate-pulse bg-slate-800/80",
+        "animate-pulse bg-slate-200 dark:bg-slate-800/80",
         variant === "text" && "h-4 rounded",
         variant === "rectangular" && "rounded-lg",
         variant === "circular" && "rounded-full",

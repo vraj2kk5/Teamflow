@@ -265,7 +265,7 @@ export default function IssueDetailPage({
       <div className="flex items-center justify-between">
         <Link
           href={`/projects/${issue.projectId}`}
-          className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Back to {issue.project.name}</span>
@@ -325,11 +325,11 @@ export default function IssueDetailPage({
               </Badge>
             </div>
 
-            <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight leading-snug">
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight leading-snug">
               {issue.title}
             </h1>
 
-            <div className="pt-2 border-t border-slate-800">
+            <div className="pt-2 border-t border-slate-200 dark:border-slate-800">
               <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
                 Description
               </h3>
@@ -342,7 +342,7 @@ export default function IssueDetailPage({
           {/* Bug Details Card (if BUG) */}
           {issue.type === "BUG" && (
             <Card className="border-rose-950/60 space-y-4">
-              <CardHeader className="pb-2 border-b border-slate-800">
+              <CardHeader className="pb-2 border-b border-slate-200 dark:border-slate-800">
                 <CardTitle className="text-base text-rose-400 flex items-center gap-2">
                   <Bug className="w-4 h-4" />
                   <span>Bug Diagnostic Information</span>
@@ -354,7 +354,7 @@ export default function IssueDetailPage({
                   <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">
                     Steps to Reproduce
                   </h4>
-                  <p className="text-sm text-slate-300 whitespace-pre-wrap bg-slate-950/60 p-3 rounded-lg border border-slate-800">
+                  <p className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap bg-slate-50 dark:bg-slate-950/60 p-3 rounded-lg border border-slate-200 dark:border-slate-800">
                     {issue.stepsToReproduce}
                   </p>
                 </div>
@@ -413,7 +413,7 @@ export default function IssueDetailPage({
                     </Button>
                   </div>
                   {/* Monospaced scrollable box rendered as pure plain text */}
-                  <pre className="p-4 rounded-xl bg-slate-950 border border-slate-800 text-xs font-mono text-rose-300 overflow-x-auto max-h-80 select-all leading-relaxed whitespace-pre-wrap">
+                  <pre className="p-4 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs font-mono text-rose-600 dark:text-rose-300 overflow-x-auto max-h-80 select-all leading-relaxed whitespace-pre-wrap">
                     {issue.errorLog}
                   </pre>
                 </div>
@@ -423,7 +423,7 @@ export default function IssueDetailPage({
 
           {/* Media Attachments Section (Visual Bug Reporting) */}
           <Card className="space-y-4">
-            <CardHeader className="pb-2 border-b border-slate-800">
+            <CardHeader className="pb-2 border-b border-slate-200 dark:border-slate-800">
               <CardTitle className="text-base flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Paperclip className="w-4 h-4 text-indigo-400" />
@@ -447,11 +447,11 @@ export default function IssueDetailPage({
                   return (
                     <div
                       key={att.id}
-                      className="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800/80 space-y-3"
+                      className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800/80 space-y-3"
                     >
                       <div className="flex items-center justify-between gap-2">
                         <div className="min-w-0">
-                          <p className="text-xs font-semibold text-white truncate">
+                          <p className="text-xs font-semibold text-slate-900 dark:text-white truncate">
                             {att.originalFilename}
                           </p>
                           <p className="text-[11px] text-slate-400">
@@ -501,7 +501,7 @@ export default function IssueDetailPage({
 
           {/* Comments Discussion Thread */}
           <Card className="space-y-4">
-            <CardHeader className="pb-2 border-b border-slate-800">
+            <CardHeader className="pb-2 border-b border-slate-200 dark:border-slate-800">
               <CardTitle className="text-base flex items-center gap-2">
                 <MessageSquare className="w-4 h-4 text-indigo-400" />
                 <span>Discussion ({issue.comments.length})</span>
@@ -510,14 +510,14 @@ export default function IssueDetailPage({
 
             <div className="space-y-4">
               {issue.comments.map((comment) => (
-                <div key={comment.id} className="flex items-start gap-3 p-3 rounded-xl bg-slate-950/60 border border-slate-800/80">
+                <div key={comment.id} className="flex items-start gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800/80">
                   <Avatar name={comment.author.name} avatarUrl={comment.author.avatarUrl} size="sm" />
                   <div className="flex-1 space-y-1">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold text-white">{comment.author.name}</span>
+                      <span className="text-xs font-semibold text-slate-900 dark:text-white">{comment.author.name}</span>
                       <span className="text-[11px] text-slate-500">{formatDate(comment.createdAt)}</span>
                     </div>
-                    <p className="text-xs text-slate-300 whitespace-pre-wrap leading-relaxed">{comment.body}</p>
+                    <p className="text-xs text-slate-700 dark:text-slate-300 whitespace-pre-wrap leading-relaxed">{comment.body}</p>
                   </div>
                 </div>
               ))}
@@ -542,7 +542,7 @@ export default function IssueDetailPage({
 
           {/* Activity Timeline */}
           <Card className="space-y-4">
-            <CardHeader className="pb-2 border-b border-slate-800">
+            <CardHeader className="pb-2 border-b border-slate-200 dark:border-slate-800">
               <CardTitle className="text-base flex items-center gap-2">
                 <Activity className="w-4 h-4 text-indigo-400" />
                 <span>Activity Timeline</span>
@@ -554,7 +554,7 @@ export default function IssueDetailPage({
                 <div key={log.id} className="flex items-center gap-3 text-xs">
                   <Avatar name={log.actor.name} avatarUrl={log.actor.avatarUrl} size="sm" />
                   <div className="flex-1">
-                    <span className="font-semibold text-white">{log.actor.name} </span>
+                    <span className="font-semibold text-slate-900 dark:text-white">{log.actor.name} </span>
                     <span className="text-slate-400">{log.action.replace("_", " ").toLowerCase()}</span>
                   </div>
                   <span className="text-[11px] text-slate-500 shrink-0" title={formatDateTime(log.createdAt)}>
@@ -569,8 +569,8 @@ export default function IssueDetailPage({
         {/* Right Sidebar Attributes */}
         <div className="space-y-5">
           <Card className="space-y-4">
-            <CardHeader className="pb-2 border-b border-slate-800">
-              <CardTitle className="text-sm font-semibold text-slate-300 uppercase tracking-wider">
+            <CardHeader className="pb-2 border-b border-slate-200 dark:border-slate-800">
+              <CardTitle className="text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
                 Issue Attributes
               </CardTitle>
             </CardHeader>
@@ -617,29 +617,29 @@ export default function IssueDetailPage({
               </Select>
             </div>
 
-            <div className="pt-4 border-t border-slate-800 space-y-3 text-xs">
+            <div className="pt-4 border-t border-slate-200 dark:border-slate-800 space-y-3 text-xs">
               <div className="flex justify-between">
-                <span className="text-slate-400">Reporter</span>
-                <span className="font-semibold text-white">{issue.reporter.name}</span>
+                <span className="text-slate-500 dark:text-slate-400">Reporter</span>
+                <span className="font-semibold text-slate-900 dark:text-white">{issue.reporter.name}</span>
               </div>
 
               {issue.dueDate && (
                 <div className="flex justify-between">
-                  <span className="text-slate-400">Due Date</span>
-                  <span className="font-semibold text-white">{formatDate(issue.dueDate)}</span>
+                  <span className="text-slate-500 dark:text-slate-400">Due Date</span>
+                  <span className="font-semibold text-slate-900 dark:text-white">{formatDate(issue.dueDate)}</span>
                 </div>
               )}
 
               {issue.estimatedHours && (
                 <div className="flex justify-between">
-                  <span className="text-slate-400">Estimate</span>
-                  <span className="font-semibold text-white">{issue.estimatedHours} hrs</span>
+                  <span className="text-slate-500 dark:text-slate-400">Estimate</span>
+                  <span className="font-semibold text-slate-900 dark:text-white">{issue.estimatedHours} hrs</span>
                 </div>
               )}
 
               <div className="flex justify-between">
-                <span className="text-slate-400">Created</span>
-                <span className="text-slate-300">{formatDate(issue.createdAt)}</span>
+                <span className="text-slate-500 dark:text-slate-400">Created</span>
+                <span className="text-slate-700 dark:text-slate-300">{formatDate(issue.createdAt)}</span>
               </div>
 
               {issue.resolvedAt && (

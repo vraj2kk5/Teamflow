@@ -233,11 +233,11 @@ function IssuesView() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2.5">
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2.5">
             <AlertCircle className="w-6 h-6 text-indigo-400" />
             <span>Issues</span>
           </h1>
-          <p className="text-sm text-slate-400 mt-1">
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
             Global view of all tasks and bugs across projects ({totalCount} found)
           </p>
         </div>
@@ -271,7 +271,7 @@ function IssuesView() {
       </div>
 
       {/* Filter Bar */}
-      <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 space-y-3">
+      <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
         <div className="flex flex-col md:flex-row items-center gap-3">
           <div className="relative flex-1 w-full">
             <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -361,7 +361,7 @@ function IssuesView() {
         </div>
 
         {/* Quick Filter Pills */}
-        <div className="flex items-center justify-between pt-2 border-t border-slate-800/80 text-xs">
+        <div className="flex items-center justify-between pt-2 border-t border-slate-200 dark:border-slate-800/80 text-xs">
           <div className="flex items-center gap-2">
             <button
               onClick={() => {
@@ -372,7 +372,7 @@ function IssuesView() {
                 "px-2.5 py-1 rounded-full font-medium transition-colors border",
                 overdue
                   ? "bg-rose-950/80 text-rose-300 border-rose-800"
-                  : "bg-slate-800/80 text-slate-400 border-slate-700 hover:text-white"
+                  : "bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:text-slate-900 dark:hover:text-white"
               )}
             >
               Overdue Only
@@ -387,7 +387,7 @@ function IssuesView() {
                 "px-2.5 py-1 rounded-full font-medium transition-colors border",
                 assigneeId === "me"
                   ? "bg-indigo-950/80 text-indigo-300 border-indigo-800"
-                  : "bg-slate-800/80 text-slate-400 border-slate-700 hover:text-white"
+                  : "bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:text-slate-900 dark:hover:text-white"
               )}
             >
               Assigned to Me
@@ -397,7 +397,7 @@ function IssuesView() {
           {hasActiveFilters && (
             <button
               onClick={handleResetFilters}
-              className="flex items-center gap-1 text-slate-400 hover:text-white transition-colors"
+              className="flex items-center gap-1 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors"
             >
               <X className="w-3.5 h-3.5" />
               <span>Reset Filters</span>
@@ -426,10 +426,10 @@ function IssuesView() {
           onAction={hasActiveFilters ? handleResetFilters : () => setIsModalOpen(true)}
         />
       ) : (
-        <div className="rounded-2xl bg-slate-900 border border-slate-800 overflow-hidden shadow-sm">
+        <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm text-slate-300">
-              <thead className="bg-slate-950 text-xs uppercase font-semibold text-slate-400 border-b border-slate-800">
+            <table className="w-full text-left text-sm text-slate-700 dark:text-slate-300">
+              <thead className="bg-slate-50 dark:bg-slate-950 text-xs uppercase font-semibold text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
                 <tr>
                   <th className="px-4 py-3.5">Key</th>
                   <th className="px-4 py-3.5">Title</th>
@@ -441,20 +441,20 @@ function IssuesView() {
                   <th className="px-4 py-3.5">Due Date</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/60">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
                 {issues.map((i) => (
                   <tr
                     key={i.id}
                     onClick={() => router.push(`/issues/${i.id}`)}
-                    className="hover:bg-slate-800/50 transition-colors cursor-pointer group"
+                    className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer group"
                   >
                     <td className="px-4 py-3.5 font-mono text-xs text-indigo-400 font-semibold">
                       {i.key}
                     </td>
-                    <td className="px-4 py-3.5 font-medium text-white max-w-sm truncate group-hover:text-indigo-300 transition-colors">
+                    <td className="px-4 py-3.5 font-medium text-slate-900 dark:text-white max-w-sm truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-300 transition-colors">
                       {i.title}
                     </td>
-                    <td className="px-4 py-3.5 text-xs text-slate-400">
+                    <td className="px-4 py-3.5 text-xs text-slate-500 dark:text-slate-400">
                       {i.project.name}
                     </td>
                     <td className="px-4 py-3.5">
@@ -498,13 +498,13 @@ function IssuesView() {
                       {i.assignee ? (
                         <div className="flex items-center gap-2">
                           <Avatar name={i.assignee.name} avatarUrl={i.assignee.avatarUrl} size="sm" />
-                          <span className="text-xs text-slate-300">{i.assignee.name}</span>
+                          <span className="text-xs text-slate-700 dark:text-slate-300">{i.assignee.name}</span>
                         </div>
                       ) : (
                         <span className="text-xs text-slate-500 italic">Unassigned</span>
                       )}
                     </td>
-                    <td className="px-4 py-3.5 text-xs text-slate-400">
+                    <td className="px-4 py-3.5 text-xs text-slate-500 dark:text-slate-400">
                       {i.dueDate ? formatDate(i.dueDate) : "-"}
                     </td>
                   </tr>
@@ -515,7 +515,7 @@ function IssuesView() {
 
           {/* Pagination Footer */}
           {totalPages > 1 && (
-            <div className="p-4 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
+            <div className="p-4 border-t border-slate-200 dark:border-slate-800/80 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
               <span>
                 Page {page} of {totalPages}
               </span>
@@ -553,7 +553,7 @@ function IssuesView() {
       >
         <form onSubmit={handleCreateIssue} className="space-y-4">
           {modalError && (
-            <div className="p-3 rounded-lg bg-rose-950/80 border border-rose-800 text-xs text-rose-300">
+            <div className="p-3 rounded-lg bg-rose-50 dark:bg-rose-950/80 border border-rose-200 dark:border-rose-800 text-xs text-rose-700 dark:text-rose-300">
               {modalError}
             </div>
           )}

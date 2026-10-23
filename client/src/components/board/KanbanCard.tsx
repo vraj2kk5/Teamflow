@@ -63,20 +63,20 @@ export function KanbanCard({ issue, onStatusChange }: KanbanCardProps) {
   ];
 
   return (
-    <div className="group rounded-xl bg-slate-900 border border-slate-800 p-4 shadow-sm hover:border-slate-700 hover:shadow-md transition-all space-y-3">
+    <div className="group rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 shadow-sm hover:border-indigo-400 dark:hover:border-slate-700 hover:shadow-md transition-all space-y-3">
       {/* Top Header: Key, Type, Priority, Status Dropdown */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           {issue.type === "BUG" ? (
-            <span className="p-1 rounded bg-rose-950/80 text-rose-400 border border-rose-800/80" title="Bug Report">
+            <span className="p-1 rounded bg-rose-50 dark:bg-rose-950/80 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800/80" title="Bug Report">
               <Bug className="w-3.5 h-3.5" />
             </span>
           ) : (
-            <span className="p-1 rounded bg-indigo-950/80 text-indigo-400 border border-indigo-800/80" title="Task">
+            <span className="p-1 rounded bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800/80" title="Task">
               <CheckCircle2 className="w-3.5 h-3.5" />
             </span>
           )}
-          <span className="text-xs font-mono font-semibold text-slate-400">{issue.key}</span>
+          <span className="text-xs font-mono font-semibold text-slate-500 dark:text-slate-400">{issue.key}</span>
         </div>
 
         <div className="flex items-center gap-1.5">
@@ -112,13 +112,13 @@ export function KanbanCard({ issue, onStatusChange }: KanbanCardProps) {
               className="opacity-0 absolute inset-0 w-full h-full cursor-pointer z-10"
             >
               {statuses.map((s) => (
-                <option key={s.value} value={s.value}>
+                <option key={s.value} value={s.value} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">
                   Move to: {s.label}
                 </option>
               ))}
             </select>
             <button
-              className="p-1 text-slate-500 hover:text-slate-200 rounded hover:bg-slate-800 transition-colors"
+              className="p-1 text-slate-400 hover:text-slate-700 dark:text-slate-500 dark:hover:text-slate-200 rounded hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               title="Move card to status"
             >
               <MoreVertical className="w-3.5 h-3.5" />
@@ -130,18 +130,18 @@ export function KanbanCard({ issue, onStatusChange }: KanbanCardProps) {
       {/* Title */}
       <Link
         href={`/issues/${issue.id}`}
-        className="block text-sm font-semibold text-white group-hover:text-indigo-400 transition-colors line-clamp-2"
+        className="block text-sm font-semibold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-2"
       >
         {issue.title}
       </Link>
 
       {/* Footer: Due Date & Assignee */}
-      <div className="flex items-center justify-between pt-2 border-t border-slate-800/60 text-xs">
+      <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800/60 text-xs">
         {issue.dueDate ? (
           <div
             className={cn(
               "flex items-center gap-1 text-[11px]",
-              isOverdue ? "text-rose-400 font-semibold" : "text-slate-400"
+              isOverdue ? "text-rose-600 dark:text-rose-400 font-semibold" : "text-slate-500 dark:text-slate-400"
             )}
             title={isOverdue ? "Overdue" : "Due Date"}
           >
@@ -149,7 +149,7 @@ export function KanbanCard({ issue, onStatusChange }: KanbanCardProps) {
             <span>{formatDate(issue.dueDate)}</span>
           </div>
         ) : (
-          <span className="text-slate-600 text-[11px]">No due date</span>
+          <span className="text-slate-400 dark:text-slate-600 text-[11px]">No due date</span>
         )}
 
         <div className="flex items-center gap-1.5">
@@ -160,7 +160,7 @@ export function KanbanCard({ issue, onStatusChange }: KanbanCardProps) {
               size="sm"
             />
           ) : (
-            <span className="text-[11px] text-slate-500 italic">Unassigned</span>
+            <span className="text-[11px] text-slate-400 dark:text-slate-500 italic">Unassigned</span>
           )}
         </div>
       </div>
