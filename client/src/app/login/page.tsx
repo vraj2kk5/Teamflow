@@ -90,8 +90,8 @@ function LoginForm() {
 
         <Card className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl">
           <form onSubmit={handleSubmit}>
-            <CardHeader>
-              <CardTitle>Sign in to your account</CardTitle>
+            <CardHeader className="pb-4">
+              <CardTitle className="text-xl font-bold">Sign in to your account</CardTitle>
               <CardDescription>Enter your email and password below</CardDescription>
             </CardHeader>
 

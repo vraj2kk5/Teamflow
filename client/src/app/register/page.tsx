@@ -57,13 +57,13 @@ export default function RegisterPage() {
 
     setIsLoading(true);
     try {
-      await register({
-        name: name.trim(),
-        email: email.trim(),
+      await register(
+        name.trim(),
+        email.trim(),
         password,
-        organizationName: mode === "create" ? orgName.trim() : undefined,
-        inviteCode: mode === "join" ? inviteCode.trim().toUpperCase() : undefined,
-      });
+        mode === "create" ? orgName.trim() : undefined,
+        mode === "join" ? inviteCode.trim().toUpperCase() : undefined
+      );
 
       toastSuccess(
         mode === "create"
@@ -106,17 +106,19 @@ export default function RegisterPage() {
 
         <Card className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl">
           <form onSubmit={handleSubmit}>
-            <CardHeader>
-              <CardTitle>Sign Up</CardTitle>
-              <CardDescription>Fill out your details to get started</CardDescription>
+            <CardHeader className="space-y-3 pb-4">
+              <div>
+                <CardTitle className="text-xl font-bold">Sign Up</CardTitle>
+                <CardDescription className="mt-0.5">Fill out your details to get started</CardDescription>
+              </div>
 
               {/* Mode Toggle Tabs */}
-              <div className="grid grid-cols-2 gap-2 mt-4 p-1 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
+              <div className="grid grid-cols-2 gap-2 p-1 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
                 <button
                   type="button"
                   onClick={() => setMode("create")}
                   className={cn(
-                    "flex items-center justify-center gap-2 py-2 text-xs font-semibold rounded-lg transition-all",
+                    "flex items-center justify-center gap-2 py-2 px-3 text-xs font-semibold rounded-lg transition-all",
                     mode === "create"
                       ? "bg-indigo-600 text-white shadow-sm"
                       : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
@@ -129,7 +131,7 @@ export default function RegisterPage() {
                   type="button"
                   onClick={() => setMode("join")}
                   className={cn(
-                    "flex items-center justify-center gap-2 py-2 text-xs font-semibold rounded-lg transition-all",
+                    "flex items-center justify-center gap-2 py-2 px-3 text-xs font-semibold rounded-lg transition-all",
                     mode === "join"
                       ? "bg-indigo-600 text-white shadow-sm"
                       : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"

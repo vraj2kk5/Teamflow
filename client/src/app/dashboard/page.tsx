@@ -168,7 +168,7 @@ export default function DashboardPage() {
       {/* Real Stat Cards Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
-          <CardHeader className="pb-1 border-0">
+          <CardHeader className="pb-1 border-0 flex-row items-center justify-between space-y-0">
             <CardTitle className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400 tracking-wider">
               Total Projects
             </CardTitle>
@@ -185,7 +185,7 @@ export default function DashboardPage() {
         </Card>
 
         <Card>
-          <CardHeader className="pb-1 border-0">
+          <CardHeader className="pb-1 border-0 flex-row items-center justify-between space-y-0">
             <CardTitle className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400 tracking-wider">
               Open Tasks
             </CardTitle>
@@ -202,7 +202,7 @@ export default function DashboardPage() {
         </Card>
 
         <Card>
-          <CardHeader className="pb-1 border-0">
+          <CardHeader className="pb-1 border-0 flex-row items-center justify-between space-y-0">
             <CardTitle className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400 tracking-wider">
               Open Bugs
             </CardTitle>
@@ -219,7 +219,7 @@ export default function DashboardPage() {
         </Card>
 
         <Card>
-          <CardHeader className="pb-1 border-0">
+          <CardHeader className="pb-1 border-0 flex-row items-center justify-between space-y-0">
             <CardTitle className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400 tracking-wider">
               Overdue Items
             </CardTitle>
@@ -256,7 +256,7 @@ export default function DashboardPage() {
         <div className="lg:col-span-2 space-y-6">
           {/* Project Health Progress Breakdown */}
           <Card className="space-y-4">
-            <CardHeader className="pb-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            <CardHeader className="pb-3 border-b border-slate-100 dark:border-slate-800 flex-row items-center justify-between space-y-0">
               <CardTitle className="text-base font-semibold text-slate-900 dark:text-white">
                 Project Progress & Health
               </CardTitle>
@@ -329,7 +329,7 @@ export default function DashboardPage() {
 
           {/* My Assigned Work Quick Table */}
           <Card className="space-y-4">
-            <CardHeader className="pb-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            <CardHeader className="pb-3 border-b border-slate-100 dark:border-slate-800 flex-row items-center justify-between space-y-0">
               <CardTitle className="text-base font-semibold text-slate-900 dark:text-white">
                 My Assigned Work
               </CardTitle>
@@ -389,7 +389,7 @@ export default function DashboardPage() {
         {/* Right Column: Recent Activity Feed */}
         <div className="space-y-6">
           <Card className="space-y-4">
-            <CardHeader className="pb-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            <CardHeader className="pb-3 border-b border-slate-100 dark:border-slate-800 flex-row items-center justify-between space-y-0">
               <CardTitle className="text-base font-semibold text-slate-900 dark:text-white flex items-center gap-2">
                 <Activity className="w-4 h-4 text-indigo-500 dark:text-indigo-400" />
                 <span>Recent Activity</span>
