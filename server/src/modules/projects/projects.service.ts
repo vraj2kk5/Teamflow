@@ -23,11 +23,12 @@ export class ProjectsService {
       organizationId: orgId,
     };
 
-    // Scoping: Members see only projects they are members of
-    if (role === Role.MEMBER) {
-      where.memberships = {
-        some: { userId },
-      };
+    // Scoping: Non-admins see only projects they are members of (or created)
+    if (role !== Role.ADMIN) {
+      where.OR = [
+        { ownerId: userId },
+        { memberships: { some: { userId } } },
+      ];
     }
 
     if (query.q) {

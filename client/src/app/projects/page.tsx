@@ -188,10 +188,12 @@ export default function ProjectsPage() {
       ) : projects.length === 0 ? (
         <EmptyState
           icon={FolderKanban}
-          title="No projects found"
+          title={role === "MEMBER" ? "No assigned projects" : "No projects found"}
           description={
             search || statusFilter
               ? "No projects match your current filters. Try resetting search or status."
+              : role === "MEMBER"
+              ? "You haven't been assigned to any projects yet. Contact your Project Manager or Admin to be added to a project."
               : "No projects in this organization yet. Create one to get started."
           }
           actionLabel={canCreate ? "Create Project" : undefined}

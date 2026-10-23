@@ -30,8 +30,10 @@ export async function requireProjectAccess(
       return next(new NotFoundError("Project not found in current organization"));
     }
 
-    if (auth.role === Role.MEMBER) {
-      const isMember = project.memberships.some((m) => m.userId === auth.userId);
+    if (auth.role !== Role.ADMIN) {
+      const isMember =
+        project.memberships.some((m) => m.userId === auth.userId) ||
+        project.ownerId === auth.userId;
       if (!isMember) {
         return next(new ForbiddenError("You are not a member of this project"));
       }

@@ -31,6 +31,7 @@ import {
   Calendar,
   CheckCircle2,
   AlertCircle,
+  ShieldAlert,
   Clock,
   ArrowLeft,
 } from "lucide-react";
@@ -84,6 +85,7 @@ export default function ProjectDetailPage({
   const [orgMembers, setOrgMembers] = useState<{ id: string; user: { id: string; name: string; email: string } }[]>([]);
   const [activeTab, setActiveTab] = useState<"board" | "list" | "bugs" | "members" | "settings">("board");
   const [isLoading, setIsLoading] = useState(true);
+  const [accessError, setAccessError] = useState<string | null>(null);
 
   // Create Issue Modal State
   const [isIssueModalOpen, setIsIssueModalOpen] = useState(false);
@@ -114,6 +116,7 @@ export default function ProjectDetailPage({
 
   const fetchProjectData = useCallback(async () => {
     setIsLoading(true);
+    setAccessError(null);
     try {
       const [projData, issuesData] = await Promise.all([
         api.get<ProjectDetail>(`/projects/${projectId}`),
@@ -130,7 +133,11 @@ export default function ProjectDetailPage({
       setIssues(rawIssues);
     } catch (err: unknown) {
       if (err instanceof ApiClientError) {
-        toastError(err.message, "Failed to load project");
+        if (err.statusCode === 403 || err.message.toLowerCase().includes("not a member")) {
+          setAccessError(err.message || "You are not a member of this project");
+        } else {
+          toastError(err.message, "Failed to load project");
+        }
       }
     } finally {
       setIsLoading(false);
@@ -285,12 +292,58 @@ export default function ProjectDetailPage({
     }
   };
 
-  if (isLoading || !project) {
+  if (accessError) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center p-4">
+        <div className="max-w-md w-full text-center space-y-4 p-8 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl">
+          <div className="mx-auto w-14 h-14 rounded-2xl bg-rose-100 dark:bg-rose-950/80 flex items-center justify-center text-rose-600 dark:text-rose-400 mb-2">
+            <ShieldAlert className="w-7 h-7" />
+          </div>
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white">Project Access Restricted</h2>
+          <p className="text-sm text-slate-600 dark:text-slate-400">
+            {accessError}
+          </p>
+          <p className="text-xs text-slate-500 dark:text-slate-500">
+            You are only allowed to see projects you have been assigned to. Contact your Project Manager or Admin to be added to this project.
+          </p>
+          <div className="pt-3 flex flex-col sm:flex-row gap-2 justify-center">
+            <Link href="/projects">
+              <Button variant="primary" size="sm" className="w-full sm:w-auto">
+                <ArrowLeft className="w-3.5 h-3.5 mr-1.5" />
+                <span>Back to My Projects</span>
+              </Button>
+            </Link>
+            <Link href="/dashboard">
+              <Button variant="outline" size="sm" className="w-full sm:w-auto">
+                <span>Dashboard</span>
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (isLoading) {
     return (
       <div className="space-y-6">
         <Skeleton className="h-8 w-48" />
         <Skeleton className="h-40 rounded-2xl" />
         <Skeleton className="h-96 rounded-2xl" />
+      </div>
+    );
+  }
+
+  if (!project) {
+    return (
+      <div className="min-h-[50vh] flex items-center justify-center">
+        <EmptyState
+          icon={FolderKanban}
+          title="Project not found"
+          description="The requested project does not exist or you do not have permission to access it."
+          actionLabel="Back to My Projects"
+          onAction={() => router.push("/projects")}
+        />
       </div>
     );
   }

@@ -10,6 +10,8 @@ export class ActivityController {
 
       const result = await ActivityService.getOrganizationActivity(
         auth.organizationId,
+        auth.userId,
+        auth.role,
         {
           page: req.query.page ? parseInt(req.query.page as string, 10) : 1,
           pageSize: req.query.pageSize ? parseInt(req.query.pageSize as string, 10) : 20,

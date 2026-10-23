@@ -7,21 +7,23 @@ export class DashboardService {
       organizationId: orgId,
     };
 
-    if (role === Role.MEMBER) {
-      projectWhere.memberships = {
-        some: { userId },
-      };
+    if (role !== Role.ADMIN) {
+      projectWhere.OR = [
+        { ownerId: userId },
+        { memberships: { some: { userId } } },
+      ];
     }
 
     const issueWhere: Prisma.IssueWhereInput = {
       organizationId: orgId,
     };
 
-    if (role === Role.MEMBER) {
+    if (role !== Role.ADMIN) {
       issueWhere.project = {
-        memberships: {
-          some: { userId },
-        },
+        OR: [
+          { ownerId: userId },
+          { memberships: { some: { userId } } },
+        ],
       };
     }
 
@@ -105,7 +107,24 @@ export class DashboardService {
 
       // 9. Recent Activity
       prisma.activityLog.findMany({
-        where: { organizationId: orgId },
+        where: {
+          organizationId: orgId,
+          ...(role !== Role.ADMIN
+            ? {
+                OR: [
+                  { projectId: null },
+                  {
+                    project: {
+                      OR: [
+                        { ownerId: userId },
+                        { memberships: { some: { userId } } },
+                      ],
+                    },
+                  },
+                ],
+              }
+            : {}),
+        },
         take: 10,
         orderBy: { createdAt: "desc" },
         include: {
