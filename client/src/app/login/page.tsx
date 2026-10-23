@@ -53,12 +53,6 @@ function LoginForm() {
     }
   };
 
-  const fillDemo = (demoEmail: string) => {
-    setEmail(demoEmail);
-    setPassword("Password123!");
-    setFieldErrors({});
-  };
-
   const loginAsDemo = async (demoEmail: string) => {
     setEmail(demoEmail);
     setPassword("Password123!");
@@ -80,17 +74,21 @@ function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-slate-950">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-slate-50 dark:bg-slate-950 transition-colors">
       <div className="w-full max-w-md space-y-6">
         <div className="text-center space-y-2">
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-600 to-indigo-400 text-white shadow-lg shadow-indigo-600/30 mb-2">
-            <Briefcase className="w-6 h-6" />
+            <Briefcase className="w-6 h-6 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">Welcome back to TeamFlow</h1>
-          <p className="text-sm text-slate-400">Sign in to manage projects and record visual bug reports</p>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+            Welcome back to TeamFlow
+          </h1>
+          <p className="text-sm text-slate-600 dark:text-slate-400">
+            Sign in to manage projects and record visual bug reports
+          </p>
         </div>
 
-        <Card className="border-slate-800 bg-slate-900/90 shadow-2xl">
+        <Card className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl">
           <form onSubmit={handleSubmit}>
             <CardHeader>
               <CardTitle>Sign in to your account</CardTitle>
@@ -103,10 +101,14 @@ function LoginForm() {
                 type="email"
                 placeholder="developer@company.com"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (fieldErrors.email) setFieldErrors((prev) => ({ ...prev, email: undefined }));
+                }}
                 error={fieldErrors.email}
                 required
                 autoComplete="email"
+                disabled={isLoading}
               />
 
               <Input
@@ -114,16 +116,21 @@ function LoginForm() {
                 type="password"
                 placeholder="••••••••"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (fieldErrors.password) setFieldErrors((prev) => ({ ...prev, password: undefined }));
+                }}
                 error={fieldErrors.password}
                 required
                 autoComplete="current-password"
+                disabled={isLoading}
               />
 
               <Button
                 type="submit"
+                variant="primary"
                 className="w-full mt-2"
-                size="lg"
+                size="md"
                 isLoading={isLoading}
               >
                 <span>Sign In</span>
@@ -131,17 +138,20 @@ function LoginForm() {
               </Button>
             </CardContent>
 
-            <CardFooter className="flex-col gap-4 text-center">
-              <p className="text-xs text-slate-400">
+            <CardFooter className="flex flex-col space-y-4 pt-2">
+              <p className="text-xs text-center text-slate-600 dark:text-slate-400">
                 Don&apos;t have an account yet?{" "}
-                <Link href="/register" className="text-indigo-400 hover:text-indigo-300 font-medium underline">
+                <Link
+                  href="/register"
+                  className="font-semibold text-indigo-600 dark:text-indigo-400 hover:underline"
+                >
                   Create an account
                 </Link>
               </p>
 
-              {/* Demo Logins Section */}
-              <div className="w-full pt-3 border-t border-slate-800">
-                <p className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold mb-2">
+              {/* Quick Demo Credentials */}
+              <div className="pt-4 border-t border-slate-100 dark:border-slate-800 w-full space-y-2">
+                <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-center">
                   Quick Demo Credentials (1-Click Sign In)
                 </p>
                 <div className="grid grid-cols-3 gap-2">
@@ -149,28 +159,28 @@ function LoginForm() {
                     type="button"
                     disabled={isLoading}
                     onClick={() => loginAsDemo("admin@teamflow.dev")}
-                    className="p-2 rounded-lg bg-slate-800 hover:bg-indigo-600 hover:text-white text-xs font-semibold text-slate-200 transition-all border border-slate-700/60 flex flex-col items-center justify-center gap-0.5 cursor-pointer disabled:opacity-50"
+                    className="p-2 rounded-lg bg-slate-100 hover:bg-indigo-600 hover:text-white dark:bg-slate-800 dark:hover:bg-indigo-600 dark:hover:text-white text-xs font-semibold text-slate-800 dark:text-slate-200 transition-all border border-slate-200 dark:border-slate-700/60 flex flex-col items-center justify-center gap-0.5 cursor-pointer disabled:opacity-50"
                   >
                     <span>Admin</span>
-                    <span className="text-[10px] text-slate-400 font-normal">Full Access</span>
+                    <span className="text-[10px] text-slate-500 dark:text-slate-400 font-normal">Full Access</span>
                   </button>
                   <button
                     type="button"
                     disabled={isLoading}
                     onClick={() => loginAsDemo("pm@teamflow.dev")}
-                    className="p-2 rounded-lg bg-slate-800 hover:bg-indigo-600 hover:text-white text-xs font-semibold text-slate-200 transition-all border border-slate-700/60 flex flex-col items-center justify-center gap-0.5 cursor-pointer disabled:opacity-50"
+                    className="p-2 rounded-lg bg-slate-100 hover:bg-indigo-600 hover:text-white dark:bg-slate-800 dark:hover:bg-indigo-600 dark:hover:text-white text-xs font-semibold text-slate-800 dark:text-slate-200 transition-all border border-slate-200 dark:border-slate-700/60 flex flex-col items-center justify-center gap-0.5 cursor-pointer disabled:opacity-50"
                   >
                     <span>PM</span>
-                    <span className="text-[10px] text-slate-400 font-normal">Projects</span>
+                    <span className="text-[10px] text-slate-500 dark:text-slate-400 font-normal">Projects</span>
                   </button>
                   <button
                     type="button"
                     disabled={isLoading}
                     onClick={() => loginAsDemo("member@teamflow.dev")}
-                    className="p-2 rounded-lg bg-slate-800 hover:bg-indigo-600 hover:text-white text-xs font-semibold text-slate-200 transition-all border border-slate-700/60 flex flex-col items-center justify-center gap-0.5 cursor-pointer disabled:opacity-50"
+                    className="p-2 rounded-lg bg-slate-100 hover:bg-indigo-600 hover:text-white dark:bg-slate-800 dark:hover:bg-indigo-600 dark:hover:text-white text-xs font-semibold text-slate-800 dark:text-slate-200 transition-all border border-slate-200 dark:border-slate-700/60 flex flex-col items-center justify-center gap-0.5 cursor-pointer disabled:opacity-50"
                   >
                     <span>Member</span>
-                    <span className="text-[10px] text-slate-400 font-normal">Bugs / Dev</span>
+                    <span className="text-[10px] text-slate-500 dark:text-slate-400 font-normal">Bugs / Dev</span>
                   </button>
                 </div>
               </div>
@@ -184,7 +194,7 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-slate-950 flex items-center justify-center" />}>
+    <Suspense fallback={<div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center" />}>
       <LoginForm />
     </Suspense>
   );

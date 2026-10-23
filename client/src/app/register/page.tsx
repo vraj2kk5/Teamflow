@@ -24,22 +24,27 @@ export default function RegisterPage() {
   const [orgName, setOrgName] = useState("");
   const [inviteCode, setInviteCode] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  const [fieldErrors, setFieldErrors] = useState<{
+    name?: string;
+    email?: string;
+    password?: string;
+    orgName?: string;
+    inviteCode?: string;
+  }>({});
 
   const validate = () => {
-    const errs: Record<string, string> = {};
+    const errs: typeof fieldErrors = {};
     if (!name.trim()) errs.name = "Full name is required";
     if (!email.trim()) errs.email = "Email is required";
     else if (!/\S+@\S+\.\S+/.test(email)) errs.email = "Invalid email format";
-
     if (!password) errs.password = "Password is required";
     else if (password.length < 8) errs.password = "Password must be at least 8 characters";
 
-    if (mode === "create" && !orgName.trim()) {
-      errs.orgName = "Organization name is required";
-    }
-    if (mode === "join" && !inviteCode.trim()) {
-      errs.inviteCode = "Invite code is required";
+    if (mode === "create") {
+      if (!orgName.trim()) errs.orgName = "Organization name is required";
+    } else {
+      if (!inviteCode.trim()) errs.inviteCode = "Invite code is required";
     }
 
     setFieldErrors(errs);
@@ -52,21 +57,26 @@ export default function RegisterPage() {
 
     setIsLoading(true);
     try {
-      await register(
-        name.trim(),
-        email.trim(),
+      await register({
+        name: name.trim(),
+        email: email.trim(),
         password,
-        mode === "create" ? orgName.trim() : undefined,
-        mode === "join" ? inviteCode.trim() : undefined
+        organizationName: mode === "create" ? orgName.trim() : undefined,
+        inviteCode: mode === "join" ? inviteCode.trim().toUpperCase() : undefined,
+      });
+
+      toastSuccess(
+        mode === "create"
+          ? "Account and organization created successfully!"
+          : "Successfully joined organization!"
       );
-      toastSuccess("Account created successfully!");
       router.push("/dashboard");
     } catch (err: unknown) {
       if (err instanceof ApiClientError) {
-        if (err.details && err.details.length > 0) {
-          const newErrs: Record<string, string> = {};
+        if (err.details) {
+          const newErrs: typeof fieldErrors = {};
           err.details.forEach((d) => {
-            if (d.field) newErrs[d.field] = d.message;
+            if (d.field) (newErrs as Record<string, string>)[d.field] = d.message;
           });
           setFieldErrors(newErrs);
         }
@@ -80,24 +90,28 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-slate-950">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-slate-50 dark:bg-slate-950 transition-colors">
       <div className="w-full max-w-lg space-y-6">
         <div className="text-center space-y-2">
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-600 to-indigo-400 text-white shadow-lg shadow-indigo-600/30 mb-2">
-            <Briefcase className="w-6 h-6" />
+            <Briefcase className="w-6 h-6 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">Create your TeamFlow account</h1>
-          <p className="text-sm text-slate-400">Collaborate with your engineering team and report bugs visually</p>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+            Create your TeamFlow account
+          </h1>
+          <p className="text-sm text-slate-600 dark:text-slate-400">
+            Collaborate with your engineering team and report bugs visually
+          </p>
         </div>
 
-        <Card className="border-slate-800 bg-slate-900/90 shadow-2xl">
+        <Card className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl">
           <form onSubmit={handleSubmit}>
             <CardHeader>
               <CardTitle>Sign Up</CardTitle>
               <CardDescription>Fill out your details to get started</CardDescription>
 
               {/* Mode Toggle Tabs */}
-              <div className="grid grid-cols-2 gap-2 mt-4 p-1 rounded-xl bg-slate-950 border border-slate-800">
+              <div className="grid grid-cols-2 gap-2 mt-4 p-1 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
                 <button
                   type="button"
                   onClick={() => setMode("create")}
@@ -105,7 +119,7 @@ export default function RegisterPage() {
                     "flex items-center justify-center gap-2 py-2 text-xs font-semibold rounded-lg transition-all",
                     mode === "create"
                       ? "bg-indigo-600 text-white shadow-sm"
-                      : "text-slate-400 hover:text-slate-200"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
                   )}
                 >
                   <Building className="w-3.5 h-3.5" />
@@ -118,7 +132,7 @@ export default function RegisterPage() {
                     "flex items-center justify-center gap-2 py-2 text-xs font-semibold rounded-lg transition-all",
                     mode === "join"
                       ? "bg-indigo-600 text-white shadow-sm"
-                      : "text-slate-400 hover:text-slate-200"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
                   )}
                 >
                   <KeyRound className="w-3.5 h-3.5" />
@@ -194,9 +208,9 @@ export default function RegisterPage() {
             </CardContent>
 
             <CardFooter className="justify-center text-center">
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-600 dark:text-slate-400">
                 Already have an account?{" "}
-                <Link href="/login" className="text-indigo-400 hover:text-indigo-300 font-medium underline">
+                <Link href="/login" className="text-indigo-600 dark:text-indigo-400 hover:underline font-semibold">
                   Sign in
                 </Link>
               </p>
