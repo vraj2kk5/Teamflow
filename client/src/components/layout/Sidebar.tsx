@@ -13,7 +13,6 @@ import {
   Activity,
   User,
   Settings,
-  ShieldCheck,
   Briefcase,
   Building2,
 } from "lucide-react";
@@ -39,13 +38,12 @@ const navItems: NavItem[] = [
   { label: "Settings", href: "/settings", icon: Settings },
 ];
 
-export function Sidebar({
-  className,
-  onNavigate,
-}: {
-  className?: string;
+interface SidebarProps {
   onNavigate?: () => void;
-}) {
+  className?: string;
+}
+
+export function Sidebar({ onNavigate, className }: SidebarProps) {
   const pathname = usePathname();
   const { organization, role } = useAuth();
 
@@ -57,23 +55,30 @@ export function Sidebar({
       )}
     >
       {/* Brand & Organization */}
-      <div className="p-5 border-b border-slate-200 dark:border-slate-800/80">
+      <div className="p-4 border-b border-slate-200 dark:border-slate-800/80 space-y-3">
         <Link
           href="/dashboard"
-          className="flex items-center gap-2.5 text-slate-900 dark:text-white font-bold text-lg tracking-tight group"
           onClick={onNavigate}
+          className="flex items-center gap-2.5 group"
         >
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-indigo-600 to-indigo-400 flex items-center justify-center text-white shadow-md shadow-indigo-600/30 group-hover:scale-105 transition-transform">
-            <Briefcase className="w-4 h-4 text-white" />
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-400 flex items-center justify-center text-white shadow-md shadow-indigo-500/20 group-hover:scale-105 transition-transform">
+            <Briefcase className="w-4 h-4" />
           </div>
-          <span>TeamFlow</span>
+          <div>
+            <span className="font-bold text-base text-slate-900 dark:text-white tracking-tight leading-none block">
+              TeamFlow
+            </span>
+            <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest font-mono">
+              Workspace
+            </span>
+          </div>
         </Link>
 
         {organization && (
-          <div className="mt-4 p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-between">
-            <div className="flex items-center gap-2 min-w-0">
-              <Building2 className="w-4 h-4 text-indigo-500 dark:text-indigo-400 shrink-0" />
-              <span className="text-xs font-medium text-slate-800 dark:text-slate-200 truncate">
+          <div className="flex items-center justify-between p-2 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 text-xs">
+            <div className="flex items-center gap-2 truncate">
+              <Building2 className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+              <span className="font-semibold text-slate-800 dark:text-slate-200 truncate">
                 {organization.name}
               </span>
             </div>
@@ -82,27 +87,27 @@ export function Sidebar({
                 size="sm"
                 variant={
                   role === "ADMIN"
-                    ? "danger"
+                    ? "primary"
                     : role === "PROJECT_MANAGER"
-                    ? "warning"
+                    ? "purple"
                     : "neutral"
                 }
-                className="text-[10px] shrink-0"
+                className="text-[9px] uppercase tracking-wider px-1.5 py-0 shrink-0"
               >
-                {role === "ADMIN" ? "Admin" : role === "PROJECT_MANAGER" ? "PM" : "Member"}
+                {role === "PROJECT_MANAGER" ? "PM" : role}
               </Badge>
             )}
           </div>
         )}
       </div>
 
-      {/* Navigation Links */}
+      {/* Navigation */}
       <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
         {navItems.map((item) => {
-          const Icon = item.icon;
           const isActive =
             pathname === item.href ||
             (item.href !== "/dashboard" && pathname.startsWith(item.href));
+          const Icon = item.icon;
 
           return (
             <Link
@@ -127,15 +132,6 @@ export function Sidebar({
           );
         })}
       </nav>
-
-      {/* Footer System Status */}
-      <div className="p-4 border-t border-slate-200 dark:border-slate-800/80 text-[11px] text-slate-500 dark:text-slate-400 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span>PostgreSQL & Storage Active</span>
-        </div>
-        <ShieldCheck className="w-4 h-4 text-slate-400" />
-      </div>
     </aside>
   );
 }
