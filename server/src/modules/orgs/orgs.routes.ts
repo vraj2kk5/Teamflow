@@ -7,6 +7,9 @@ const orgsRouter = Router();
 
 orgsRouter.use(requireAuth);
 
+orgsRouter.post("/", OrgsController.create);
+orgsRouter.post("/join", OrgsController.join);
+
 orgsRouter.get("/current", OrgsController.getCurrent);
 orgsRouter.patch("/:id", requireOrgRole(Role.ADMIN), OrgsController.update);
 orgsRouter.get("/:id/members", OrgsController.getMembers);

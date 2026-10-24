@@ -5,6 +5,7 @@ import { Role } from "@prisma/client";
 import { AddMemberInput, UpdateOrgInput } from "./orgs.schema";
 import { NotificationsService } from "../notifications/notifications.service";
 import { EmailService } from "../../lib/email";
+import { AuthService } from "../auth/auth.service";
 
 export class OrgsService {
   static async getCurrentOrg(orgId: string, role?: Role) {
@@ -383,6 +384,115 @@ export class OrgsService {
       deletedOrgId: orgId,
       deletedOrgName: org.name,
       message: `Organization "${org.name}" has been permanently deleted.`,
+    };
+  }
+
+  static async createOrg(userId: string, input: { name?: string }) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+    if (!user) throw new NotFoundError("User not found");
+
+    const orgName = (input.name || "").trim() || `${user.name}'s Organization`;
+    const baseSlug = orgName
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+    const slug = `${baseSlug || "org"}-${crypto.randomBytes(3).toString("hex")}`;
+    const inviteCode = `TF-${crypto.randomBytes(4).toString("hex").toUpperCase()}`;
+
+    return prisma.$transaction(async (tx) => {
+      const org = await tx.organization.create({
+        data: {
+          name: orgName,
+          slug,
+          inviteCode,
+        },
+      });
+
+      await tx.organizationMembership.create({
+        data: {
+          userId,
+          organizationId: org.id,
+          role: Role.ADMIN,
+        },
+      });
+
+      await tx.activityLog.create({
+        data: {
+          organizationId: org.id,
+          actorId: userId,
+          action: "MEMBER_ADDED",
+          metadata: { role: Role.ADMIN, event: "ORGANIZATION_CREATED" },
+        },
+      });
+
+      const token = AuthService.signToken({
+        userId,
+        email: user.email,
+        organizationId: org.id,
+      });
+
+      return {
+        organization: org,
+        role: Role.ADMIN,
+        token,
+      };
+    });
+  }
+
+  static async joinOrg(userId: string, input: { inviteCode: string }) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+    if (!user) throw new NotFoundError("User not found");
+
+    const code = (input.inviteCode || "").trim().toUpperCase();
+    if (!code) throw new BadRequestError("Invite code is required");
+
+    const org = await prisma.organization.findUnique({
+      where: { inviteCode: code },
+    });
+    if (!org) throw new NotFoundError("Invalid organization invite code");
+
+    let membership = await prisma.organizationMembership.findUnique({
+      where: {
+        userId_organizationId: {
+          userId,
+          organizationId: org.id,
+        },
+      },
+    });
+
+    if (!membership) {
+      membership = await prisma.organizationMembership.create({
+        data: {
+          userId,
+          organizationId: org.id,
+          role: Role.MEMBER,
+        },
+      });
+
+      await prisma.activityLog.create({
+        data: {
+          organizationId: org.id,
+          actorId: userId,
+          action: "MEMBER_ADDED",
+          metadata: { role: Role.MEMBER, method: "INVITE_CODE" },
+        },
+      });
+    }
+
+    const token = AuthService.signToken({
+      userId,
+      email: user.email,
+      organizationId: org.id,
+    });
+
+    return {
+      organization: org,
+      role: membership.role,
+      token,
     };
   }
 }

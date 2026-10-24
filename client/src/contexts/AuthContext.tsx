@@ -27,7 +27,12 @@ interface AuthContextType {
   role: UserRole | null;
   allOrganizations: (Organization & { role: UserRole })[];
   isLoading: boolean;
-  login: (email: string, password: string, rememberMe?: boolean) => Promise<void>;
+  login: (email: string, password: string, rememberMe?: boolean) => Promise<{
+    user: User;
+    organization: Organization | null;
+    role: UserRole | null;
+    token?: string;
+  }>;
   register: (
     name: string,
     email: string,
@@ -35,6 +40,16 @@ interface AuthContextType {
     orgName?: string,
     inviteCode?: string
   ) => Promise<void>;
+  createOrganization: (name: string) => Promise<{
+    organization: Organization;
+    role: UserRole;
+    token?: string;
+  }>;
+  joinOrganization: (inviteCode: string) => Promise<{
+    organization: Organization;
+    role: UserRole;
+    token?: string;
+  }>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
   switchOrganization: (orgId: string) => Promise<void>;
@@ -79,8 +94,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (email: string, password: string, rememberMe = false) => {
     const res = await api.post<{
       user: User;
-      organization: Organization;
-      role: UserRole;
+      organization: Organization | null;
+      role: UserRole | null;
       token?: string;
     }>("/auth/login", { email, password, rememberMe });
 
@@ -92,6 +107,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setOrganization(res.organization);
     setRole(res.role);
     await refreshUser();
+    return res;
+  };
+
+  const createOrganization = async (name: string) => {
+    const res = await api.post<{
+      organization: Organization;
+      role: UserRole;
+      token?: string;
+    }>("/organizations", { name });
+
+    if (res.token) {
+      api.setToken(res.token);
+    }
+
+    setOrganization(res.organization);
+    setRole(res.role);
+    await refreshUser();
+    return res;
+  };
+
+  const joinOrganization = async (inviteCode: string) => {
+    const res = await api.post<{
+      organization: Organization;
+      role: UserRole;
+      token?: string;
+    }>("/organizations/join", { inviteCode });
+
+    if (res.token) {
+      api.setToken(res.token);
+    }
+
+    setOrganization(res.organization);
+    setRole(res.role);
+    await refreshUser();
+    return res;
   };
 
   const register = async (
@@ -158,6 +208,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isLoading,
         login,
         register,
+        createOrganization,
+        joinOrganization,
         logout,
         refreshUser,
         switchOrganization,

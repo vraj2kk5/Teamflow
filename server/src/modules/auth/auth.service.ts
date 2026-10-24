@@ -168,18 +168,14 @@ export class AuthService {
       throw new UnauthorizedError("Invalid email or password");
     }
 
-    if (!user.memberships.length) {
-      throw new UnauthorizedError("User does not belong to any organization");
-    }
-
-    const activeMembership = user.memberships[0];
+    const activeMembership = user.memberships[0] || null;
 
     const tokenExpires = input.rememberMe ? "30d" : "1d";
     const token = this.signToken(
       {
         userId: user.id,
         email: user.email,
-        organizationId: activeMembership.organizationId,
+        organizationId: activeMembership ? activeMembership.organizationId : "",
       },
       tokenExpires
     );
@@ -193,8 +189,8 @@ export class AuthService {
         jobTitle: user.jobTitle,
         bio: user.bio,
       },
-      organization: activeMembership.organization,
-      role: activeMembership.role,
+      organization: activeMembership ? activeMembership.organization : null,
+      role: activeMembership ? activeMembership.role : null,
       token,
     };
   }

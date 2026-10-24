@@ -59,7 +59,7 @@ function LoginForm() {
 
     setIsLoading(true);
     try {
-      await login(email.trim(), password, rememberMe);
+      const authRes = await login(email.trim(), password, rememberMe);
       if (typeof window !== "undefined") {
         if (rememberMe) {
           localStorage.setItem("teamflow_remembered_email", email.trim());
@@ -77,7 +77,11 @@ function LoginForm() {
         }
       }
       toastSuccess("Logged in successfully!");
-      router.push(nextUrl);
+      if (!authRes?.organization) {
+        router.push("/organization-deleted?name=Previous%20Workspace");
+      } else {
+        router.push(nextUrl);
+      }
     } catch (err: unknown) {
       if (err instanceof ApiClientError) {
         toastError(err.message, "Login Failed");

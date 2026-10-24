@@ -67,7 +67,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </p>
           <div className="pt-2 flex flex-col gap-2">
             <button
-              onClick={() => router.push("/register")}
+              onClick={() => router.push("/organization-deleted?name=Workspace")}
               className="w-full py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs shadow-md shadow-indigo-600/20 transition-all cursor-pointer"
             >
               Create or Join Organization
