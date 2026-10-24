@@ -723,7 +723,13 @@ export function IssuesView({ pageMode = "ISSUES" }: IssuesViewProps) {
                 {issues.map((i) => (
                   <tr
                     key={i.id}
-                    onClick={() => router.push(`/issues/${i.id}`)}
+                    onClick={() =>
+                      router.push(
+                        i.type === "TASK" || isTasksMode
+                          ? `/tasks/${i.id}`
+                          : `/issues/${i.id}`
+                      )
+                    }
                     className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer group"
                   >
                     <td className="px-4 py-3.5 font-mono text-xs text-indigo-400 font-semibold">

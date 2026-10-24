@@ -248,7 +248,7 @@ export default function MyTasksPage() {
                     </div>
 
                     <Link
-                      href={`/issues/${task.id}`}
+                      href={task.type === "TASK" ? `/tasks/${task.id}` : `/issues/${task.id}`}
                       className="block text-sm font-semibold text-slate-900 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-300 transition-colors truncate"
                     >
                       {task.title}
@@ -284,7 +284,7 @@ export default function MyTasksPage() {
                   />
 
                   <Link
-                    href={`/issues/${task.id}`}
+                    href={task.type === "TASK" ? `/tasks/${task.id}` : `/issues/${task.id}`}
                     className="p-2 text-slate-400 hover:text-slate-700 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                     title="View details"
                   >

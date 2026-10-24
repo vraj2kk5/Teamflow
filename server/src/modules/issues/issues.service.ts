@@ -308,13 +308,14 @@ export class IssuesService {
       });
 
       if (issue.assignee && issue.assigneeId !== reporterId) {
+        const isBug = issue.type === "BUG";
         await tx.notification.create({
           data: {
             userId: issue.assignee.id,
             actorId: reporterId,
-            title: "New Task Assigned",
+            title: isBug ? "New Bug Assigned" : "New Task Assigned",
             message: `${issue.reporter.name} assigned you to ${issue.key}: "${issue.title}"`,
-            link: `/issues/${issue.id}`,
+            link: isBug ? `/issues/${issue.id}` : `/tasks/${issue.id}`,
             type: "ASSIGNMENT",
           },
         });
@@ -326,7 +327,7 @@ export class IssuesService {
           taskKey: issue.key,
           taskTitle: issue.title,
           actorName: issue.reporter.name,
-          taskUrl: `${clientOrigin}/issues/${issue.id}`,
+          taskUrl: `${clientOrigin}/${isBug ? "issues" : "tasks"}/${issue.id}`,
         });
       }
 
@@ -457,13 +458,14 @@ export class IssuesService {
         });
         const actorName = actor?.name || "A team member";
 
+        const isBug = updated.type === "BUG";
         await tx.notification.create({
           data: {
             userId: input.assigneeId,
             actorId,
-            title: "Task Assigned to You",
+            title: isBug ? "Bug Assigned to You" : "Task Assigned to You",
             message: `${actorName} assigned you to ${updated.key}: "${updated.title}"`,
-            link: `/issues/${updated.id}`,
+            link: isBug ? `/issues/${updated.id}` : `/tasks/${updated.id}`,
             type: "ASSIGNMENT",
           },
         });
@@ -475,7 +477,7 @@ export class IssuesService {
           taskKey: updated.key,
           taskTitle: updated.title,
           actorName,
-          taskUrl: `${clientOrigin}/issues/${updated.id}`,
+          taskUrl: `${clientOrigin}/${isBug ? "issues" : "tasks"}/${updated.id}`,
         });
       }
 
@@ -528,13 +530,14 @@ export class IssuesService {
       });
 
       if (existing.assigneeId && existing.assigneeId !== actorId) {
+        const isBug = updated.type === "BUG";
         await tx.notification.create({
           data: {
             userId: existing.assigneeId,
             actorId,
-            title: "Task Status Updated",
+            title: isBug ? "Bug Status Updated" : "Task Status Updated",
             message: `${updated.key}: "${updated.title}" was moved to ${input.status}`,
-            link: `/issues/${updated.id}`,
+            link: isBug ? `/issues/${updated.id}` : `/tasks/${updated.id}`,
             type: "STATUS_CHANGED",
           },
         });

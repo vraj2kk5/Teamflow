@@ -87,7 +87,7 @@ export class CommentsService {
             actorId: authorId,
             title: `New Comment on ${issue.key}`,
             message: `${comment.author.name}: "${input.body.substring(0, 50)}${input.body.length > 50 ? '...' : ''}"`,
-            link: `/issues/${issue.id}`,
+            link: issue.type === "BUG" ? `/issues/${issue.id}` : `/tasks/${issue.id}`,
             type: "COMMENT_ADDED",
           },
         });

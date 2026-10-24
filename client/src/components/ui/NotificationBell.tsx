@@ -118,7 +118,21 @@ export function NotificationBell() {
     const label = getLinkLabel(item);
     if (item.link && label && !item.link.includes("/dashboard")) {
       setIsOpen(false);
-      router.push(item.link);
+      let target = item.link;
+      if (label === "View task") {
+        if (target === "/issues") {
+          target = "/tasks";
+        } else if (target.startsWith("/issues/")) {
+          target = target.replace("/issues/", "/tasks/");
+        }
+      } else if (label === "View bug") {
+        if (target === "/tasks") {
+          target = "/issues";
+        } else if (target.startsWith("/tasks/")) {
+          target = target.replace("/tasks/", "/issues/");
+        }
+      }
+      router.push(target);
     }
   };
 
