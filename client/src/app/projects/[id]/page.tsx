@@ -441,7 +441,7 @@ export default function ProjectDetailPage({
           </div>
 
           {canManage && (
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2.5 flex-wrap">
               <Button
                 size="md"
                 variant="outline"
@@ -452,6 +452,17 @@ export default function ProjectDetailPage({
               >
                 <Plus className="w-4 h-4 mr-1" />
                 <span>New Task</span>
+              </Button>
+
+              <Button
+                size="md"
+                variant="ghost"
+                onClick={() => setIsDeleteDialogOpen(true)}
+                className="text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/50 border border-rose-200 dark:border-rose-900/60"
+                title="Delete this project"
+              >
+                <Trash2 className="w-4 h-4 mr-1.5" />
+                <span>Delete Project</span>
               </Button>
             </div>
           )}

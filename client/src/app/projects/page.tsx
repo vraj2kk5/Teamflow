@@ -15,6 +15,7 @@ import { Skeleton } from "../../components/ui/Skeleton";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { Avatar } from "../../components/ui/Avatar";
 import { Modal } from "../../components/ui/Modal";
+import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import {
   FolderKanban,
   Plus,
@@ -22,6 +23,7 @@ import {
   ArrowRight,
   KeyRound,
   Copy,
+  Trash2,
 } from "lucide-react";
 
 interface ProjectStats {
@@ -77,6 +79,10 @@ export default function ProjectsPage() {
   const [joinCode, setJoinCode] = useState("");
   const [isJoining, setIsJoining] = useState(false);
   const [joinError, setJoinError] = useState("");
+
+  // Delete Project State
+  const [deletingProject, setDeletingProject] = useState<ProjectItem | null>(null);
+  const [isDeletingProject, setIsDeletingProject] = useState(false);
 
   const canCreate = role === "ADMIN" || role === "PROJECT_MANAGER";
 
@@ -168,6 +174,25 @@ export default function ProjectsPage() {
       }
     } finally {
       setIsJoining(false);
+    }
+  };
+
+  const handleDeleteProject = async () => {
+    if (!deletingProject) return;
+    setIsDeletingProject(true);
+    try {
+      await api.delete(`/projects/${deletingProject.id}`);
+      toastSuccess(`Project "${deletingProject.name}" deleted`);
+      setProjects((prev) => prev.filter((p) => p.id !== deletingProject.id));
+      setDeletingProject(null);
+    } catch (err: unknown) {
+      if (err instanceof ApiClientError) {
+        toastError(err.message, "Failed to delete project");
+      } else {
+        toastError("Failed to delete project");
+      }
+    } finally {
+      setIsDeletingProject(false);
     }
   };
 
@@ -294,20 +319,37 @@ export default function ProjectsPage() {
                         </div>
                       )}
                     </div>
-                    <Badge
-                      size="sm"
-                      variant={
-                        project.status === "ACTIVE"
-                          ? "success"
-                          : project.status === "ON_HOLD"
-                          ? "warning"
-                          : project.status === "COMPLETED"
-                          ? "primary"
-                          : "neutral"
-                      }
-                    >
-                      {project.status.replace("_", " ")}
-                    </Badge>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <Badge
+                        size="sm"
+                        variant={
+                          project.status === "ACTIVE"
+                            ? "success"
+                            : project.status === "ON_HOLD"
+                            ? "warning"
+                            : project.status === "COMPLETED"
+                            ? "primary"
+                            : "neutral"
+                        }
+                      >
+                        {project.status.replace("_", " ")}
+                      </Badge>
+
+                      {canCreate && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setDeletingProject(project);
+                          }}
+                          className="p-1 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/60 dark:hover:text-rose-400 transition-colors"
+                          title="Delete project"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
                   </CardHeader>
 
                   <CardContent className="space-y-4 pt-3">
@@ -482,6 +524,17 @@ export default function ProjectsPage() {
           </div>
         </form>
       </Modal>
+
+      {/* Delete Project Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={Boolean(deletingProject)}
+        onClose={() => setDeletingProject(null)}
+        onConfirm={handleDeleteProject}
+        title={`Delete "${deletingProject?.name}"?`}
+        message="Are you sure you want to delete this project? All associated tasks, bug reports, and media will be permanently deleted. This action cannot be undone."
+        confirmText="Yes, Delete Project"
+        isLoading={isDeletingProject}
+      />
     </div>
   );
 }
