@@ -149,32 +149,29 @@ export default function DashboardPage() {
 
         <div className="flex items-center gap-2.5">
           {role !== "ADMIN" ? (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => router.push("/my-tasks")}
-            >
-              <span>My Tasks</span>
-            </Button>
+            <Link href="/my-tasks">
+              <Button size="sm" variant="outline">
+                <span>My Tasks</span>
+              </Button>
+            </Link>
           ) : (
+            <Link href="/tasks?create=true">
+              <Button size="sm" variant="outline">
+                <Plus className="w-3.5 h-3.5 mr-1" />
+                <span>Give / New Task</span>
+              </Button>
+            </Link>
+          )}
+          <Link href="/bug-reports/new">
             <Button
               size="sm"
-              variant="outline"
-              onClick={() => router.push("/tasks?create=true")}
+              variant="danger"
+              className="bg-rose-600 hover:bg-rose-700 text-white shadow-sm"
             >
-              <Plus className="w-3.5 h-3.5 mr-1" />
-              <span>Give / New Task</span>
+              <Bug className="w-3.5 h-3.5 mr-1.5" />
+              <span>Report a Bug</span>
             </Button>
-          )}
-          <Button
-            size="sm"
-            variant="primary"
-            onClick={() => router.push("/bug-reports/new")}
-            className="bg-rose-600 hover:bg-rose-700 text-white"
-          >
-            <Bug className="w-3.5 h-3.5 mr-1" />
-            <span>Report a Bug</span>
-          </Button>
+          </Link>
         </div>
       </div>
 

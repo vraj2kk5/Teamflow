@@ -78,26 +78,28 @@ export function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
 
         {/* Only Admins and Project Managers can create tasks */}
         {role !== "MEMBER" && (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => router.push("/tasks?create=true")}
-            className="hidden sm:inline-flex border-slate-300 dark:border-slate-700"
-          >
-            <Plus className="w-3.5 h-3.5 mr-1" />
-            <span>New Task</span>
-          </Button>
+          <Link href="/tasks?create=true">
+            <Button
+              size="sm"
+              variant="outline"
+              className="hidden sm:inline-flex border-slate-300 dark:border-slate-700"
+            >
+              <Plus className="w-3.5 h-3.5 mr-1" />
+              <span>New Task</span>
+            </Button>
+          </Link>
         )}
 
-        <Button
-          size="sm"
-          variant="primary"
-          onClick={() => router.push("/bug-reports/new")}
-          className="bg-rose-600 hover:bg-rose-700 text-white focus:ring-rose-500"
-        >
-          <Bug className="w-3.5 h-3.5 text-white" />
-          <span className="text-white">Report a Bug</span>
-        </Button>
+        <Link href="/bug-reports/new">
+          <Button
+            size="sm"
+            variant="danger"
+            className="bg-rose-600 hover:bg-rose-700 text-white focus:ring-rose-500 shadow-sm"
+          >
+            <Bug className="w-3.5 h-3.5 text-white mr-1.5" />
+            <span className="text-white font-medium">Report a Bug</span>
+          </Button>
+        </Link>
 
         {/* User Menu */}
         <div className="relative" ref={dropdownRef}>

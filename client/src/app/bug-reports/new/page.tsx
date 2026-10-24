@@ -34,7 +34,7 @@ import {
 interface ProjectOption {
   id: string;
   name: string;
-  key: string;
+  key?: string;
 }
 
 interface AttachedMediaItem {
@@ -78,7 +78,7 @@ export default function NewBugReportPage() {
     async function loadProjects() {
       setIsLoadingProjects(true);
       try {
-        const res = await api.get<ProjectOption[]>("/projects");
+        const res = await api.get<ProjectOption[]>("/projects?allOrgProjects=true&pageSize=100");
         const list = Array.isArray(res) ? res : (res as unknown as { data?: ProjectOption[] })?.data || [];
         setProjects(Array.isArray(list) ? list : []);
 
@@ -87,8 +87,8 @@ export default function NewBugReportPage() {
 
         if (queryProjId && list.some((p) => p.id === queryProjId)) {
           setProjectId(queryProjId);
-        } else if (list.length > 0 && !projectId) {
-          setProjectId(list[0].id);
+        } else if (list.length > 0) {
+          setProjectId((prev) => prev || list[0].id);
         }
       } catch (err: unknown) {
         if (err instanceof ApiClientError) {
@@ -99,7 +99,7 @@ export default function NewBugReportPage() {
       }
     }
     loadProjects();
-  }, [projectId, toastError]);
+  }, [toastError]);
 
   // Audio callback
   const handleAttachAudio = (file: File, durationSeconds: number) => {
@@ -393,7 +393,7 @@ export default function NewBugReportPage() {
                 >
                   {(Array.isArray(projects) ? projects : []).map((p) => (
                     <option key={p.id} value={p.id}>
-                      {p.name} ({p.key})
+                      {p.name}
                     </option>
                   ))}
                 </Select>

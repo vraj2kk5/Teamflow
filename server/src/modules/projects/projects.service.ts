@@ -20,6 +20,7 @@ export class ProjectsService {
       status?: string;
       page?: number;
       pageSize?: number;
+      allOrgProjects?: string;
     }
   ) {
     const page = Math.max(1, query.page || 1);
@@ -32,7 +33,8 @@ export class ProjectsService {
 
     // Scoping: Regular members see only projects they are members of (or created).
     // Admins and Project Managers can view and manage organization projects.
-    if (role === Role.MEMBER) {
+    // For bug reporting or org project pickers (allOrgProjects === "true"), allow members to select any project in their organization.
+    if (role === Role.MEMBER && query.allOrgProjects !== "true") {
       where.OR = [
         { ownerId: userId },
         { memberships: { some: { userId } } },

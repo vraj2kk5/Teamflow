@@ -118,8 +118,9 @@ export async function requireIssueAccess(
         (m: { userId: string }) => m.userId === auth.userId
       );
       const isAssignee = issue.assigneeId === auth.userId;
-      if (!isProjectMember && !isAssignee) {
-        return next(new ForbiddenError("You are not a member of this issue's project"));
+      const isReporter = issue.reporterId === auth.userId;
+      if (!isProjectMember && !isAssignee && !isReporter) {
+        return next(new ForbiddenError("You do not have access to this issue"));
       }
     }
 
