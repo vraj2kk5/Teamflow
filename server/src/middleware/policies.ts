@@ -117,7 +117,8 @@ export async function requireIssueAccess(
       const isProjectMember = issue.project.memberships.some(
         (m: { userId: string }) => m.userId === auth.userId
       );
-      if (!isProjectMember) {
+      const isAssignee = issue.assigneeId === auth.userId;
+      if (!isProjectMember && !isAssignee) {
         return next(new ForbiddenError("You are not a member of this issue's project"));
       }
     }

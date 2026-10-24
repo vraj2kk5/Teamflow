@@ -129,7 +129,8 @@ export class LocalDiskDriver implements StorageDriver {
       .digest("base64url");
 
     const token = `${payloadB64}.${hmac}`;
-    return `/api/files/${token}`;
+    const serverOrigin = process.env.SERVER_URL || (`http://localhost:` + (env.PORT || 5000));
+    return `${serverOrigin}/api/files/${token}`;
   }
 
   public verifyToken(

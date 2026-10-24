@@ -31,7 +31,14 @@ export function MediaPlayer({
       const res = await api.get<{ accessUrl: string; expiresIn: number }>(
         `/attachments/${attachmentId}/access`
       );
-      setAccessUrl(res.accessUrl);
+      let finalUrl = res.accessUrl;
+      if (finalUrl.startsWith("/")) {
+        const apiOrigin = process.env.NEXT_PUBLIC_API_URL
+          ? process.env.NEXT_PUBLIC_API_URL.replace(/\/api\/?$/, "")
+          : "http://localhost:5000";
+        finalUrl = `${apiOrigin}${finalUrl}`;
+      }
+      setAccessUrl(finalUrl);
     } catch (err: unknown) {
       if (err instanceof ApiClientError) {
         setError(err.message);
