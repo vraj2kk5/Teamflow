@@ -123,6 +123,29 @@ export function NotificationBell() {
     }
   };
 
+  const getLinkLabel = (item: NotificationItem) => {
+    const title = item.title.toLowerCase();
+    const msg = item.message.toLowerCase();
+    const link = (item.link || "").toLowerCase();
+
+    if (title.includes("task") || msg.includes("task")) {
+      return "View task";
+    }
+    if (title.includes("bug") || msg.includes("bug")) {
+      return "View bug";
+    }
+    if (title.includes("project") || link.includes("/projects")) {
+      return "View project";
+    }
+    if (link.includes("/dashboard")) {
+      return "Go to dashboard";
+    }
+    if (link.includes("/issues")) {
+      return "View task";
+    }
+    return "View details";
+  };
+
   return (
     <div className="relative" ref={dropdownRef}>
       <button
@@ -213,7 +236,7 @@ export function NotificationBell() {
 
                     {item.link && (
                       <div className="pt-0.5 flex items-center gap-1 text-[11px] text-indigo-600 dark:text-indigo-400 font-medium">
-                        <span>View issue</span>
+                        <span>{getLinkLabel(item)}</span>
                         <ExternalLink className="w-3 h-3" />
                       </div>
                     )}
