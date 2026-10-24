@@ -44,6 +44,14 @@ export interface SendTaskAssignedEmailOptions {
   taskUrl: string;
 }
 
+export interface SendAdminWelcomeEmailOptions {
+  to: string;
+  recipientName?: string;
+  orgName: string;
+  inviteCode?: string;
+  dashboardUrl: string;
+}
+
 interface OutgoingEmail {
   to: string;
   subject: string;
@@ -299,6 +307,67 @@ export class EmailService {
       logger.info(`📢 Subject: ${subject}`);
       logger.info(`👤 Assigned by: ${actorName}`);
       logger.info(`🔗 View Task: ${taskUrl}`);
+      logger.info(`========================================================================`);
+    }
+  }
+
+  /**
+   * Dispatches a welcome email when a user registers or onboards as an Administrator with a new workspace.
+   */
+  static async sendAdminWelcomeEmail(options: SendAdminWelcomeEmailOptions): Promise<void> {
+    const { to, recipientName, orgName, inviteCode, dashboardUrl } = options;
+
+    const subject = `Welcome to TeamFlow – Your Workspace "${orgName}" is Ready! 🎉`;
+    const text = `Hello ${recipientName || "there"},\n\nWelcome to TeamFlow! Your administrator account and workspace "${orgName}" have been created successfully.\n\nWorkspace: ${orgName}\nAccount Email: ${to}\nRole: Administrator (Full Access)\n${inviteCode ? `Invite Code: ${inviteCode}\n` : ""}Go to your dashboard: ${dashboardUrl}\n\nShare your invite code with team members so they can join your workspace.`;
+    const html = `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 28px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff;">
+        <div style="text-align: center; margin-bottom: 24px;">
+          <div style="display: inline-block; background-color: #4f46e5; color: #ffffff; padding: 8px 16px; border-radius: 8px; font-weight: 700; font-size: 16px; letter-spacing: -0.3px;">
+            TeamFlow
+          </div>
+        </div>
+        <h2 style="color: #1e293b; margin-top: 0; font-size: 20px; text-align: center;">Welcome to TeamFlow, ${recipientName || "Admin"}! 🎉</h2>
+        <p style="color: #475569; font-size: 15px; line-height: 1.6; text-align: center; margin-top: 8px;">
+          Your administrator account and workspace <strong>${orgName}</strong> have been created successfully.
+        </p>
+
+        <div style="padding: 18px; background-color: #f8fafc; border-radius: 10px; margin: 24px 0; border: 1px solid #e2e8f0;">
+          <p style="margin: 0 0 10px; font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Workspace Details</p>
+          <div style="font-size: 14px; color: #1e293b; line-height: 1.8;">
+            <div><strong>Workspace Name:</strong> ${orgName}</div>
+            <div><strong>Account Email:</strong> ${to}</div>
+            <div><strong>Role:</strong> Administrator (Full Access)</div>
+          </div>
+          ${
+            inviteCode
+              ? `
+          <div style="margin-top: 14px; padding-top: 14px; border-top: 1px dashed #cbd5e1;">
+            <p style="margin: 0 0 6px; font-size: 12px; font-weight: 600; color: #64748b;">Your Team Invite Code:</p>
+            <span style="display: inline-block; padding: 6px 14px; background-color: #ede9fe; color: #5b21b6; border-radius: 6px; font-family: monospace; font-size: 16px; font-weight: 700; letter-spacing: 1px;">${inviteCode}</span>
+            <p style="margin: 6px 0 0; font-size: 12px; color: #94a3b8;">Share this code with your teammates so they can join your workspace.</p>
+          </div>`
+              : ""
+          }
+        </div>
+
+        <div style="margin: 28px 0; text-align: center;">
+          <a href="${dashboardUrl}" style="background-color: #4f46e5; color: #ffffff; padding: 12px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px; display: inline-block; box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2);">Go to Dashboard &rarr;</a>
+        </div>
+
+        <p style="color: #94a3b8; font-size: 12px; margin-top: 24px; text-align: center; border-top: 1px solid #f1f5f9; padding-top: 16px;">
+          TeamFlow Project & Issue Management &bull; If you did not create this account, please ignore this email.
+        </p>
+      </div>
+    `;
+
+    const dispatched = await this.dispatchEmail({ to, subject, text, html });
+    if (!dispatched) {
+      logger.info(`========================================================================`);
+      logger.info(`🎉 [ADMIN WELCOME EMAIL] Workspace Created: ${orgName}`);
+      logger.info(`📧 To: ${to} ${recipientName ? `(${recipientName})` : ""}`);
+      logger.info(`📢 Subject: ${subject}`);
+      if (inviteCode) logger.info(`🔑 Invite Code: ${inviteCode}`);
+      logger.info(`🔗 Dashboard: ${dashboardUrl}`);
       logger.info(`========================================================================`);
     }
   }

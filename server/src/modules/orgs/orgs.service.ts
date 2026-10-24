@@ -401,7 +401,7 @@ export class OrgsService {
     const slug = `${baseSlug || "org"}-${crypto.randomBytes(3).toString("hex")}`;
     const inviteCode = `TF-${crypto.randomBytes(4).toString("hex").toUpperCase()}`;
 
-    return prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx) => {
       const org = await tx.organization.create({
         data: {
           name: orgName,
@@ -439,6 +439,19 @@ export class OrgsService {
         token,
       };
     });
+
+    const clientOrigin = process.env.CLIENT_ORIGIN || "http://localhost:3000";
+    await EmailService.sendAdminWelcomeEmail({
+      to: user.email,
+      recipientName: user.name,
+      orgName: result.organization.name,
+      inviteCode: result.organization.inviteCode || undefined,
+      dashboardUrl: `${clientOrigin}/dashboard`,
+    }).catch(() => {
+      // Ignore background email failure
+    });
+
+    return result;
   }
 
   static async joinOrg(userId: string, input: { inviteCode: string }) {

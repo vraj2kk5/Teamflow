@@ -57,7 +57,7 @@ export class AuthService {
 
     const passwordHash = await bcrypt.hash(input.password, 10);
 
-    return prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx) => {
       // 1. Create User
       const user = await tx.user.create({
         data: {
@@ -140,6 +140,22 @@ export class AuthService {
         token,
       };
     });
+
+    // If an Admin created a workspace on registration, send them a confirmation welcome email
+    if (result.role === "ADMIN") {
+      const clientOrigin = process.env.CLIENT_ORIGIN || "http://localhost:3000";
+      await EmailService.sendAdminWelcomeEmail({
+        to: result.user.email,
+        recipientName: result.user.name,
+        orgName: result.organization.name,
+        inviteCode: result.organization.inviteCode || undefined,
+        dashboardUrl: `${clientOrigin}/dashboard`,
+      }).catch((err) => {
+        // Log without interrupting the response
+      });
+    }
+
+    return result;
   }
 
   static async login(input: LoginInput) {
