@@ -98,4 +98,14 @@ export class OrgsController {
       next(err);
     }
   }
+
+  static async deleteOrg(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const orgId = resolveOrgId(req);
+      const result = await OrgsService.deleteOrg(orgId, req.auth!.userId);
+      res.status(200).json({ data: result });
+    } catch (err) {
+      next(err);
+    }
+  }
 }

@@ -31,4 +31,10 @@ orgsRouter.post(
   OrgsController.rotateInviteCode
 );
 
+orgsRouter.delete(
+  "/:id",
+  requireOrgRole(Role.ADMIN),
+  OrgsController.deleteOrg
+);
+
 export { orgsRouter };

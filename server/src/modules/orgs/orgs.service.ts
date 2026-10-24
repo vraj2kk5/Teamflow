@@ -1,6 +1,6 @@
 import { prisma } from "../../lib/prisma";
 import crypto from "crypto";
-import { NotFoundError, BadRequestError, ConflictError } from "../../lib/errors";
+import { NotFoundError, BadRequestError, ConflictError, ForbiddenError } from "../../lib/errors";
 import { Role } from "@prisma/client";
 import { AddMemberInput, UpdateOrgInput } from "./orgs.schema";
 import { NotificationsService } from "../notifications/notifications.service";
@@ -348,5 +348,41 @@ export class OrgsService {
       where: { id: orgId },
       data: { inviteCode: newCode },
     });
+  }
+
+  static async deleteOrg(orgId: string, actorId: string) {
+    const membership = await prisma.organizationMembership.findUnique({
+      where: {
+        userId_organizationId: {
+          userId: actorId,
+          organizationId: orgId,
+        },
+      },
+    });
+
+    if (!membership || membership.role !== Role.ADMIN) {
+      throw new ForbiddenError("Only organization Administrators can delete the organization");
+    }
+
+    const org = await prisma.organization.findUnique({
+      where: { id: orgId },
+      select: { id: true, name: true },
+    });
+
+    if (!org) {
+      throw new NotFoundError("Organization not found");
+    }
+
+    // Cascade delete automatically removes all memberships, projects, issues, comments, attachments, and activity logs
+    await prisma.organization.delete({
+      where: { id: orgId },
+    });
+
+    return {
+      success: true,
+      deletedOrgId: orgId,
+      deletedOrgName: org.name,
+      message: `Organization "${org.name}" has been permanently deleted.`,
+    };
   }
 }
