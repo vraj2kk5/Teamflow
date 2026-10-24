@@ -7,6 +7,7 @@ import {
 } from "./issues.schema";
 import { Prisma, Role } from "@prisma/client";
 import { getStorageDriver } from "../../lib/storage";
+import { EmailService } from "../../lib/email";
 
 export class IssuesService {
   static async getIssues(
@@ -306,16 +307,26 @@ export class IssuesService {
         },
       });
 
-      if (issue.assigneeId && issue.assigneeId !== reporterId) {
+      if (issue.assignee && issue.assigneeId !== reporterId) {
         await tx.notification.create({
           data: {
-            userId: issue.assigneeId,
+            userId: issue.assignee.id,
             actorId: reporterId,
             title: "New Task Assigned",
             message: `${issue.reporter.name} assigned you to ${issue.key}: "${issue.title}"`,
             link: `/issues/${issue.id}`,
             type: "ASSIGNMENT",
           },
+        });
+
+        const clientOrigin = process.env.CLIENT_ORIGIN || "http://localhost:3000";
+        await EmailService.sendTaskAssignedEmail({
+          to: issue.assignee.email,
+          recipientName: issue.assignee.name,
+          taskKey: issue.key,
+          taskTitle: issue.title,
+          actorName: issue.reporter.name,
+          taskUrl: `${clientOrigin}/issues/${issue.id}`,
         });
       }
 
@@ -439,16 +450,32 @@ export class IssuesService {
         });
       }
 
-      if (input.assigneeId && input.assigneeId !== existing.assigneeId && input.assigneeId !== actorId) {
+      if (input.assigneeId && input.assigneeId !== existing.assigneeId && input.assigneeId !== actorId && updated.assignee) {
+        const actor = await prisma.user.findUnique({
+          where: { id: actorId },
+          select: { name: true },
+        });
+        const actorName = actor?.name || "A team member";
+
         await tx.notification.create({
           data: {
             userId: input.assigneeId,
             actorId,
             title: "Task Assigned to You",
-            message: `You were assigned to ${updated.key}: "${updated.title}"`,
+            message: `${actorName} assigned you to ${updated.key}: "${updated.title}"`,
             link: `/issues/${updated.id}`,
             type: "ASSIGNMENT",
           },
+        });
+
+        const clientOrigin = process.env.CLIENT_ORIGIN || "http://localhost:3000";
+        await EmailService.sendTaskAssignedEmail({
+          to: updated.assignee.email,
+          recipientName: updated.assignee.name,
+          taskKey: updated.key,
+          taskTitle: updated.title,
+          actorName,
+          taskUrl: `${clientOrigin}/issues/${updated.id}`,
         });
       }
 

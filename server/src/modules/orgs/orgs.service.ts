@@ -3,6 +3,8 @@ import crypto from "crypto";
 import { NotFoundError, BadRequestError, ConflictError } from "../../lib/errors";
 import { Role } from "@prisma/client";
 import { AddMemberInput, UpdateOrgInput } from "./orgs.schema";
+import { NotificationsService } from "../notifications/notifications.service";
+import { EmailService } from "../../lib/email";
 
 export class OrgsService {
   static async getCurrentOrg(orgId: string, role?: Role) {
@@ -66,15 +68,57 @@ export class OrgsService {
   }
 
   static async addMemberByEmail(orgId: string, input: AddMemberInput, actorId: string) {
+    const org = await prisma.organization.findUnique({
+      where: { id: orgId },
+      select: { id: true, name: true, inviteCode: true },
+    });
+
+    if (!org) {
+      throw new NotFoundError("Organization not found");
+    }
+
+    let inviteCode = org.inviteCode;
+    if (!inviteCode) {
+      inviteCode = `TF-${crypto.randomBytes(4).toString("hex").toUpperCase()}`;
+      await prisma.organization.update({
+        where: { id: org.id },
+        data: { inviteCode },
+      });
+    }
+
+    const actor = await prisma.user.findUnique({
+      where: { id: actorId },
+      select: { id: true, name: true },
+    });
+    const actorName = actor?.name || "A team administrator";
+    const clientOrigin = process.env.CLIENT_ORIGIN || "http://localhost:3000";
+
     // 1. Check if user with email exists in platform
     const user = await prisma.user.findUnique({
       where: { email: input.email },
     });
 
+    // If user is not yet registered on TeamFlow, automatically send an invitation email with the org invite code
     if (!user) {
-      throw new NotFoundError(
-        "No registered user with this email. Ask them to register first."
-      );
+      const registerUrl = `${clientOrigin}/register?inviteCode=${encodeURIComponent(
+        inviteCode
+      )}&email=${encodeURIComponent(input.email)}`;
+
+      await EmailService.sendInviteEmail({
+        to: input.email,
+        orgName: org.name,
+        actorName,
+        inviteCode,
+        registerUrl,
+        role: input.role,
+      });
+
+      return {
+        invited: true,
+        email: input.email,
+        role: input.role,
+        message: `An invitation email has been sent to ${input.email} with your organization invite code (${inviteCode}). Once registered, they will be part of ${org.name}.`,
+      };
     }
 
     // 2. Check if already member
@@ -92,8 +136,8 @@ export class OrgsService {
     }
 
     // 3. Add membership and log activity in transaction
-    return prisma.$transaction(async (tx) => {
-      const membership = await tx.organizationMembership.create({
+    const membership = await prisma.$transaction(async (tx) => {
+      const created = await tx.organizationMembership.create({
         data: {
           userId: user.id,
           organizationId: orgId,
@@ -125,8 +169,33 @@ export class OrgsService {
         },
       });
 
-      return membership;
+      return created;
     });
+
+    // Send in-app notification to the existing user
+    await NotificationsService.createNotification({
+      userId: user.id,
+      actorId,
+      title: `Welcome to ${org.name}`,
+      message: `${actorName} added you to ${org.name} as ${input.role}`,
+      link: "/dashboard",
+      type: "ASSIGNMENT",
+    });
+
+    // Send email alert to user
+    await EmailService.sendOrgAddedEmail({
+      to: user.email,
+      recipientName: user.name,
+      orgName: org.name,
+      actorName,
+      role: input.role,
+      dashboardUrl: `${clientOrigin}/dashboard`,
+    });
+
+    return {
+      ...membership,
+      invited: false,
+    };
   }
 
   static async updateMemberRole(

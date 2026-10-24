@@ -3,6 +3,8 @@ import { prisma } from "../../lib/prisma";
 import { NotFoundError, BadRequestError } from "../../lib/errors";
 import { CreateProjectInput, UpdateProjectInput } from "./projects.schema";
 import { Role, Prisma } from "@prisma/client";
+import { NotificationsService } from "../notifications/notifications.service";
+import { EmailService } from "../../lib/email";
 
 export class ProjectsService {
   private static generateInviteCode(): string {
@@ -422,6 +424,15 @@ export class ProjectsService {
       return existing;
     }
 
+    const project = await prisma.project.findFirst({
+      where: { id: projectId, organizationId: orgId },
+      select: { id: true, name: true },
+    });
+
+    if (!project) {
+      throw new NotFoundError("Project not found");
+    }
+
     const membership = await prisma.projectMembership.create({
       data: {
         projectId,
@@ -434,7 +445,14 @@ export class ProjectsService {
       },
     });
 
+    let actorName = "A team administrator";
     if (actorId) {
+      const actor = await prisma.user.findUnique({
+        where: { id: actorId },
+        select: { name: true },
+      });
+      if (actor?.name) actorName = actor.name;
+
       await prisma.activityLog.create({
         data: {
           organizationId: orgId,
@@ -445,6 +463,26 @@ export class ProjectsService {
         },
       });
     }
+
+    // Send in-app notification to member
+    await NotificationsService.createNotification({
+      userId: targetUserId,
+      actorId,
+      title: `Added to Project`,
+      message: `${actorName} added you to project "${project.name}"`,
+      link: `/projects/${project.id}`,
+      type: "ASSIGNMENT",
+    });
+
+    // Send email alert to member
+    const clientOrigin = process.env.CLIENT_ORIGIN || "http://localhost:3000";
+    await EmailService.sendProjectAddedEmail({
+      to: membership.user.email,
+      recipientName: membership.user.name,
+      projectName: project.name,
+      actorName,
+      projectUrl: `${clientOrigin}/projects/${project.id}`,
+    });
 
     return membership;
   }

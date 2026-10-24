@@ -1,30 +1,44 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "../../contexts/AuthContext";
 import { useToast } from "../../components/ui/Toast";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import { PasswordInput } from "../../components/ui/PasswordInput";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "../../components/ui/Card";
-import { Briefcase, ArrowRight, Building, KeyRound } from "lucide-react";
+import { Briefcase, ArrowRight, Building, KeyRound, Sparkles } from "lucide-react";
 import { ApiClientError } from "../../lib/api";
 import { cn } from "../../lib/utils";
 
-export default function RegisterPage() {
+function RegisterContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { register } = useAuth();
   const { error: toastError, success: toastSuccess } = useToast();
 
-  const [mode, setMode] = useState<"create" | "join">("create");
+  const queryInvite = searchParams.get("inviteCode");
+  const queryEmail = searchParams.get("email");
+
+  const [mode, setMode] = useState<"create" | "join">(queryInvite ? "join" : "create");
   const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(queryEmail || "");
   const [password, setPassword] = useState("");
   const [orgName, setOrgName] = useState("");
-  const [inviteCode, setInviteCode] = useState("");
+  const [inviteCode, setInviteCode] = useState(queryInvite || "");
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (queryInvite) {
+      setMode("join");
+      setInviteCode(queryInvite);
+    }
+    if (queryEmail) {
+      setEmail(queryEmail);
+    }
+  }, [queryInvite, queryEmail]);
 
   const [fieldErrors, setFieldErrors] = useState<{
     name?: string;
@@ -112,6 +126,15 @@ export default function RegisterPage() {
                 <CardTitle className="text-xl font-bold">Sign Up</CardTitle>
                 <CardDescription className="mt-0.5">Fill out your details to get started</CardDescription>
               </div>
+
+              {queryInvite && (
+                <div className="p-3 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 text-xs text-indigo-700 dark:text-indigo-300 flex items-center gap-2.5">
+                  <Sparkles className="w-4 h-4 shrink-0 text-indigo-600 dark:text-indigo-400" />
+                  <span>
+                    You have been invited to join an organization! Your invite code has been pre-filled.
+                  </span>
+                </div>
+              )}
 
               {/* Mode Toggle Tabs */}
               <div className="grid grid-cols-2 gap-2 p-1 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
@@ -225,5 +248,13 @@ export default function RegisterPage() {
         </Card>
       </div>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center p-4 bg-slate-50 dark:bg-slate-950"><div className="w-8 h-8 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" /></div>}>
+      <RegisterContent />
+    </Suspense>
   );
 }

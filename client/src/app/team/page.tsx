@@ -119,11 +119,20 @@ export default function TeamPage() {
     setIsAdding(true);
     setAddError("");
     try {
-      await api.post(`/organizations/${organization?.id}/members`, {
-        email: addEmail.trim(),
-        role: addRole,
-      });
-      toastSuccess(`Invited ${addEmail} as ${addRole}`);
+      const res = await api.post<{ data?: { invited?: boolean; message?: string } }>(
+        `/organizations/${organization?.id}/members`,
+        {
+          email: addEmail.trim(),
+          role: addRole,
+        }
+      );
+      const payload = res as unknown as { data?: { invited?: boolean; message?: string } };
+      const isInvited = payload?.data?.invited;
+      if (isInvited) {
+        toastSuccess(`Invitation sent to ${addEmail}! An invite link and organization code were sent via email.`);
+      } else {
+        toastSuccess(`Added ${addEmail} to organization as ${addRole}`);
+      }
       setIsAddModalOpen(false);
       setAddEmail("");
       setAddRole("MEMBER");
