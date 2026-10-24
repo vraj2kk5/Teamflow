@@ -274,7 +274,7 @@ export class AuthService {
     const clientOrigin = env.CLIENT_ORIGIN || "http://localhost:3000";
     const resetUrl = `${clientOrigin}/reset-password?token=${token}`;
 
-    // Dispatch email securely (out-of-band to user's registered inbox / secure server logger)
+    // Dispatch email securely out-of-band to user's registered inbox
     await EmailService.sendPasswordResetEmail({
       to: user.email,
       recipientName: user.name,
@@ -282,11 +282,7 @@ export class AuthService {
       resetUrl,
     });
 
-    const isDev = env.NODE_ENV === "development";
-    return {
-      ...genericResponse,
-      ...(isDev && !process.env.SMTP_PASS ? { devResetUrl: resetUrl } : {}),
-    };
+    return genericResponse;
   }
 
   static async resetPassword(input: ResetPasswordInput) {
