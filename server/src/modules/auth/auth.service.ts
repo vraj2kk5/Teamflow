@@ -68,7 +68,7 @@ export class AuthService {
       });
 
       let targetOrgId: string;
-      let targetRole: "ADMIN" | "MEMBER" = "ADMIN";
+      let targetRole: "ADMIN" | "PROJECT_MANAGER" | "MEMBER" = "ADMIN";
 
       if (input.inviteCode) {
         const org = await tx.organization.findUnique({
@@ -78,7 +78,7 @@ export class AuthService {
           throw new NotFoundError("Invalid organization invite code");
         }
         targetOrgId = org.id;
-        targetRole = "MEMBER";
+        targetRole = (input.role as "ADMIN" | "PROJECT_MANAGER" | "MEMBER") || "MEMBER";
       } else {
         const orgName = input.orgName || `${input.name}'s Organization`;
         const slug = this.generateSlug(orgName);

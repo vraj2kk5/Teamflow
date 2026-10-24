@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useAuth } from "../../contexts/AuthContext";
+import { useAuth, UserRole } from "../../contexts/AuthContext";
 import { useToast } from "../../components/ui/Toast";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
@@ -21,6 +21,7 @@ function RegisterContent() {
 
   const queryInvite = searchParams.get("inviteCode");
   const queryEmail = searchParams.get("email");
+  const queryRole = searchParams.get("role") as UserRole | null;
 
   const [mode, setMode] = useState<"create" | "join">(queryInvite ? "join" : "create");
   const [name, setName] = useState("");
@@ -77,7 +78,8 @@ function RegisterContent() {
         email.trim(),
         password,
         mode === "create" ? orgName.trim() : undefined,
-        mode === "join" ? inviteCode.trim().toUpperCase() : undefined
+        mode === "join" ? inviteCode.trim().toUpperCase() : undefined,
+        mode === "join" && queryRole ? queryRole : undefined
       );
 
       toastSuccess(

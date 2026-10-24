@@ -103,7 +103,7 @@ export class OrgsService {
     if (!user) {
       const registerUrl = `${clientOrigin}/register?inviteCode=${encodeURIComponent(
         inviteCode
-      )}&email=${encodeURIComponent(input.email)}`;
+      )}&email=${encodeURIComponent(input.email)}&role=${encodeURIComponent(input.role)}`;
 
       await EmailService.sendInviteEmail({
         to: input.email,

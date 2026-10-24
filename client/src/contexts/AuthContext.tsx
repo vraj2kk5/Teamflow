@@ -38,7 +38,8 @@ interface AuthContextType {
     email: string,
     password: string,
     orgName?: string,
-    inviteCode?: string
+    inviteCode?: string,
+    role?: UserRole
   ) => Promise<void>;
   createOrganization: (name: string) => Promise<{
     organization: Organization;
@@ -89,6 +90,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     refreshUser();
+    const handleFocus = () => {
+      refreshUser();
+    };
+    window.addEventListener("focus", handleFocus);
+    const interval = setInterval(refreshUser, 15000);
+    return () => {
+      window.removeEventListener("focus", handleFocus);
+      clearInterval(interval);
+    };
   }, [refreshUser]);
 
   const login = async (email: string, password: string, rememberMe = false) => {
@@ -149,14 +159,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     email: string,
     password: string,
     orgName?: string,
-    inviteCode?: string
+    inviteCode?: string,
+    role?: UserRole
   ) => {
     const res = await api.post<{
       user: User;
       organization: Organization;
       role: UserRole;
       token?: string;
-    }>("/auth/register", { name, email, password, orgName, inviteCode });
+    }>("/auth/register", { name, email, password, orgName, inviteCode, role });
 
     if (res.token) {
       api.setToken(res.token);
