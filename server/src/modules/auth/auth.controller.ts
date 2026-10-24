@@ -8,7 +8,7 @@ import {
   changePasswordSchema,
 } from "./auth.schema";
 import { env } from "../../config/env";
-import { UnauthorizedError } from "../../lib/errors";
+import { UnauthorizedError, BadRequestError } from "../../lib/errors";
 
 export class AuthController {
   private static setAuthCookie(res: Response, token: string, rememberMe = false): void {
@@ -132,6 +132,29 @@ export class AuthController {
 
       const validated = changePasswordSchema.parse(req.body);
       const result = await AuthService.changePassword(auth.userId, validated);
+
+      res.status(200).json({
+        data: result,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async switchOrg(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const auth = (req as unknown as { auth?: { userId: string } }).auth;
+      if (!auth?.userId) {
+        throw new UnauthorizedError("Not authenticated");
+      }
+
+      const { organizationId } = req.body;
+      if (!organizationId || typeof organizationId !== "string") {
+        throw new BadRequestError("organizationId is required");
+      }
+
+      const result = await AuthService.switchOrg(auth.userId, organizationId);
+      AuthController.setAuthCookie(res, result.token);
 
       res.status(200).json({
         data: result,

@@ -13,6 +13,7 @@ const publicRoutes = [
   "/register",
   "/forgot-password",
   "/reset-password",
+  "/organization-deleted",
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {

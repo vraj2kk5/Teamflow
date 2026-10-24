@@ -37,6 +37,7 @@ interface AuthContextType {
   ) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  switchOrganization: (orgId: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -117,6 +118,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await refreshUser();
   };
 
+  const switchOrganization = async (orgId: string) => {
+    const res = await api.post<{
+      user: User;
+      organization: Organization;
+      role: UserRole;
+      token?: string;
+    }>("/auth/switch-org", { organizationId: orgId });
+
+    if (res.token) {
+      api.setToken(res.token);
+    }
+
+    setUser(res.user);
+    setOrganization(res.organization);
+    setRole(res.role);
+    await refreshUser();
+  };
+
   const logout = async () => {
     try {
       await api.post("/auth/logout");
@@ -141,6 +160,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         register,
         logout,
         refreshUser,
+        switchOrganization,
       }}
     >
       {children}

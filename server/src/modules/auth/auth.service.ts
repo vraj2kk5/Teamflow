@@ -10,7 +10,7 @@ import {
   ResetPasswordInput,
   ChangePasswordInput,
 } from "./auth.schema";
-import { ConflictError, UnauthorizedError, NotFoundError } from "../../lib/errors";
+import { ConflictError, UnauthorizedError, NotFoundError, ForbiddenError } from "../../lib/errors";
 import { EmailService } from "../../lib/email";
 
 export interface TokenPayload {
@@ -215,9 +215,9 @@ export class AuthService {
       throw new NotFoundError("User not found");
     }
 
-    const activeMembership =
-      user.memberships.find((m) => m.organizationId === currentOrgId) ||
-      user.memberships[0];
+    const activeMembership = currentOrgId
+      ? user.memberships.find((m) => m.organizationId === currentOrgId) || null
+      : null;
 
     return {
       user: {
@@ -234,6 +234,45 @@ export class AuthService {
         ...m.organization,
         role: m.role,
       })),
+    };
+  }
+
+  static async switchOrg(userId: string, targetOrgId: string) {
+    const membership = await prisma.organizationMembership.findUnique({
+      where: {
+        userId_organizationId: {
+          userId,
+          organizationId: targetOrgId,
+        },
+      },
+      include: {
+        organization: true,
+        user: true,
+      },
+    });
+
+    if (!membership) {
+      throw new ForbiddenError("You are not a member of this organization");
+    }
+
+    const token = this.signToken({
+      userId,
+      email: membership.user.email,
+      organizationId: targetOrgId,
+    });
+
+    return {
+      user: {
+        id: membership.user.id,
+        name: membership.user.name,
+        email: membership.user.email,
+        avatarUrl: membership.user.avatarUrl,
+        jobTitle: membership.user.jobTitle,
+        bio: membership.user.bio,
+      },
+      organization: membership.organization,
+      role: membership.role,
+      token,
     };
   }
 

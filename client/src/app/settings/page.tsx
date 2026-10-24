@@ -109,20 +109,16 @@ export default function SettingsPage() {
 
     setIsDeletingOrg(true);
     try {
+      const deletedName = organization.name;
       await api.delete(`/organizations/${organization.id}`);
-      toastSuccess(`Organization "${organization.name}" was permanently deleted.`);
+      toastSuccess(`Organization "${deletedName}" was permanently deleted.`);
       setIsDeleteDialogOpen(false);
 
-      // Refresh user profile to check remaining organizations
-      const me = await api.get<{ allOrganizations?: Array<{ id: string }> }>("/auth/me");
+      // Refresh user profile to clear the deleted org
       await refreshUser();
 
-      if (me?.allOrganizations && me.allOrganizations.length > 0) {
-        router.push("/dashboard");
-      } else {
-        // No remaining organizations, route to register to create/join one
-        router.push("/register");
-      }
+      // Divert directly to the dedicated organization deleted page
+      router.push(`/organization-deleted?name=${encodeURIComponent(deletedName)}`);
     } catch (err: unknown) {
       if (err instanceof ApiClientError) {
         toastError(err.message, "Failed to delete organization");

@@ -25,5 +25,6 @@ authRouter.get("/me", requireAuth, AuthController.me);
 authRouter.post("/forgot-password", authRateLimiter, AuthController.forgotPassword);
 authRouter.post("/reset-password", authRateLimiter, AuthController.resetPassword);
 authRouter.post("/change-password", requireAuth, AuthController.changePassword);
+authRouter.post("/switch-org", requireAuth, AuthController.switchOrg);
 
 export { authRouter };
