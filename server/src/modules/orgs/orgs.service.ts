@@ -180,7 +180,7 @@ export class OrgsService {
       actorId,
       title: `Welcome to ${org.name}`,
       message: `${actorName} added you to ${org.name} as ${input.role}`,
-      link: "/dashboard",
+      link: undefined,
       type: "ASSIGNMENT",
     });
 

@@ -94,30 +94,31 @@ export function NotificationBell() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleMarkAsRead = async (id: string, link?: string | null, e?: React.MouseEvent) => {
+  const handleMarkAsRead = async (item: NotificationItem, e?: React.MouseEvent) => {
     if (e) {
       e.preventDefault();
       e.stopPropagation();
     }
     // Optimistic UI update immediately
     setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
+      prev.map((n) => (n.id === item.id ? { ...n, isRead: true } : n))
     );
     setUnreadCount((prev) => Math.max(0, prev - 1));
 
     try {
-      await api.patch(`/notifications/${id}/read`, {});
+      await api.patch(`/notifications/${item.id}/read`, {});
     } catch {
       try {
-        await api.post(`/notifications/${id}/read`, {});
+        await api.post(`/notifications/${item.id}/read`, {});
       } catch {
         // silent fallback
       }
     }
 
-    if (link) {
+    const label = getLinkLabel(item);
+    if (item.link && label && !item.link.includes("/dashboard")) {
       setIsOpen(false);
-      router.push(link);
+      router.push(item.link);
     }
   };
 
@@ -159,27 +160,38 @@ export function NotificationBell() {
     }
   };
 
-  const getLinkLabel = (item: NotificationItem) => {
-    const title = item.title.toLowerCase();
-    const msg = item.message.toLowerCase();
+  const getLinkLabel = (item: NotificationItem): string | null => {
+    const title = (item.title || "").toLowerCase();
+    const msg = (item.message || "").toLowerCase();
     const link = (item.link || "").toLowerCase();
 
-    if (title.includes("task") || msg.includes("task")) {
-      return "View task";
+    // Welcome, onboardings, or dashboard links are purely informational notifications (no link button)
+    if (title.includes("welcome") || link.includes("/dashboard") || !item.link) {
+      return null;
     }
-    if (title.includes("bug") || msg.includes("bug")) {
-      return "View bug";
-    }
+
+    // Projects: show "View project"
     if (title.includes("project") || link.includes("/projects")) {
       return "View project";
     }
-    if (link.includes("/dashboard")) {
-      return "Go to dashboard";
+
+    // Bugs: show "View bug"
+    if (title.includes("bug") || msg.includes("bug")) {
+      return "View bug";
     }
-    if (link.includes("/issues")) {
+
+    // Tasks / Issues: show "View task"
+    if (
+      title.includes("task") ||
+      msg.includes("task") ||
+      title.includes("issue") ||
+      link.includes("/issues") ||
+      link.includes("/tasks")
+    ) {
       return "View task";
     }
-    return "View details";
+
+    return null;
   };
 
   return (
@@ -242,47 +254,50 @@ export function NotificationBell() {
                 </p>
               </div>
             ) : (
-              notifications.map((item) => (
-                <div
-                  key={item.id}
-                  onClick={(e) => handleMarkAsRead(item.id, item.link, e)}
-                  className={`p-3 transition-colors cursor-pointer flex items-start gap-3 ${
-                    item.isRead
-                      ? "hover:bg-slate-50 dark:hover:bg-slate-850/50 opacity-80"
-                      : "bg-indigo-50/70 hover:bg-indigo-100/70 dark:bg-indigo-950/20 dark:hover:bg-indigo-950/30 border-l-2 border-indigo-500"
-                  }`}
-                >
-                  <div className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/60 shrink-0 mt-0.5">
-                    {getIcon(item.type)}
-                  </div>
-
-                  <div className="flex-1 min-w-0 space-y-1">
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="text-xs font-semibold text-slate-900 dark:text-white truncate">
-                        {item.title}
-                      </p>
-                      <span className="text-[10px] text-slate-400 dark:text-slate-500 shrink-0">
-                        {formatRelativeTime(item.createdAt)}
-                      </span>
+              notifications.map((item) => {
+                const linkLabel = getLinkLabel(item);
+                return (
+                  <div
+                    key={item.id}
+                    onClick={(e) => handleMarkAsRead(item, e)}
+                    className={`p-3 transition-colors cursor-pointer flex items-start gap-3 ${
+                      item.isRead
+                        ? "hover:bg-slate-50 dark:hover:bg-slate-850/50 opacity-80"
+                        : "bg-indigo-50/70 hover:bg-indigo-100/70 dark:bg-indigo-950/20 dark:hover:bg-indigo-950/30 border-l-2 border-indigo-500"
+                    }`}
+                  >
+                    <div className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/60 shrink-0 mt-0.5">
+                      {getIcon(item.type)}
                     </div>
 
-                    <p className="text-xs text-slate-600 dark:text-slate-300 leading-snug line-clamp-2">
-                      {item.message}
-                    </p>
-
-                    {item.link && (
-                      <div className="pt-0.5 flex items-center gap-1 text-[11px] text-indigo-600 dark:text-indigo-400 font-medium">
-                        <span>{getLinkLabel(item)}</span>
-                        <ExternalLink className="w-3 h-3" />
+                    <div className="flex-1 min-w-0 space-y-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-xs font-semibold text-slate-900 dark:text-white truncate">
+                          {item.title}
+                        </p>
+                        <span className="text-[10px] text-slate-400 dark:text-slate-500 shrink-0">
+                          {formatRelativeTime(item.createdAt)}
+                        </span>
                       </div>
+
+                      <p className="text-xs text-slate-600 dark:text-slate-300 leading-snug line-clamp-2">
+                        {item.message}
+                      </p>
+
+                      {linkLabel && (
+                        <div className="pt-0.5 flex items-center gap-1 text-[11px] text-indigo-600 dark:text-indigo-400 font-medium hover:underline">
+                          <span>{linkLabel}</span>
+                          <ExternalLink className="w-3 h-3" />
+                        </div>
+                      )}
+                    </div>
+
+                    {!item.isRead && (
+                      <span className="w-2 h-2 rounded-full bg-indigo-500 shrink-0 mt-1.5" />
                     )}
                   </div>
-
-                  {!item.isRead && (
-                    <span className="w-2 h-2 rounded-full bg-indigo-500 shrink-0 mt-1.5" />
-                  )}
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>
