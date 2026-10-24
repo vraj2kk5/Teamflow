@@ -108,7 +108,7 @@ function IssuesView() {
   // New Issue Modal
   const [isModalOpen, setIsModalOpen] = useState(searchParams.get("create") === "true");
   const [modalType, setModalType] = useState<"TASK" | "BUG">("TASK");
-  const [modalProjId, setModalProjId] = useState("");
+  const [modalProjId, setModalProjId] = useState(initialProject || "");
   const [modalTitle, setModalTitle] = useState("");
   const [modalDesc, setModalDesc] = useState("");
   const [modalPriority, setModalPriority] = useState("MEDIUM");
@@ -132,6 +132,13 @@ function IssuesView() {
       .map((m: ProjectMemberOption) => m.user);
   }, [currentModalProject]);
 
+  // Reset assignee if it no longer belongs to the selected project
+  useEffect(() => {
+    if (modalAssigneeId && !eligibleAssignees.some((u) => u.id === modalAssigneeId)) {
+      setModalAssigneeId("");
+    }
+  }, [modalProjId, eligibleAssignees, modalAssigneeId]);
+
   // Update URL params
   const updateUrl = useCallback(() => {
     const params = new URLSearchParams();
@@ -148,16 +155,40 @@ function IssuesView() {
     router.replace(`/issues${queryString ? `?${queryString}` : ""}`);
   }, [q, projectId, status, priority, assigneeId, type, overdue, page, router]);
 
-  // Fetch Projects List for select filter
+  // Fetch Projects List for select filter and modals
   useEffect(() => {
-    api.get<{ data: ProjectOption[] }>("/projects").then((res) => {
-      const list = Array.isArray(res) ? res : (res as unknown as { data?: ProjectOption[] })?.data || [];
-      setProjects(Array.isArray(list) ? list : []);
-      if (list.length > 0 && !modalProjId) {
-        setModalProjId(list[0].id);
-      }
-    }).catch(() => {});
-  }, [modalProjId]);
+    let isMounted = true;
+    api
+      .get<{ data: ProjectOption[] }>("/projects", { pageSize: 100 })
+      .then((res) => {
+        if (!isMounted) return;
+        const list = Array.isArray(res) ? res : (res as unknown as { data?: ProjectOption[] })?.data || [];
+        const safeList = Array.isArray(list) ? list : [];
+        setProjects(safeList);
+        setModalProjId((prev) => {
+          if (prev && safeList.some((p) => p.id === prev)) return prev;
+          if (projectId && safeList.some((p) => p.id === projectId)) return projectId;
+          return safeList[0]?.id || "";
+        });
+      })
+      .catch(() => {});
+    return () => {
+      isMounted = false;
+    };
+  }, [projectId]);
+
+  const openNewIssueModal = (defaultType: "TASK" | "BUG" = "TASK") => {
+    setModalType(defaultType);
+    setModalError("");
+    setModalTitle("");
+    setModalDesc("");
+    setModalDueDate("");
+    setModalAssigneeId("");
+    if ((!modalProjId || !projects.some((p) => p.id === modalProjId)) && projects.length > 0) {
+      setModalProjId(projectId && projects.some((p) => p.id === projectId) ? projectId : projects[0].id);
+    }
+    setIsModalOpen(true);
+  };
 
   // Fetch issues
   const fetchIssues = useCallback(async () => {
@@ -277,10 +308,7 @@ function IssuesView() {
             <Button
               size="md"
               variant="outline"
-              onClick={() => {
-                setModalType("TASK");
-                setIsModalOpen(true);
-              }}
+              onClick={() => openNewIssueModal("TASK")}
             >
               <Plus className="w-4 h-4 mr-1" />
               <span>New Task</span>
@@ -290,10 +318,7 @@ function IssuesView() {
           <Button
             size="md"
             variant="primary"
-            onClick={() => {
-              setModalType("BUG");
-              setIsModalOpen(true);
-            }}
+            onClick={() => openNewIssueModal("BUG")}
             className="bg-rose-600 hover:bg-rose-700"
           >
             <Bug className="w-4 h-4 mr-1" />
@@ -459,8 +484,8 @@ function IssuesView() {
             hasActiveFilters
               ? handleResetFilters
               : canCreateTask
-              ? () => { setModalType("TASK"); setIsModalOpen(true); }
-              : () => router.push("/bug-reports/new")
+              ? () => openNewIssueModal("TASK")
+              : () => openNewIssueModal("BUG")
           }
         />
       ) : (
@@ -603,11 +628,24 @@ function IssuesView() {
               onChange={(e) => setModalProjId(e.target.value)}
               required
             >
-              {(Array.isArray(projects) ? projects : []).map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
+              {projects.length === 0 ? (
+                <option value="" disabled>
+                  Loading projects...
                 </option>
-              ))}
+              ) : (
+                <>
+                  {!modalProjId && (
+                    <option value="" disabled>
+                      Select a project...
+                    </option>
+                  )}
+                  {projects.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </>
+              )}
             </Select>
 
             {canCreateTask ? (
@@ -692,7 +730,7 @@ function IssuesView() {
               Cancel
             </Button>
             <Button type="submit" isLoading={isSubmitting}>
-              Create Issue
+              {modalType === "BUG" ? "Report Bug" : "Create Task"}
             </Button>
           </div>
         </form>
