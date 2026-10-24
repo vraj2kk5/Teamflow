@@ -30,6 +30,8 @@ import {
   FileText,
   Terminal,
   Paperclip,
+  Upload,
+  Plus,
 } from "lucide-react";
 import { MediaPlayer } from "../media/MediaPlayer";
 import { formatDate, formatDateTime } from "../../lib/utils";
@@ -135,6 +137,42 @@ export function IssueDetailView({ id, expectedType }: IssueDetailViewProps) {
   // Delete state
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Attachment state
+  const attachmentInputRef = React.useRef<HTMLInputElement>(null);
+  const [isUploadingAttachment, setIsUploadingAttachment] = useState(false);
+
+  const handleDirectAttachmentUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setIsUploadingAttachment(true);
+    let successCount = 0;
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const formData = new FormData();
+        formData.append("file", file);
+        await api.uploadWithProgress(`/issues/${id}/attachments`, formData);
+        successCount++;
+      }
+      toastSuccess(
+        successCount === 1
+          ? "Attachment uploaded successfully"
+          : `${successCount} attachments uploaded successfully`
+      );
+      fetchIssue();
+    } catch (err: unknown) {
+      if (err instanceof ApiClientError) {
+        toastError(err.message, "Upload Failed");
+      } else {
+        toastError("Failed to upload attachment", "Error");
+      }
+    } finally {
+      setIsUploadingAttachment(false);
+      if (attachmentInputRef.current) attachmentInputRef.current.value = "";
+    }
+  };
 
   const fetchIssue = useCallback(async () => {
     setIsLoading(true);
@@ -451,21 +489,50 @@ export function IssueDetailView({ id, expectedType }: IssueDetailViewProps) {
             </Card>
           )}
 
-          {/* Media Attachments Section (Visual Bug Reporting) */}
+          {/* Media Attachments Section */}
           <Card className="space-y-4">
             <CardHeader className="pb-2 border-b border-slate-200 dark:border-slate-800">
-              <CardTitle className="text-base flex items-center justify-between">
+              <div className="flex items-center justify-between w-full">
                 <div className="flex items-center gap-2">
                   <Paperclip className="w-4 h-4 text-indigo-400" />
-                  <span>Media Attachments ({issue.attachments.length})</span>
+                  <span className="font-semibold text-base">Media Attachments ({issue.attachments.length})</span>
                 </div>
-              </CardTitle>
+                <div>
+                  <input
+                    ref={attachmentInputRef}
+                    type="file"
+                    className="hidden"
+                    multiple
+                    accept="image/*,video/*,audio/*"
+                    onChange={handleDirectAttachmentUpload}
+                  />
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => attachmentInputRef.current?.click()}
+                    isLoading={isUploadingAttachment}
+                    className="h-8 text-xs font-medium"
+                  >
+                    <Plus className="w-3.5 h-3.5 mr-1" />
+                    <span>Add Attachment</span>
+                  </Button>
+                </div>
+              </div>
             </CardHeader>
 
             {issue.attachments.length === 0 ? (
-              <p className="text-xs text-slate-500 italic py-2">
-                No screen or voice recordings or screenshots attached.
-              </p>
+              <div
+                onClick={() => attachmentInputRef.current?.click()}
+                className="p-6 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl text-center cursor-pointer hover:border-indigo-400 dark:hover:border-indigo-500/50 hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors group"
+              >
+                <Upload className="w-6 h-6 mx-auto text-slate-400 group-hover:text-indigo-500 transition-colors mb-2" />
+                <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  Click to upload attachments
+                </p>
+                <p className="text-[11px] text-slate-400 mt-1">
+                  Upload screenshots, screen recordings, mockups, or audio notes
+                </p>
+              </div>
             ) : (
               <div className="space-y-4">
                 {issue.attachments.map((att) => {

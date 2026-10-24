@@ -38,6 +38,9 @@ import {
   Check,
   KeyRound,
   RefreshCw,
+  Paperclip,
+  Upload,
+  X,
 } from "lucide-react";
 import { cn, formatDate } from "../../../lib/utils";
 
@@ -101,6 +104,8 @@ export default function ProjectDetailPage({
   const [issueAssigneeId, setIssueAssigneeId] = useState("");
   const [issueDueDate, setIssueDueDate] = useState("");
   const [issueEstHours, setIssueEstHours] = useState("");
+  const [issueAttachments, setIssueAttachments] = useState<File[]>([]);
+  const issueFileInputRef = React.useRef<HTMLInputElement>(null);
   const [isCreatingIssue, setIsCreatingIssue] = useState(false);
   const [issueFormError, setIssueFormError] = useState("");
 
@@ -230,7 +235,7 @@ export default function ProjectDetailPage({
     setIsCreatingIssue(true);
     setIssueFormError("");
     try {
-      await api.post("/issues", {
+      const createdRes = await api.post<{ id: string }>("/issues", {
         projectId,
         type: issueType,
         title: issueTitle.trim(),
@@ -241,7 +246,24 @@ export default function ProjectDetailPage({
         estimatedHours: issueEstHours ? parseFloat(issueEstHours) : undefined,
       });
 
-      toastSuccess(`${issueType === "BUG" ? "Bug report" : "Task"} created!`);
+      const newIssueId = (createdRes as any)?.id || (createdRes as any)?.data?.id;
+      if (newIssueId && issueAttachments.length > 0) {
+        for (const file of issueAttachments) {
+          try {
+            const formData = new FormData();
+            formData.append("file", file);
+            await api.uploadWithProgress(`/issues/${newIssueId}/attachments`, formData);
+          } catch (uploadErr) {
+            console.error("Failed to upload attachment", uploadErr);
+          }
+        }
+      }
+
+      toastSuccess(
+        issueAttachments.length > 0
+          ? `${issueType === "BUG" ? "Bug report" : "Task"} created with ${issueAttachments.length} attachment(s)!`
+          : `${issueType === "BUG" ? "Bug report" : "Task"} created!`
+      );
       setIsIssueModalOpen(false);
       setIssueTitle("");
       setIssueDesc("");
@@ -249,6 +271,7 @@ export default function ProjectDetailPage({
       setIssueAssigneeId("");
       setIssueDueDate("");
       setIssueEstHours("");
+      setIssueAttachments([]);
       fetchProjectData();
     } catch (err: unknown) {
       if (err instanceof ApiClientError) {
@@ -994,6 +1017,70 @@ export default function ProjectDetailPage({
               value={issueEstHours}
               onChange={(e) => setIssueEstHours(e.target.value)}
             />
+          </div>
+
+          {/* Media Attachments Section */}
+          <div className="space-y-2">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+              Media Attachments (Optional)
+            </label>
+            <div
+              onClick={() => issueFileInputRef.current?.click()}
+              className="p-3.5 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl text-center cursor-pointer hover:border-indigo-400 dark:hover:border-indigo-500/50 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors group"
+            >
+              <Upload className="w-5 h-5 mx-auto text-slate-400 group-hover:text-indigo-500 transition-colors mb-1" />
+              <p className="text-xs text-slate-600 dark:text-slate-300 font-medium">
+                Click to attach files (Screenshots, screen recordings, mockups, or audio)
+              </p>
+              <p className="text-[10px] text-slate-400 mt-0.5">
+                PNG, JPG, WebP, MP4, WebM up to 100MB
+              </p>
+              <input
+                ref={issueFileInputRef}
+                type="file"
+                multiple
+                accept="image/*,video/*,audio/*"
+                className="hidden"
+                onChange={(e) => {
+                  if (e.target.files) {
+                    setIssueAttachments((prev) => [...prev, ...Array.from(e.target.files!)]);
+                  }
+                }}
+              />
+            </div>
+
+            {issueAttachments.length > 0 && (
+              <div className="space-y-1.5 pt-1 max-h-36 overflow-y-auto">
+                {issueAttachments.map((file, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center justify-between p-2 rounded-lg bg-slate-100 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700/60 text-xs"
+                  >
+                    <div className="flex items-center gap-2 truncate">
+                      <Paperclip className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                      <span className="truncate text-slate-800 dark:text-slate-200 font-medium">
+                        {file.name}
+                      </span>
+                      <span className="text-slate-400 text-[10px]">
+                        ({file.size / (1024 * 1024) < 1
+                          ? `${Math.round(file.size / 1024)} KB`
+                          : `${(file.size / (1024 * 1024)).toFixed(1)} MB`})
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setIssueAttachments((prev) => prev.filter((_, i) => i !== idx))
+                      }
+                      className="text-slate-400 hover:text-rose-500 p-1 transition-colors"
+                      title="Remove file"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">

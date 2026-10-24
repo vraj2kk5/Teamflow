@@ -28,6 +28,7 @@ import {
   ChevronRight,
   FolderKanban,
   Paperclip,
+  Upload,
   X,
 } from "lucide-react";
 import { formatDate, cn } from "../../lib/utils";
@@ -124,6 +125,8 @@ export function IssuesView({ pageMode = "ISSUES" }: IssuesViewProps) {
   const [modalPriority, setModalPriority] = useState("MEDIUM");
   const [modalDueDate, setModalDueDate] = useState("");
   const [modalAssigneeId, setModalAssigneeId] = useState("");
+  const [modalAttachments, setModalAttachments] = useState<File[]>([]);
+  const modalFileInputRef = React.useRef<HTMLInputElement>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [modalError, setModalError] = useState("");
 
@@ -195,6 +198,7 @@ export function IssuesView({ pageMode = "ISSUES" }: IssuesViewProps) {
     setModalDesc("");
     setModalDueDate("");
     setModalAssigneeId("");
+    setModalAttachments([]);
     if ((!modalProjId || !projects.some((p) => p.id === modalProjId)) && projects.length > 0) {
       setModalProjId(projectId && projects.some((p) => p.id === projectId) ? projectId : projects[0].id);
     }
@@ -273,7 +277,7 @@ export function IssuesView({ pageMode = "ISSUES" }: IssuesViewProps) {
     setIsSubmitting(true);
     setModalError("");
     try {
-      await api.post("/issues", {
+      const createdRes = await api.post<{ id: string }>("/issues", {
         projectId: modalProjId,
         type: modalType,
         title: modalTitle.trim(),
@@ -283,12 +287,30 @@ export function IssuesView({ pageMode = "ISSUES" }: IssuesViewProps) {
         dueDate: modalDueDate ? new Date(modalDueDate).toISOString() : undefined,
       });
 
-      toastSuccess(`${modalType === "BUG" ? "Bug report" : "Task"} created!`);
+      const newIssueId = (createdRes as any)?.id || (createdRes as any)?.data?.id;
+      if (newIssueId && modalAttachments.length > 0) {
+        for (const file of modalAttachments) {
+          try {
+            const formData = new FormData();
+            formData.append("file", file);
+            await api.uploadWithProgress(`/issues/${newIssueId}/attachments`, formData);
+          } catch (uploadErr) {
+            console.error("Failed to upload attachment", uploadErr);
+          }
+        }
+      }
+
+      toastSuccess(
+        modalAttachments.length > 0
+          ? `${modalType === "BUG" ? "Bug report" : "Task"} created with ${modalAttachments.length} attachment(s)!`
+          : `${modalType === "BUG" ? "Bug report" : "Task"} created!`
+      );
       setIsModalOpen(false);
       setModalTitle("");
       setModalDesc("");
       setModalDueDate("");
       setModalAssigneeId("");
+      setModalAttachments([]);
       fetchIssues();
     } catch (err: unknown) {
       if (err instanceof ApiClientError) {
@@ -951,6 +973,70 @@ export function IssuesView({ pageMode = "ISSUES" }: IssuesViewProps) {
               </option>
             ))}
           </Select>
+
+          {/* Media Attachments Section */}
+          <div className="space-y-2">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+              Media Attachments (Optional)
+            </label>
+            <div
+              onClick={() => modalFileInputRef.current?.click()}
+              className="p-3.5 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl text-center cursor-pointer hover:border-indigo-400 dark:hover:border-indigo-500/50 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors group"
+            >
+              <Upload className="w-5 h-5 mx-auto text-slate-400 group-hover:text-indigo-500 transition-colors mb-1" />
+              <p className="text-xs text-slate-600 dark:text-slate-300 font-medium">
+                Click to attach files (Screenshots, screen recordings, mockups, or audio)
+              </p>
+              <p className="text-[10px] text-slate-400 mt-0.5">
+                PNG, JPG, WebP, MP4, WebM up to 100MB
+              </p>
+              <input
+                ref={modalFileInputRef}
+                type="file"
+                multiple
+                accept="image/*,video/*,audio/*"
+                className="hidden"
+                onChange={(e) => {
+                  if (e.target.files) {
+                    setModalAttachments((prev) => [...prev, ...Array.from(e.target.files!)]);
+                  }
+                }}
+              />
+            </div>
+
+            {modalAttachments.length > 0 && (
+              <div className="space-y-1.5 pt-1 max-h-36 overflow-y-auto">
+                {modalAttachments.map((file, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center justify-between p-2 rounded-lg bg-slate-100 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700/60 text-xs"
+                  >
+                    <div className="flex items-center gap-2 truncate">
+                      <Paperclip className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                      <span className="truncate text-slate-800 dark:text-slate-200 font-medium">
+                        {file.name}
+                      </span>
+                      <span className="text-slate-400 text-[10px]">
+                        ({file.size / (1024 * 1024) < 1
+                          ? `${Math.round(file.size / 1024)} KB`
+                          : `${(file.size / (1024 * 1024)).toFixed(1)} MB`})
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setModalAttachments((prev) => prev.filter((_, i) => i !== idx))
+                      }
+                      className="text-slate-400 hover:text-rose-500 p-1 transition-colors"
+                      title="Remove file"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
 
           <div className="flex justify-end gap-3 pt-4 border-t border-slate-800">
             <Button
