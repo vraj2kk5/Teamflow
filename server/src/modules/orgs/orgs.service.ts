@@ -124,22 +124,32 @@ export class OrgsService {
       };
     }
 
-    // 2. Check if already member
-    const existing = await prisma.organizationMembership.findUnique({
-      where: {
-        userId_organizationId: {
-          userId: user.id,
-          organizationId: orgId,
-        },
-      },
+    // 2. Check if user already belongs to this or another organization
+    const existingMembership = await prisma.organizationMembership.findFirst({
+      where: { userId: user.id },
+      include: { organization: true },
     });
 
-    if (existing) {
-      throw new ConflictError("This user is already a member of the organization");
+    if (existingMembership) {
+      if (existingMembership.organizationId === orgId) {
+        throw new ConflictError("This user is already a member of your organization");
+      }
+      throw new ConflictError(
+        `This user (${input.email}) is already a member of another organization ("${existingMembership.organization.name}"). Each user can only belong to one organization.`
+      );
     }
 
     // 3. Add membership and log activity in transaction
     const membership = await prisma.$transaction(async (tx) => {
+      const activeCount = await tx.organizationMembership.count({
+        where: { userId: user.id },
+      });
+      if (activeCount > 0) {
+        throw new ConflictError(
+          "This user already belongs to an organization. Each user can only belong to one organization."
+        );
+      }
+
       const created = await tx.organizationMembership.create({
         data: {
           userId: user.id,
@@ -393,6 +403,17 @@ export class OrgsService {
     });
     if (!user) throw new NotFoundError("User not found");
 
+    const existingMembership = await prisma.organizationMembership.findFirst({
+      where: { userId },
+      include: { organization: true },
+    });
+
+    if (existingMembership) {
+      throw new ConflictError(
+        `You already belong to "${existingMembership.organization.name}". Each user can only belong to one organization.`
+      );
+    }
+
     const orgName = (input.name || "").trim() || `${user.name}'s Organization`;
     const baseSlug = orgName
       .toLowerCase()
@@ -468,33 +489,35 @@ export class OrgsService {
     });
     if (!org) throw new NotFoundError("Invalid organization invite code");
 
-    let membership = await prisma.organizationMembership.findUnique({
-      where: {
-        userId_organizationId: {
-          userId,
-          organizationId: org.id,
-        },
+    const existingMembership = await prisma.organizationMembership.findFirst({
+      where: { userId },
+      include: { organization: true },
+    });
+
+    if (existingMembership) {
+      if (existingMembership.organizationId === org.id) {
+        throw new ConflictError(`You are already a member of "${org.name}"`);
+      }
+      throw new ConflictError(
+        `You already belong to "${existingMembership.organization.name}". Each user can only belong to one organization.`
+      );
+    }
+    const membership = await prisma.organizationMembership.create({
+      data: {
+        userId,
+        organizationId: org.id,
+        role: Role.MEMBER,
       },
     });
 
-    if (!membership) {
-      membership = await prisma.organizationMembership.create({
-        data: {
-          userId,
-          organizationId: org.id,
-          role: Role.MEMBER,
-        },
-      });
-
-      await prisma.activityLog.create({
-        data: {
-          organizationId: org.id,
-          actorId: userId,
-          action: "MEMBER_ADDED",
-          metadata: { role: Role.MEMBER, method: "INVITE_CODE" },
-        },
-      });
-    }
+    await prisma.activityLog.create({
+      data: {
+        organizationId: org.id,
+        actorId: userId,
+        action: "MEMBER_ADDED",
+        metadata: { role: Role.MEMBER, method: "INVITE_CODE" },
+      },
+    });
 
     const token = AuthService.signToken({
       userId,

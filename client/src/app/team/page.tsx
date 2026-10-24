@@ -378,7 +378,7 @@ export default function TeamPage() {
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         title="Add Team Member"
-        description="Enter the email address of a registered user to add them to this organization"
+        description="Invite or add a user to this organization. Note: Each user can only belong to one organization."
       >
         <form onSubmit={handleAddMember} className="space-y-4">
           <Input
@@ -391,6 +391,7 @@ export default function TeamPage() {
               setAddError("");
             }}
             error={addError}
+            helperText="If the user already belongs to another organization, they cannot be added."
             required
             autoFocus
           />

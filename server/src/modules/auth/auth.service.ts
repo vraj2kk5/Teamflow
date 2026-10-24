@@ -52,6 +52,15 @@ export class AuthService {
     });
 
     if (existingUser) {
+      const existingMembership = await prisma.organizationMembership.findFirst({
+        where: { userId: existingUser.id },
+        include: { organization: true },
+      });
+      if (existingMembership) {
+        throw new ConflictError(
+          `This email is already registered and belongs to "${existingMembership.organization.name}". Each user can only belong to one organization.`
+        );
+      }
       throw new ConflictError("A user with this email address already exists");
     }
 
