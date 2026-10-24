@@ -86,9 +86,10 @@ export async function requireAuth(
         throw new UnauthorizedError("User account no longer exists");
       }
 
-      // Allow auth management routes through so the user can inspect status or switch deliberately
+      // Allow auth management and user notification routes through so user can view/mark notifications even if active organization is deleted/unselected
       if (
         req.baseUrl.includes("/auth") ||
+        req.baseUrl.includes("/notifications") ||
         req.path === "/me" ||
         req.path === "/logout" ||
         req.path === "/switch-org"

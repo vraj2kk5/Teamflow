@@ -45,18 +45,31 @@ export function NotificationBell() {
   const fetchNotifications = useCallback(async () => {
     if (!user) return;
     try {
-      const res = await api.get<{
-        data: {
-          data: NotificationItem[];
-          unreadCount: number;
-        };
-      }>("/notifications?limit=25");
+      const res = await api.get<any>("/notifications?limit=50");
 
-      const payload = (res as unknown as { data?: { data?: NotificationItem[]; unreadCount?: number } })?.data || res;
-      const notifList = (payload as { data?: NotificationItem[] })?.data || (Array.isArray(payload) ? payload : []);
-      const count = (payload as { unreadCount?: number })?.unreadCount ?? notifList.filter((n) => !n.isRead).length;
+      let items: NotificationItem[] = [];
+      let count = 0;
 
-      setNotifications(notifList);
+      if (Array.isArray(res)) {
+        items = res;
+        count = items.filter((n) => !n.isRead).length;
+      } else if (res && typeof res === "object") {
+        if (Array.isArray(res.data)) {
+          items = res.data;
+        } else if (res.data && Array.isArray(res.data.data)) {
+          items = res.data.data;
+        }
+
+        if (typeof res.unreadCount === "number") {
+          count = res.unreadCount;
+        } else if (res.data && typeof res.data.unreadCount === "number") {
+          count = res.data.unreadCount;
+        } else {
+          count = items.filter((n) => !n.isRead).length;
+        }
+      }
+
+      setNotifications(items);
       setUnreadCount(count);
     } catch {
       // silent fallback
@@ -81,30 +94,53 @@ export function NotificationBell() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleMarkAsRead = async (id: string, link?: string | null) => {
+  const handleMarkAsRead = async (id: string, link?: string | null, e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    // Optimistic UI update immediately
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
+    );
+    setUnreadCount((prev) => Math.max(0, prev - 1));
+
     try {
-      await api.patch(`/notifications/${id}/read`);
-      setNotifications((prev) =>
-        prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
-      );
-      setUnreadCount((prev) => Math.max(0, prev - 1));
-      if (link) {
-        setIsOpen(false);
-        router.push(link);
-      }
+      await api.patch(`/notifications/${id}/read`, {});
     } catch {
-      // ignore
+      try {
+        await api.post(`/notifications/${id}/read`, {});
+      } catch {
+        // silent fallback
+      }
+    }
+
+    if (link) {
+      setIsOpen(false);
+      router.push(link);
     }
   };
 
-  const handleMarkAllAsRead = async () => {
+  const handleMarkAllAsRead = async (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    // Instant optimistic UI update: immediately clear dots and counter
+    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+    setUnreadCount(0);
     setIsLoading(true);
+
     try {
-      await api.post("/notifications/read-all");
-      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
-      setUnreadCount(0);
-    } catch {
-      // ignore
+      await api.post("/notifications/read-all", {});
+    } catch (err) {
+      console.error("POST /read-all failed, trying PATCH:", err);
+      try {
+        await api.patch("/notifications/read-all", {});
+      } catch (patchErr) {
+        console.error("PATCH /read-all failed:", patchErr);
+        await fetchNotifications();
+      }
     } finally {
       setIsLoading(false);
     }
@@ -180,10 +216,10 @@ export function NotificationBell() {
               )}
             </div>
 
-            {unreadCount > 0 && (
+            {(unreadCount > 0 || notifications.some((n) => !n.isRead)) && (
               <button
                 type="button"
-                onClick={handleMarkAllAsRead}
+                onClick={(e) => handleMarkAllAsRead(e)}
                 disabled={isLoading}
                 className="text-[11px] text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium flex items-center gap-1 transition-colors cursor-pointer disabled:opacity-50"
               >
@@ -209,7 +245,7 @@ export function NotificationBell() {
               notifications.map((item) => (
                 <div
                   key={item.id}
-                  onClick={() => handleMarkAsRead(item.id, item.link)}
+                  onClick={(e) => handleMarkAsRead(item.id, item.link, e)}
                   className={`p-3 transition-colors cursor-pointer flex items-start gap-3 ${
                     item.isRead
                       ? "hover:bg-slate-50 dark:hover:bg-slate-850/50 opacity-80"
