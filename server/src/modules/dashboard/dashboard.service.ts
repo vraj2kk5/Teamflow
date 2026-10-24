@@ -252,7 +252,28 @@ export class DashboardService {
       },
     });
 
-    // 2. Fetch completed issues in the window
+    // 2. Fetch ALL issues in scope to compute pipeline (Total, Completed, In Progress, To Do)
+    const allIssues = await prisma.issue.findMany({
+      where: issueWhere,
+      select: {
+        id: true,
+        type: true,
+        status: true,
+        assigneeId: true,
+      },
+    });
+
+    const totalWork = allIssues.length;
+    const totalTasks = allIssues.filter((i) => i.type === "TASK").length;
+    const totalBugs = allIssues.filter((i) => i.type === "BUG").length;
+    const completedWork = allIssues.filter((i) => i.status === "DONE").length;
+    const inProgressWork = allIssues.filter(
+      (i) => i.status === "IN_PROGRESS" || i.status === "IN_REVIEW"
+    ).length;
+    const toDoWork = allIssues.filter((i) => i.status === "TODO").length;
+    const completionRate = totalWork > 0 ? Math.round((completedWork / totalWork) * 100) : 0;
+
+    // 3. Fetch completed issues in the selected timeframe window
     const completedIssues = await prisma.issue.findMany({
       where: {
         ...issueWhere,
@@ -409,10 +430,13 @@ export class DashboardService {
         jobTitle: string | null;
       };
       role: Role;
+      totalAssigned: number;
       completedCount: number;
       tasksCount: number;
       bugsCount: number;
       activeCount: number;
+      toDoCount: number;
+      completionRate: number;
       completedIssues: typeof formattedCompleted;
     };
 
@@ -420,30 +444,60 @@ export class DashboardService {
 
     // Initialize with org members
     for (const m of orgMembers) {
+      const userTotal = allIssues.filter((i) => i.assigneeId === m.user.id).length;
+      const userActive = allIssues.filter(
+        (i) => i.assigneeId === m.user.id && (i.status === "IN_PROGRESS" || i.status === "IN_REVIEW")
+      ).length;
+      const userToDo = allIssues.filter(
+        (i) => i.assigneeId === m.user.id && i.status === "TODO"
+      ).length;
+      const userDone = allIssues.filter(
+        (i) => i.assigneeId === m.user.id && i.status === "DONE"
+      ).length;
+      const userRate = userTotal > 0 ? Math.round((userDone / userTotal) * 100) : 0;
+
       memberStatsMap.set(m.user.id, {
         user: m.user,
         role: m.role,
+        totalAssigned: userTotal,
         completedCount: 0,
         tasksCount: 0,
         bugsCount: 0,
-        activeCount: activeCountsByUser[m.user.id] || 0,
+        activeCount: userActive,
+        toDoCount: userToDo,
+        completionRate: userRate,
         completedIssues: [],
       });
     }
 
-    // Fill completed items per member
+    // Fill completed items per member in the timeframe window
     const unassignedCompleted: typeof formattedCompleted = [];
     for (const item of formattedCompleted) {
       if (item.assignee) {
         let stats = memberStatsMap.get(item.assignee.id);
         if (!stats) {
+          const userTotal = allIssues.filter((i) => i.assigneeId === item.assignee!.id).length;
+          const userActive = allIssues.filter(
+            (i) => i.assigneeId === item.assignee!.id && (i.status === "IN_PROGRESS" || i.status === "IN_REVIEW")
+          ).length;
+          const userToDo = allIssues.filter(
+            (i) => i.assigneeId === item.assignee!.id && i.status === "TODO"
+          ).length;
+          const userDone = allIssues.filter(
+            (i) => i.assigneeId === item.assignee!.id && i.status === "DONE"
+          ).length;
+          const userRate = userTotal > 0 ? Math.round((userDone / userTotal) * 100) : 0;
+
           stats = {
             user: { ...item.assignee, jobTitle: null },
             role: Role.MEMBER,
+            totalAssigned: userTotal,
             completedCount: 0,
             tasksCount: 0,
             bugsCount: 0,
-            activeCount: activeCountsByUser[item.assignee.id] || 0,
+            activeCount: userActive,
+            toDoCount: userToDo,
+            completionRate: userRate,
             completedIssues: [],
           };
           memberStatsMap.set(item.assignee.id, stats);
@@ -461,8 +515,8 @@ export class DashboardService {
       (a, b) => b.completedCount - a.completedCount || b.activeCount - a.activeCount
     );
 
-    const totalTasks = formattedCompleted.filter((i) => i.type === "TASK").length;
-    const totalBugs = formattedCompleted.filter((i) => i.type === "BUG").length;
+    const totalTasksCompleted = formattedCompleted.filter((i) => i.type === "TASK").length;
+    const totalBugsCompleted = formattedCompleted.filter((i) => i.type === "BUG").length;
     const activeContributors = memberStats.filter((m) => m.completedCount > 0).length;
 
     return {
@@ -470,9 +524,16 @@ export class DashboardService {
       startDate: startDate.toISOString(),
       endDate: now.toISOString(),
       summary: {
-        totalCompleted: formattedCompleted.length,
-        tasksCompleted: totalTasks,
-        bugsResolved: totalBugs,
+        totalWork,
+        totalTasks,
+        totalBugs,
+        completedWork,
+        completedInTimeframe: formattedCompleted.length,
+        tasksCompleted: totalTasksCompleted,
+        bugsResolved: totalBugsCompleted,
+        inProgressWork,
+        toDoWork,
+        completionRate,
         activeContributors,
       },
       timeline,

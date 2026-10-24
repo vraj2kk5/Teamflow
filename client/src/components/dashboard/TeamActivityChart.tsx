@@ -22,6 +22,9 @@ import {
   TrendingUp,
   UserCheck,
   RotateCcw,
+  Layers,
+  Clock,
+  ListTodo,
 } from "lucide-react";
 import { formatDate, cn } from "../../lib/utils";
 
@@ -67,10 +70,13 @@ interface MemberStat {
     jobTitle: string | null;
   };
   role: string;
+  totalAssigned?: number;
   completedCount: number;
   tasksCount: number;
   bugsCount: number;
   activeCount: number;
+  toDoCount?: number;
+  completionRate?: number;
   completedIssues: CompletedIssueItem[];
 }
 
@@ -79,9 +85,17 @@ interface AnalyticsResponse {
   startDate: string;
   endDate: string;
   summary: {
-    totalCompleted: number;
+    totalWork?: number;
+    totalTasks?: number;
+    totalBugs?: number;
+    completedWork?: number;
+    completedInTimeframe?: number;
+    totalCompleted?: number;
     tasksCompleted: number;
     bugsResolved: number;
+    inProgressWork?: number;
+    toDoWork?: number;
+    completionRate?: number;
     activeContributors: number;
   };
   timeline: TimelineDay[];
@@ -219,58 +233,90 @@ export function TeamActivityChart() {
       </CardHeader>
 
       <CardContent className="p-5 sm:p-6 space-y-6">
-        {/* Quick KPI Stat Strips */}
+        {/* Work Lifecycle KPI Pipeline: Total Work -> Completed -> In Progress -> To Do */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          {/* 1. Total Work */}
           <div className="p-4 rounded-xl bg-slate-50/80 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80">
             <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 mb-1">
-              <span>Completed Work</span>
-              <CheckCircle2 className="w-3.5 h-3.5 text-indigo-500" />
+              <span>Total Work</span>
+              <Layers className="w-3.5 h-3.5 text-indigo-500" />
             </div>
             <div className="text-2xl font-bold text-slate-900 dark:text-white">
-              {data.summary.totalCompleted}
+              {data.summary.totalWork ?? (data.summary.completedWork ?? 0) + (data.summary.inProgressWork ?? 0) + (data.summary.toDoWork ?? 0)}
             </div>
             <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-              Across all assigned projects
+              {data.summary.totalTasks ?? 0} tasks &bull; {data.summary.totalBugs ?? 0} bugs
             </p>
           </div>
 
-          <div className="p-4 rounded-xl bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/40">
-            <div className="flex items-center justify-between text-xs text-indigo-600 dark:text-indigo-400 mb-1">
-              <span>Tasks Finished</span>
-              <Sparkles className="w-3.5 h-3.5" />
-            </div>
-            <div className="text-2xl font-bold text-indigo-700 dark:text-indigo-300">
-              {data.summary.tasksCompleted}
-            </div>
-            <p className="text-[11px] text-indigo-600/80 dark:text-indigo-400/80 mt-0.5">
-              Feature & sprint tasks
-            </p>
-          </div>
-
+          {/* 2. Completed Work */}
           <div className="p-4 rounded-xl bg-emerald-50/50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/40">
             <div className="flex items-center justify-between text-xs text-emerald-600 dark:text-emerald-400 mb-1">
-              <span>Bugs Resolved</span>
-              <Bug className="w-3.5 h-3.5" />
+              <span>Completed Work</span>
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
             </div>
             <div className="text-2xl font-bold text-emerald-700 dark:text-emerald-300">
-              {data.summary.bugsResolved}
+              {data.summary.completedWork ?? data.summary.totalCompleted ?? 0}
             </div>
             <p className="text-[11px] text-emerald-600/80 dark:text-emerald-400/80 mt-0.5">
-              Verified fixes shipped
+              {data.summary.completionRate ?? 0}% rate &bull; {data.summary.completedInTimeframe ?? data.summary.totalCompleted ?? 0} in {days}d
             </p>
           </div>
 
+          {/* 3. In Progress Work */}
+          <div className="p-4 rounded-xl bg-amber-50/50 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-900/40">
+            <div className="flex items-center justify-between text-xs text-amber-600 dark:text-amber-400 mb-1">
+              <span>In Progress Work</span>
+              <Clock className="w-3.5 h-3.5 text-amber-500" />
+            </div>
+            <div className="text-2xl font-bold text-amber-700 dark:text-amber-300">
+              {data.summary.inProgressWork ?? 0}
+            </div>
+            <p className="text-[11px] text-amber-600/80 dark:text-amber-400/80 mt-0.5">
+              Under active development
+            </p>
+          </div>
+
+          {/* 4. Pending / Backlog Work */}
           <div className="p-4 rounded-xl bg-slate-50/80 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80">
             <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 mb-1">
-              <span>Active Contributors</span>
-              <Users className="w-3.5 h-3.5 text-purple-500" />
+              <span>To Do / Backlog</span>
+              <ListTodo className="w-3.5 h-3.5 text-purple-500" />
             </div>
             <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-              {data.summary.activeContributors}
+              {data.summary.toDoWork ?? 0}
             </div>
             <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-              Members with completions
+              Awaiting start & assignment
             </p>
+          </div>
+        </div>
+
+        {/* Timeframe Velocity Summary Ribbon */}
+        <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 rounded-xl bg-indigo-50/60 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/40 text-xs">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+            <span className="font-semibold text-slate-900 dark:text-white">
+              Last {days} Days Velocity:
+            </span>
+            <span className="text-slate-600 dark:text-slate-300">
+              <strong className="text-indigo-600 dark:text-indigo-400">
+                {data.summary.completedInTimeframe ?? data.summary.totalCompleted ?? 0}
+              </strong>{" "}
+              resolved ({data.summary.tasksCompleted} tasks, {data.summary.bugsResolved} bugs) by{" "}
+              <strong className="text-purple-600 dark:text-purple-400">
+                {data.summary.activeContributors}
+              </strong>{" "}
+              contributor{data.summary.activeContributors !== 1 ? "s" : ""}
+            </span>
+          </div>
+          <div className="flex items-center gap-3 font-medium">
+            <span className="text-emerald-600 dark:text-emerald-400">
+              &bull; {data.summary.completedWork ?? 0} total resolved
+            </span>
+            <span className="text-amber-600 dark:text-amber-400">
+              &bull; {data.summary.inProgressWork ?? 0} active
+            </span>
           </div>
         </div>
 
@@ -455,10 +501,13 @@ export function TeamActivityChart() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {data.memberStats.map((member) => {
               const isSelected = selectedMemberId === member.user.id;
+              const totalDone =
+                data.summary.completedInTimeframe ??
+                data.summary.totalCompleted ??
+                data.summary.completedWork ??
+                0;
               const completedPct =
-                data.summary.totalCompleted > 0
-                  ? Math.round((member.completedCount / data.summary.totalCompleted) * 100)
-                  : 0;
+                totalDone > 0 ? Math.round((member.completedCount / totalDone) * 100) : 0;
 
               return (
                 <div
@@ -497,34 +546,34 @@ export function TeamActivityChart() {
                       variant={isSelected ? "primary" : "neutral"}
                       className="shrink-0 font-semibold"
                     >
-                      {member.completedCount} done
+                      {member.completedCount} done {member.totalAssigned ? `(${member.completionRate ?? 0}%)` : ""}
                     </Badge>
                   </div>
 
-                  {/* Relative completion share progress bar */}
+                  {/* Progress bar */}
                   <div className="w-full h-1.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden my-2">
                     <div
                       className={cn(
                         "h-full rounded-full transition-all duration-500",
                         isSelected ? "bg-indigo-600 dark:bg-indigo-400" : "bg-indigo-500/70"
                       )}
-                      style={{ width: `${completedPct}%` }}
+                      style={{ width: `${Math.min(100, Math.max(member.completionRate ?? completedPct, member.completedCount > 0 ? 5 : 0))}%` }}
                     />
                   </div>
 
                   <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 pt-1">
                     <span className="flex items-center gap-1">
                       <span className="font-semibold text-slate-700 dark:text-slate-300">
-                        {member.tasksCount}
+                        {member.totalAssigned ?? (member.completedCount + member.activeCount)}
                       </span>{" "}
-                      tasks &bull;{" "}
+                      assigned &bull;{" "}
                       <span className="font-semibold text-emerald-600 dark:text-emerald-400">
-                        {member.bugsCount}
+                        {member.completedCount}
                       </span>{" "}
-                      bugs
+                      done
                     </span>
-                    <span className="text-slate-400 dark:text-slate-500">
-                      {member.activeCount} in progress
+                    <span className="text-slate-500 dark:text-slate-400">
+                      {member.activeCount} active &bull; {member.toDoCount ?? 0} to do
                     </span>
                   </div>
                 </div>
