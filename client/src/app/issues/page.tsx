@@ -26,6 +26,7 @@ import {
   ChevronLeft,
   ChevronRight,
   FolderKanban,
+  Paperclip,
   X,
 } from "lucide-react";
 import { formatDate, cn } from "../../lib/utils";
@@ -315,16 +316,101 @@ function IssuesView() {
             </Button>
           )}
 
-          <Button
-            size="md"
-            variant="primary"
-            onClick={() => openNewIssueModal("BUG")}
-            className="bg-rose-600 hover:bg-rose-700"
-          >
-            <Bug className="w-4 h-4 mr-1" />
-            <span>Report a Bug</span>
-          </Button>
+          <Link href="/bug-reports/new">
+            <Button
+              size="md"
+              variant="primary"
+              className="bg-rose-600 hover:bg-rose-700"
+            >
+              <Bug className="w-4 h-4 mr-1" />
+              <span>Report a Bug</span>
+            </Button>
+          </Link>
         </div>
+      </div>
+
+      {/* Segmented Quick Filter Tabs */}
+      <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-3">
+        <button
+          type="button"
+          onClick={() => {
+            setType("");
+            setPage(1);
+          }}
+          className={cn(
+            "flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all",
+            !type
+              ? "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 shadow-xs"
+              : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/50"
+          )}
+        >
+          <AlertCircle className="w-4 h-4" />
+          <span>All Issues</span>
+          <span
+            className={cn(
+              "text-xs px-2 py-0.5 rounded-full font-mono",
+              !type
+                ? "bg-indigo-200 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300"
+                : "bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
+            )}
+          >
+            {!type ? totalCount : "•"}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setType("TASK");
+            setPage(1);
+          }}
+          className={cn(
+            "flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all",
+            type === "TASK"
+              ? "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 shadow-xs"
+              : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/50"
+          )}
+        >
+          <CheckCircle2 className="w-4 h-4 text-blue-500" />
+          <span>Tasks</span>
+          <span
+            className={cn(
+              "text-xs px-2 py-0.5 rounded-full font-mono",
+              type === "TASK"
+                ? "bg-indigo-200 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300"
+                : "bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
+            )}
+          >
+            {type === "TASK" ? totalCount : "•"}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setType("BUG");
+            setPage(1);
+          }}
+          className={cn(
+            "flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all",
+            type === "BUG"
+              ? "bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800 shadow-xs"
+              : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/50"
+          )}
+        >
+          <Bug className="w-4 h-4 text-rose-500" />
+          <span>Bugs & Defects</span>
+          <span
+            className={cn(
+              "text-xs px-2 py-0.5 rounded-full font-mono",
+              type === "BUG"
+                ? "bg-rose-200 dark:bg-rose-900/60 text-rose-700 dark:text-rose-300"
+                : "bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
+            )}
+          >
+            {type === "BUG" ? totalCount : "•"}
+          </span>
+        </button>
       </div>
 
       {/* Filter Bar */}
@@ -472,20 +558,38 @@ function IssuesView() {
         </div>
       ) : issues.length === 0 ? (
         <EmptyState
-          icon={AlertCircle}
-          title="No issues found"
+          icon={type === "BUG" ? Bug : AlertCircle}
+          title={
+            type === "BUG"
+              ? "No bug reports found"
+              : type === "TASK"
+              ? "No tasks found"
+              : "No issues found"
+          }
           description={
             hasActiveFilters
               ? "No issues match your selected filters. Try clearing some criteria."
+              : type === "BUG"
+              ? "All clear! No bugs have been reported in this organization."
               : "No issues exist in this organization yet. Create a task or report a bug."
           }
-          actionLabel={hasActiveFilters ? "Reset Filters" : canCreateTask ? "Create Task" : "Report Bug"}
+          actionLabel={
+            hasActiveFilters
+              ? "Reset Filters"
+              : type === "BUG"
+              ? "Report a Bug"
+              : canCreateTask
+              ? "Create Task"
+              : "Report a Bug"
+          }
           onAction={
             hasActiveFilters
               ? handleResetFilters
+              : type === "BUG"
+              ? () => router.push("/bug-reports/new")
               : canCreateTask
               ? () => openNewIssueModal("TASK")
-              : () => openNewIssueModal("BUG")
+              : () => router.push("/bug-reports/new")
           }
         />
       ) : (
@@ -514,8 +618,19 @@ function IssuesView() {
                     <td className="px-4 py-3.5 font-mono text-xs text-indigo-400 font-semibold">
                       {i.key}
                     </td>
-                    <td className="px-4 py-3.5 font-medium text-slate-900 dark:text-white max-w-sm truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-300 transition-colors">
-                      {i.title}
+                    <td className="px-4 py-3.5 font-medium text-slate-900 dark:text-white max-w-sm group-hover:text-indigo-600 dark:group-hover:text-indigo-300 transition-colors">
+                      <div className="flex items-center gap-2">
+                        <span className="truncate">{i.title}</span>
+                        {i._count?.attachments > 0 && (
+                          <span
+                            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-300 border border-rose-200 dark:border-rose-800/80 shrink-0"
+                            title={`${i._count.attachments} visual attachment(s)`}
+                          >
+                            <Paperclip className="w-2.5 h-2.5" />
+                            <span>{i._count.attachments}</span>
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-4 py-3.5 text-xs text-slate-500 dark:text-slate-400">
                       {i.project.name}

@@ -322,9 +322,9 @@ export default function NewBugReportPage() {
               </Button>
             </Link>
 
-            <Link href="/bug-reports">
+            <Link href="/issues?type=BUG">
               <Button variant="secondary" className="w-full sm:w-auto">
-                <span>Back to Bug Tracker</span>
+                <span>Back to Issues</span>
               </Button>
             </Link>
           </div>
@@ -338,11 +338,11 @@ export default function NewBugReportPage() {
       {/* Top Bar / Navigation */}
       <div className="flex items-center justify-between">
         <Link
-          href="/bug-reports"
+          href="/issues?type=BUG"
           className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>Back to Bug Reports</span>
+          <span>Back to Issues</span>
         </Link>
 
         {createdIssue && (
