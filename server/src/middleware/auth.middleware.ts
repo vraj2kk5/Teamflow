@@ -65,7 +65,7 @@ export async function requireAuth(
     }
 
     // Load active membership
-    const membership = await prisma.organizationMembership.findFirst({
+    let membership = await prisma.organizationMembership.findFirst({
       where: {
         userId: payload.userId,
         organizationId: payload.organizationId,
@@ -75,7 +75,46 @@ export async function requireAuth(
       },
     });
 
+    // If the active organization in the token was deleted or the user was removed,
+    // gracefully fall back to ANY available organization the user belongs to
     if (!membership) {
+      membership = await prisma.organizationMembership.findFirst({
+        where: {
+          userId: payload.userId,
+        },
+        include: {
+          user: true,
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
+    }
+
+    if (!membership) {
+      const user = await prisma.user.findUnique({
+        where: { id: payload.userId },
+      });
+
+      if (!user) {
+        throw new UnauthorizedError("User account no longer exists");
+      }
+
+      // Allow /auth/me and /auth/logout through so the frontend can detect the state and guide the user
+      if (req.baseUrl.includes("/auth") || req.path === "/me" || req.path === "/logout") {
+        req.user = {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+        };
+        req.auth = {
+          userId: user.id,
+          organizationId: "",
+          role: Role.MEMBER,
+        };
+        return next();
+      }
+
       throw new UnauthorizedError("User is no longer a member of this organization");
     }
 

@@ -6,7 +6,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
 import { Skeleton } from "../ui/Skeleton";
-import { X } from "lucide-react";
+import { X, Building } from "lucide-react";
 
 const publicRoutes = [
   "/login",
@@ -18,7 +18,7 @@ const publicRoutes = [
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, isLoading } = useAuth();
+  const { user, organization, isLoading, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const isPublicRoute = publicRoutes.some(
@@ -51,6 +51,36 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   if (!user) {
     return null;
+  }
+
+  if (!organization) {
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-6 text-center">
+        <div className="max-w-md w-full p-8 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl space-y-4">
+          <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/80 border border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mx-auto">
+            <Building className="w-6 h-6" />
+          </div>
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white">No Active Workspace</h2>
+          <p className="text-sm text-slate-600 dark:text-slate-400">
+            You are not currently part of an active organization. Create a new organization or join an existing team with an invite code.
+          </p>
+          <div className="pt-2 flex flex-col gap-2">
+            <button
+              onClick={() => router.push("/register")}
+              className="w-full py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs shadow-md shadow-indigo-600/20 transition-all cursor-pointer"
+            >
+              Create or Join Organization
+            </button>
+            <button
+              onClick={() => logout()}
+              className="w-full py-2.5 px-4 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold text-xs transition-all cursor-pointer"
+            >
+              Sign Out
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (

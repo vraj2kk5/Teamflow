@@ -75,6 +75,10 @@ export default function TeamPage() {
       setMembers(Array.isArray(list) ? list : []);
     } catch (err: unknown) {
       if (err instanceof ApiClientError) {
+        if (err.message.includes("no longer a member")) {
+          await refreshUser();
+          return;
+        }
         toastError(err.message, "Failed to load team members");
       }
     } finally {
