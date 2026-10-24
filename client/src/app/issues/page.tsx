@@ -19,6 +19,7 @@ import {
   AlertCircle,
   Bug,
   CheckCircle2,
+  ListTodo,
   Search,
   Filter,
   Plus,
@@ -296,8 +297,8 @@ function IssuesView() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2.5">
-            <AlertCircle className="w-6 h-6 text-indigo-400" />
-            <span>Issues</span>
+            <ListTodo className="w-6 h-6 text-indigo-500" />
+            <span>Tasks</span>
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
             Global view of all tasks and bugs across projects ({totalCount} found)
@@ -344,8 +345,8 @@ function IssuesView() {
               : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/50"
           )}
         >
-          <AlertCircle className="w-4 h-4" />
-          <span>All Issues</span>
+          <ListTodo className="w-4 h-4" />
+          <span>All Tasks</span>
           <span
             className={cn(
               "text-xs px-2 py-0.5 rounded-full font-mono",
@@ -372,7 +373,7 @@ function IssuesView() {
           )}
         >
           <CheckCircle2 className="w-4 h-4 text-blue-500" />
-          <span>Tasks</span>
+          <span>Tasks Only</span>
           <span
             className={cn(
               "text-xs px-2 py-0.5 rounded-full font-mono",
