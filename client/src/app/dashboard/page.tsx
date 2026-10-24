@@ -160,7 +160,7 @@ export default function DashboardPage() {
             <Button
               size="sm"
               variant="outline"
-              onClick={() => router.push("/issues?create=true")}
+              onClick={() => router.push("/tasks?create=true")}
             >
               <Plus className="w-3.5 h-3.5 mr-1" />
               <span>Give / New Task</span>

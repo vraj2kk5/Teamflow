@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { cn } from "../../lib/utils";
 
@@ -21,7 +22,12 @@ export function Modal({
   children,
   maxWidth = "lg",
 }: ModalProps) {
+  const [mounted, setMounted] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -29,22 +35,28 @@ export function Modal({
         onClose();
       }
     };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+      window.addEventListener("keydown", handleKeyDown);
+    }
+    return () => {
+      document.body.style.overflow = "";
+      window.removeEventListener("keydown", handleKeyDown);
+    };
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-150 overflow-y-auto"
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-150 overflow-y-auto"
       role="dialog"
       aria-modal="true"
     >
       <div
         ref={modalRef}
         className={cn(
-          "relative w-full rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-2xl animate-in zoom-in-95 duration-200 my-8 max-h-[90vh] flex flex-col transition-colors",
+          "relative w-full rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-2xl animate-in zoom-in-95 duration-200 my-8 max-h-[90vh] flex flex-col transition-colors z-[101]",
           maxWidth === "sm" && "max-w-sm",
           maxWidth === "md" && "max-w-md",
           maxWidth === "lg" && "max-w-lg",
@@ -74,6 +86,7 @@ export function Modal({
 
         <div className="py-4 overflow-y-auto flex-1">{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

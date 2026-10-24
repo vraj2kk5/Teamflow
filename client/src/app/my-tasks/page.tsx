@@ -118,7 +118,7 @@ export default function MyTasksPage() {
           <div className="flex flex-wrap items-center gap-3 pt-2">
             <Button
               variant="primary"
-              onClick={() => router.push("/issues?create=true")}
+              onClick={() => router.push("/tasks?create=true")}
             >
               <Plus className="w-4 h-4 mr-1.5" />
               <span>Give / Create Task</span>

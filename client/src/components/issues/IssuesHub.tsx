@@ -115,7 +115,9 @@ export function IssuesView({ pageMode = "ISSUES" }: IssuesViewProps) {
 
   // New Issue Modal
   const [isModalOpen, setIsModalOpen] = useState(searchParams.get("create") === "true");
-  const [modalType, setModalType] = useState<"TASK" | "BUG">(isTasksMode ? "TASK" : "BUG");
+  const [modalType, setModalType] = useState<"TASK" | "BUG">(
+    searchParams.get("modalType") === "BUG" ? "BUG" : "TASK"
+  );
   const [modalProjId, setModalProjId] = useState(initialProject || "");
   const [modalTitle, setModalTitle] = useState("");
   const [modalDesc, setModalDesc] = useState("");

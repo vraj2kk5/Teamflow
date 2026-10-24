@@ -81,7 +81,7 @@ export function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
           <Button
             size="sm"
             variant="outline"
-            onClick={() => router.push("/issues?create=true")}
+            onClick={() => router.push("/tasks?create=true")}
             className="hidden sm:inline-flex border-slate-300 dark:border-slate-700"
           >
             <Plus className="w-3.5 h-3.5 mr-1" />
