@@ -115,6 +115,7 @@ export class AuthService {
           action: "MEMBER_ADDED",
           metadata: {
             role: targetRole,
+            event: targetRole === "ADMIN" ? "ORGANIZATION_CREATED" : "MEMBER_JOINED",
             action: "REGISTERED_JOINED",
           },
         },

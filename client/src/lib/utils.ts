@@ -56,3 +56,62 @@ export function formatRelativeTime(dateString: string | Date | null | undefined)
   if (diffDay < 30) return `${diffDay}d ago`;
   return formatDate(date);
 }
+
+export function formatActivityAction(
+  action: string,
+  metadata?: Record<string, unknown> | null
+): string {
+  const norm = (action || "").toUpperCase();
+  const meta = (metadata || {}) as Record<string, unknown>;
+
+  if (
+    norm === "ORGANIZATION_CREATED" ||
+    (norm === "MEMBER_ADDED" && meta.role === "ADMIN" && meta.action === "REGISTERED_JOINED") ||
+    meta.event === "ORGANIZATION_CREATED"
+  ) {
+    return "created the workspace";
+  }
+
+  if (
+    norm === "MEMBER_JOINED" ||
+    (norm === "MEMBER_ADDED" && meta.action === "REGISTERED_JOINED" && meta.role === "MEMBER") ||
+    meta.method === "INVITE_CODE"
+  ) {
+    return "joined the workspace";
+  }
+
+  if (norm === "MEMBER_ADDED") {
+    if (meta.targetUserName || meta.name) {
+      return `added ${meta.targetUserName || meta.name} to the team`;
+    }
+    return "added a team member";
+  }
+
+  if (norm === "MEMBER_REMOVED") {
+    return "removed a team member";
+  }
+
+  if (norm === "ROLE_CHANGED") {
+    if (meta.to) {
+      return `changed role to ${meta.to}`;
+    }
+    return "updated member role";
+  }
+
+  if (norm === "PROJECT_CREATED") return "created project";
+  if (norm === "PROJECT_UPDATED") return "updated project";
+  if (norm === "PROJECT_DELETED") return "deleted project";
+  if (norm === "ISSUE_CREATED") return "created task";
+  if (norm === "ISSUE_UPDATED") return "updated task";
+  if (norm === "ISSUE_DELETED") return "deleted task";
+  if (norm === "STATUS_CHANGED") {
+    if (meta.to) {
+      return `moved task to ${String(meta.to).replace(/_/g, " ").toLowerCase()}`;
+    }
+    return "updated task status";
+  }
+  if (norm === "COMMENT_ADDED") return "added a comment";
+  if (norm === "ATTACHMENT_UPLOADED") return "uploaded an attachment";
+
+  return action.replace(/_/g, " ").toLowerCase();
+}

@@ -20,7 +20,7 @@ import {
   Sparkles,
   Plus,
 } from "lucide-react";
-import { formatDate, cn } from "../../lib/utils";
+import { formatDate, cn, formatActivityAction } from "../../lib/utils";
 import { TeamActivityChart } from "../../components/dashboard/TeamActivityChart";
 
 interface DashboardData {
@@ -448,7 +448,7 @@ export default function DashboardPage() {
                     </div>
 
                     <p className="text-slate-600 dark:text-slate-300 pl-8">
-                      {log.action.replace(/_/g, " ").toLowerCase()}{" "}
+                      {formatActivityAction(log.action, log.metadata)}{" "}
                       {log.issue && (
                         <Link
                           href={`/issues/${log.issue.id}`}

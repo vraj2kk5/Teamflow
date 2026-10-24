@@ -10,7 +10,7 @@ import { Skeleton } from "../../components/ui/Skeleton";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { Button } from "../../components/ui/Button";
 import { Activity, ChevronLeft, ChevronRight, FolderKanban, AlertCircle, Bug } from "lucide-react";
-import { formatDate, formatDateTime } from "../../lib/utils";
+import { formatDate, formatDateTime, formatActivityAction } from "../../lib/utils";
 
 interface ActivityLogItem {
   id: string;
@@ -118,7 +118,7 @@ export default function ActivityPage() {
 
                     <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
                       <span className="font-medium text-indigo-600 dark:text-indigo-400">
-                        {log.action.replace(/_/g, " ").toLowerCase()}
+                        {formatActivityAction(log.action, log.metadata)}
                       </span>{" "}
                       {log.issue && (
                         <span>
