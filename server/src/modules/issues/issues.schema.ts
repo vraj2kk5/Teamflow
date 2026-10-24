@@ -26,6 +26,7 @@ export const updateIssueSchema = z.object({
   assigneeId: z.string().cuid().nullable().optional(),
   dueDate: z.string().datetime().nullable().optional(),
   estimatedHours: z.number().min(0).max(1000).nullable().optional(),
+  resolutionNotes: z.string().trim().nullable().optional(),
 
   // Bug-specific fields
   stepsToReproduce: z.string().trim().nullable().optional(),
@@ -36,6 +37,7 @@ export const updateIssueSchema = z.object({
 
 export const updateIssueStatusSchema = z.object({
   status: z.nativeEnum(IssueStatus),
+  resolutionNotes: z.string().trim().nullable().optional(),
 });
 
 export type CreateIssueInput = z.infer<typeof createIssueSchema>;

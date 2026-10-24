@@ -14,6 +14,7 @@ import { Badge } from "../ui/Badge";
 import { Avatar } from "../ui/Avatar";
 import { Skeleton } from "../ui/Skeleton";
 import { ConfirmDialog } from "../ui/ConfirmDialog";
+import { Modal } from "../ui/Modal";
 import {
   AlertCircle,
   Bug,
@@ -53,6 +54,7 @@ export interface IssueDetail {
   actualResult?: string | null;
   errorLog?: string | null;
   resolvedAt?: string | null;
+  resolutionNotes?: string | null;
   createdAt: string;
   updatedAt: string;
   project: {
@@ -138,6 +140,8 @@ export function IssueDetailView({ id, expectedType }: IssueDetailViewProps) {
   // Delete state
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isResolveModalOpen, setIsResolveModalOpen] = useState(false);
+  const [resolutionInput, setResolutionInput] = useState("");
 
   // Attachment state
   const attachmentInputRef = React.useRef<HTMLInputElement>(null);
@@ -259,11 +263,17 @@ export function IssueDetailView({ id, expectedType }: IssueDetailViewProps) {
 
   const isTask = (issue?.type || expectedType) === "TASK";
 
-  const handleStatusChange = async (newStatus: IssueDetail["status"]) => {
+  const handleStatusChange = async (newStatus: IssueDetail["status"], resolutionNotes?: string) => {
     if (!issue) return;
+    if (newStatus === "DONE" && resolutionNotes === undefined) {
+      setResolutionInput(issue.resolutionNotes || "");
+      setIsResolveModalOpen(true);
+      return;
+    }
     try {
       await api.patch<{ data: IssueDetail }>(`/issues/${id}/status`, {
         status: newStatus,
+        resolutionNotes: resolutionNotes || undefined,
       });
       setIssue((prev) =>
         prev
@@ -463,6 +473,26 @@ export function IssueDetailView({ id, expectedType }: IssueDetailViewProps) {
               </p>
             </div>
           </Card>
+
+          {/* Resolution Summary Callout */}
+          {issue.status === "DONE" && (
+            <Card className="border-emerald-200 dark:border-emerald-800/60 bg-emerald-50/40 dark:bg-emerald-950/20 space-y-2 p-4 shadow-sm">
+              <div className="flex items-center gap-2 text-emerald-800 dark:text-emerald-300 font-semibold text-sm">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                <span>Resolved {issue.resolvedAt ? `on ${formatDate(issue.resolvedAt)}` : ""}</span>
+              </div>
+              {issue.resolutionNotes && (
+                <div className="pt-1 text-xs text-slate-700 dark:text-slate-300">
+                  <span className="font-semibold text-slate-900 dark:text-white block mb-1">
+                    Resolution / Root Cause Summary:
+                  </span>
+                  <div className="whitespace-pre-wrap leading-relaxed bg-white dark:bg-slate-900/80 p-3 rounded-lg border border-emerald-200 dark:border-emerald-800/40 text-slate-800 dark:text-slate-200">
+                    {issue.resolutionNotes}
+                  </div>
+                </div>
+              )}
+            </Card>
+          )}
 
           {/* Bug Details Card (if BUG) */}
           {issue.type === "BUG" && (

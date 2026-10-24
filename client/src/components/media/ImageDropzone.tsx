@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useRef, useEffect, useState, useCallback } from "react";
-import { Image as ImageIcon, X, Upload, AlertCircle } from "lucide-react";
+import { Image as ImageIcon, X, Upload, AlertCircle, PenLine } from "lucide-react";
 import { formatBytes } from "../../lib/utils";
+import { ImageAnnotatorModal } from "./ImageAnnotatorModal";
 
 interface ImageDropzoneProps {
   images: File[];
@@ -19,6 +20,7 @@ export function ImageDropzone({
 }: ImageDropzoneProps) {
   const [error, setError] = useState<string | null>(null);
   const [previews, setPreviews] = useState<{ id: string; url: string; file: File }[]>([]);
+  const [annotatingIndex, setAnnotatingIndex] = useState<number | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Generate previews and clean up old object URLs
@@ -170,7 +172,7 @@ export function ImageDropzone({
           {previews.map((preview, index) => (
             <div
               key={preview.id}
-              className="relative group rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-950 aspect-video flex items-center justify-center"
+              className="relative group rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-950 aspect-video flex items-center justify-center shadow-sm"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -178,20 +180,56 @@ export function ImageDropzone({
                 alt={`Screenshot ${index + 1}`}
                 className="w-full h-full object-cover"
               />
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  removeImage(index);
-                }}
-                className="absolute top-1.5 right-1.5 p-1 rounded-full bg-black/80 text-white hover:bg-rose-600 transition-colors"
-                title="Remove screenshot"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
+
+              {preview.file.name.includes("-annotated") && (
+                <span className="absolute bottom-1.5 left-1.5 px-1.5 py-0.5 rounded text-[9px] font-bold bg-indigo-600/90 text-white shadow-sm pointer-events-none">
+                  Annotated
+                </span>
+              )}
+
+              {/* Action overlay buttons */}
+              <div className="absolute top-1.5 right-1.5 flex items-center gap-1 opacity-90 group-hover:opacity-100 transition-opacity">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setAnnotatingIndex(index);
+                  }}
+                  className="p-1 rounded-full bg-black/80 text-white hover:bg-indigo-600 transition-colors shadow"
+                  title="Annotate screenshot (pen, arrow, bounding box, text)"
+                >
+                  <PenLine className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    removeImage(index);
+                  }}
+                  className="p-1 rounded-full bg-black/80 text-white hover:bg-rose-600 transition-colors shadow"
+                  title="Remove screenshot"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </div>
           ))}
         </div>
+      )}
+
+      {/* Annotator Modal */}
+      {annotatingIndex !== null && images[annotatingIndex] && (
+        <ImageAnnotatorModal
+          isOpen={true}
+          file={images[annotatingIndex]}
+          onClose={() => setAnnotatingIndex(null)}
+          onSave={(annotatedFile) => {
+            const updated = [...images];
+            updated[annotatingIndex] = annotatedFile;
+            onChange(updated);
+            setAnnotatingIndex(null);
+          }}
+        />
       )}
     </div>
   );

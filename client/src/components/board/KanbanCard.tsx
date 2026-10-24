@@ -45,9 +45,18 @@ export interface IssueItem {
 interface KanbanCardProps {
   issue: IssueItem;
   onStatusChange: (issueId: string, newStatus: IssueItem["status"]) => void;
+  isDragging?: boolean;
+  onDragStart?: (issueId: string) => void;
+  onDragEnd?: () => void;
 }
 
-export function KanbanCard({ issue, onStatusChange }: KanbanCardProps) {
+export function KanbanCard({
+  issue,
+  onStatusChange,
+  isDragging = false,
+  onDragStart,
+  onDragEnd,
+}: KanbanCardProps) {
   const [isChangingStatus, setIsChangingStatus] = useState(false);
 
   const isOverdue =
@@ -63,7 +72,19 @@ export function KanbanCard({ issue, onStatusChange }: KanbanCardProps) {
   ];
 
   return (
-    <div className="group rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 shadow-sm hover:border-indigo-400 dark:hover:border-slate-700 hover:shadow-md transition-all space-y-3">
+    <div
+      draggable={true}
+      onDragStart={(e) => {
+        e.dataTransfer.setData("text/plain", issue.id);
+        e.dataTransfer.effectAllowed = "move";
+        onDragStart?.(issue.id);
+      }}
+      onDragEnd={() => onDragEnd?.()}
+      className={cn(
+        "group rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 shadow-sm hover:border-indigo-400 dark:hover:border-slate-700 hover:shadow-md transition-all space-y-3 cursor-grab active:cursor-grabbing select-none",
+        isDragging && "opacity-40 scale-95 border-dashed border-indigo-400 bg-indigo-50/20 dark:bg-indigo-950/20"
+      )}
+    >
       {/* Top Header: Key, Type, Priority, Status Dropdown */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">

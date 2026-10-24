@@ -14,6 +14,8 @@ import {
   RefreshCw,
   ExternalLink,
   Inbox,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 
 export interface NotificationItem {
@@ -40,7 +42,88 @@ export function NotificationBell() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [desktopAlerts, setDesktopAlerts] = useState<"default" | "granted" | "denied" | "unsupported">("default");
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const prevUnreadCountRef = useRef<number | null>(null);
+
+  // Initialize preferences
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const storedSound = localStorage.getItem("teamflow_sound_enabled");
+      if (storedSound !== null) {
+        setSoundEnabled(storedSound === "true");
+      }
+      if ("Notification" in window) {
+        setDesktopAlerts(Notification.permission);
+      } else {
+        setDesktopAlerts("unsupported");
+      }
+    }
+  }, []);
+
+  const playNotificationChime = useCallback(() => {
+    try {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const now = ctx.currentTime;
+
+      // Primary tone (D5 -> A5)
+      const osc1 = ctx.createOscillator();
+      const gain1 = ctx.createGain();
+      osc1.type = "sine";
+      osc1.frequency.setValueAtTime(587.33, now);
+      osc1.frequency.exponentialRampToValueAtTime(880, now + 0.12);
+      gain1.gain.setValueAtTime(0.14, now);
+      gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+      osc1.connect(gain1);
+      gain1.connect(ctx.destination);
+      osc1.start(now);
+      osc1.stop(now + 0.42);
+
+      // Harmonized high bell shimmer
+      const osc2 = ctx.createOscillator();
+      const gain2 = ctx.createGain();
+      osc2.type = "triangle";
+      osc2.frequency.setValueAtTime(1174.66, now + 0.08);
+      gain2.gain.setValueAtTime(0.05, now + 0.08);
+      gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+      osc2.connect(gain2);
+      gain2.connect(ctx.destination);
+      osc2.start(now + 0.08);
+      osc2.stop(now + 0.38);
+    } catch {
+      // Audio autoplay policy fallback
+    }
+  }, []);
+
+  const toggleSound = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const nextVal = !soundEnabled;
+    setSoundEnabled(nextVal);
+    localStorage.setItem("teamflow_sound_enabled", String(nextVal));
+    if (nextVal) {
+      playNotificationChime();
+    }
+  };
+
+  const requestDesktopPermission = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (typeof window !== "undefined" && "Notification" in window) {
+      try {
+        const permission = await Notification.requestPermission();
+        setDesktopAlerts(permission);
+        if (permission === "granted") {
+          new Notification("TeamFlow Desktop Alerts Enabled", {
+            body: "You will now receive desktop notifications for task assignments and team comments.",
+          });
+        }
+      } catch {
+        // blocked or closed
+      }
+    }
+  };
 
   const fetchNotifications = useCallback(async () => {
     if (!user) return;
@@ -69,12 +152,36 @@ export function NotificationBell() {
         }
       }
 
+      // Check if new unread notifications arrived while user is browsing
+      if (prevUnreadCountRef.current !== null && count > prevUnreadCountRef.current) {
+        if (soundEnabled) {
+          playNotificationChime();
+        }
+        if (
+          typeof window !== "undefined" &&
+          "Notification" in window &&
+          Notification.permission === "granted"
+        ) {
+          const newest = items.find((n) => !n.isRead);
+          if (newest) {
+            try {
+              new Notification(newest.title, {
+                body: newest.message,
+              });
+            } catch {
+              // Notification blocked
+            }
+          }
+        }
+      }
+      prevUnreadCountRef.current = count;
+
       setNotifications(items);
       setUnreadCount(count);
     } catch {
       // silent fallback
     }
-  }, [user]);
+  }, [user, soundEnabled, playNotificationChime]);
 
   // Poll notifications periodically (every 30s)
   useEffect(() => {
@@ -242,18 +349,49 @@ export function NotificationBell() {
               )}
             </div>
 
-            {(unreadCount > 0 || notifications.some((n) => !n.isRead)) && (
+            <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={(e) => handleMarkAllAsRead(e)}
-                disabled={isLoading}
-                className="text-[11px] text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium flex items-center gap-1 transition-colors cursor-pointer disabled:opacity-50"
+                onClick={toggleSound}
+                title={soundEnabled ? "Mute notification chime" : "Unmute notification chime"}
+                className={`p-1 rounded-md transition-colors ${
+                  soundEnabled
+                    ? "text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40"
+                    : "text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+                }`}
               >
-                <CheckCheck className="w-3.5 h-3.5" />
-                <span>Mark all read</span>
+                {soundEnabled ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
               </button>
-            )}
+
+              {(unreadCount > 0 || notifications.some((n) => !n.isRead)) && (
+                <button
+                  type="button"
+                  onClick={(e) => handleMarkAllAsRead(e)}
+                  disabled={isLoading}
+                  className="text-[11px] text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium flex items-center gap-1 transition-colors cursor-pointer disabled:opacity-50"
+                >
+                  <CheckCheck className="w-3.5 h-3.5" />
+                  <span>Mark all read</span>
+                </button>
+              )}
+            </div>
           </div>
+
+          {/* Desktop Alert Opt-in Banner if not granted yet */}
+          {desktopAlerts === "default" && (
+            <div className="px-4 py-2 bg-indigo-50/70 dark:bg-indigo-950/30 border-b border-indigo-100/60 dark:border-indigo-900/40 flex items-center justify-between text-xs">
+              <span className="text-[11px] text-indigo-900 dark:text-indigo-200">
+                Get native alerts when assigned tasks
+              </span>
+              <button
+                type="button"
+                onClick={requestDesktopPermission}
+                className="px-2 py-0.5 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-[10px] shadow-sm transition-colors"
+              >
+                Enable
+              </button>
+            </div>
+          )}
 
           {/* List */}
           <div className="max-h-80 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/60">

@@ -506,7 +506,10 @@ export class IssuesService {
       return existing;
     }
 
-    const resolvedAt = input.status === "DONE" ? new Date() : null;
+    const resolvedAt = input.status === "DONE" ? new Date() : (existing.status === "DONE" ? null : existing.resolvedAt);
+    const resolutionNotes = input.status === "DONE"
+      ? (input.resolutionNotes !== undefined ? input.resolutionNotes : existing.resolutionNotes)
+      : (existing.status === "DONE" ? null : existing.resolutionNotes);
 
     return prisma.$transaction(async (tx) => {
       const updated = await tx.issue.update({
@@ -514,12 +517,23 @@ export class IssuesService {
         data: {
           status: input.status,
           resolvedAt,
+          resolutionNotes,
         },
         include: {
           reporter: { select: { id: true, name: true, avatarUrl: true } },
           assignee: { select: { id: true, name: true, avatarUrl: true } },
         },
       });
+
+      if (input.status === "DONE" && input.resolutionNotes && input.resolutionNotes.trim()) {
+        await tx.comment.create({
+          data: {
+            issueId,
+            authorId: actorId,
+            body: `✅ **Resolved with Resolution Note:**\n\n${input.resolutionNotes.trim()}`,
+          },
+        });
+      }
 
       await tx.activityLog.create({
         data: {
@@ -528,7 +542,7 @@ export class IssuesService {
           issueId,
           actorId,
           action: input.status === "DONE" ? "ISSUE_RESOLVED" : "STATUS_CHANGED",
-          metadata: { from: existing.status, to: input.status },
+          metadata: { from: existing.status, to: input.status, resolutionNotes: input.resolutionNotes || undefined },
         },
       });
 
