@@ -280,7 +280,7 @@ export default function ProjectDetailPage({
         title: issueTitle.trim(),
         description: issueDesc.trim(),
         priority: issuePriority,
-        assigneeId: issueAssigneeId || undefined,
+        assigneeId: issueType === "BUG" ? undefined : (issueAssigneeId || undefined),
         dueDate: issueDueDate ? new Date(issueDueDate).toISOString() : undefined,
         estimatedHours: issueEstHours ? parseFloat(issueEstHours) : undefined,
       });
@@ -733,6 +733,11 @@ export default function ProjectDetailPage({
                             <Avatar name={i.assignee.name} avatarUrl={i.assignee.avatarUrl} size="sm" />
                             <span className="text-xs text-slate-300">{i.assignee.name}</span>
                           </div>
+                        ) : i.type === "BUG" ? (
+                          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
+                            <Users className="w-3 h-3 text-emerald-500" />
+                            <span>All Members</span>
+                          </span>
                         ) : (
                           <span className="text-xs text-slate-500 italic">Unassigned</span>
                         )}
@@ -1026,37 +1031,71 @@ export default function ProjectDetailPage({
             required
           />
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <Select
-              label="Assignee"
-              value={issueAssigneeId}
-              onChange={(e) => setIssueAssigneeId(e.target.value)}
-            >
-              <option value="">Unassigned</option>
-              {project.memberships.map((m) => (
-                <option key={m.user.id} value={m.user.id}>
-                  {m.user.name}
-                </option>
-              ))}
-            </Select>
+          {issueType === "TASK" ? (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <Select
+                label="Assignee"
+                value={issueAssigneeId}
+                onChange={(e) => setIssueAssigneeId(e.target.value)}
+              >
+                <option value="">Unassigned</option>
+                {project.memberships.map((m) => (
+                  <option key={m.user.id} value={m.user.id}>
+                    {m.user.name}
+                  </option>
+                ))}
+              </Select>
 
-            <Input
-              label="Due Date"
-              type="date"
-              value={issueDueDate}
-              onChange={(e) => setIssueDueDate(e.target.value)}
-            />
+              <Input
+                label="Due Date"
+                type="date"
+                value={issueDueDate}
+                onChange={(e) => setIssueDueDate(e.target.value)}
+              />
 
-            <Input
-              label="Est. Hours"
-              type="number"
-              step="0.5"
-              min="0"
-              placeholder="e.g. 4.5"
-              value={issueEstHours}
-              onChange={(e) => setIssueEstHours(e.target.value)}
-            />
-          </div>
+              <Input
+                label="Est. Hours"
+                type="number"
+                step="0.5"
+                min="0"
+                placeholder="e.g. 4.5"
+                value={issueEstHours}
+                onChange={(e) => setIssueEstHours(e.target.value)}
+              />
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <div className="p-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-xs text-emerald-800 dark:text-emerald-300 flex items-start gap-2.5">
+                <Users className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                <div>
+                  <span className="font-semibold text-emerald-900 dark:text-emerald-200">
+                    Collaborative Bug Solving
+                  </span>
+                  <p className="text-[11px] text-emerald-700 dark:text-emerald-400 mt-0.5 leading-relaxed">
+                    Bugs are not assigned to a single person. All project members can review, investigate, and help resolve this bug.
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Input
+                  label="Due Date (Optional)"
+                  type="date"
+                  value={issueDueDate}
+                  onChange={(e) => setIssueDueDate(e.target.value)}
+                />
+                <Input
+                  label="Est. Hours (Optional)"
+                  type="number"
+                  step="0.5"
+                  min="0"
+                  placeholder="e.g. 2.0"
+                  value={issueEstHours}
+                  onChange={(e) => setIssueEstHours(e.target.value)}
+                />
+              </div>
+            </div>
+          )}
 
           {/* Media Attachments Section */}
           <div className="space-y-2">

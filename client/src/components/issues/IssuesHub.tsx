@@ -30,6 +30,7 @@ import {
   Paperclip,
   Upload,
   X,
+  Users,
 } from "lucide-react";
 import { formatDate, cn } from "../../lib/utils";
 
@@ -322,7 +323,7 @@ export function IssuesView({ pageMode = "ISSUES" }: IssuesViewProps) {
         title: modalTitle.trim(),
         description: modalDesc.trim(),
         priority: modalPriority,
-        assigneeId: modalAssigneeId || undefined,
+        assigneeId: modalType === "BUG" ? undefined : (modalAssigneeId || undefined),
         dueDate: modalDueDate ? new Date(modalDueDate).toISOString() : undefined,
       });
 
@@ -856,6 +857,11 @@ export function IssuesView({ pageMode = "ISSUES" }: IssuesViewProps) {
                           <Avatar name={i.assignee.name} avatarUrl={i.assignee.avatarUrl} size="sm" />
                           <span className="text-xs text-slate-700 dark:text-slate-300">{i.assignee.name}</span>
                         </div>
+                      ) : !isTasksMode || i.type === "BUG" ? (
+                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
+                          <Users className="w-3 h-3 text-emerald-500" />
+                          <span>All Members</span>
+                        </span>
                       ) : (
                         <span className="text-xs text-slate-500 italic">Unassigned</span>
                       )}
@@ -1000,18 +1006,32 @@ export function IssuesView({ pageMode = "ISSUES" }: IssuesViewProps) {
             />
           </div>
 
-          <Select
-            label="Give / Assign Task To"
-            value={modalAssigneeId}
-            onChange={(e) => setModalAssigneeId(e.target.value)}
-          >
-            <option value="">Unassigned</option>
-            {eligibleAssignees.map((u: ProjectMemberOption["user"]) => (
-              <option key={u.id} value={u.id}>
-                {u.name} ({u.email})
-              </option>
-            ))}
-          </Select>
+          {modalType === "TASK" ? (
+            <Select
+              label="Give / Assign Task To"
+              value={modalAssigneeId}
+              onChange={(e) => setModalAssigneeId(e.target.value)}
+            >
+              <option value="">Unassigned</option>
+              {eligibleAssignees.map((u: ProjectMemberOption["user"]) => (
+                <option key={u.id} value={u.id}>
+                  {u.name} ({u.email})
+                </option>
+              ))}
+            </Select>
+          ) : (
+            <div className="p-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-xs text-emerald-800 dark:text-emerald-300 flex items-start gap-2.5">
+              <Users className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+              <div>
+                <span className="font-semibold text-emerald-900 dark:text-emerald-200">
+                  Collaborative Bug Solving
+                </span>
+                <p className="text-[11px] text-emerald-700 dark:text-emerald-400 mt-0.5 leading-relaxed">
+                  Bugs are not assigned to a single person. All project members can review, investigate, and help resolve this bug.
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Media Attachments Section */}
           <div className="space-y-2">

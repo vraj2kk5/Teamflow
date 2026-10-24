@@ -32,6 +32,7 @@ import {
   Paperclip,
   Upload,
   Plus,
+  Users,
 } from "lucide-react";
 import { MediaPlayer } from "../media/MediaPlayer";
 import { formatDate, formatDateTime } from "../../lib/utils";
@@ -770,24 +771,43 @@ export function IssueDetailView({ id, expectedType }: IssueDetailViewProps) {
                 ]}
               />
 
-              {/* Assignee Select */}
-              <Select
-                label="Assignee"
-                value={issue.assignee?.id || ""}
-                onChange={(e) => handleAssigneeChange(e.target.value)}
-              >
-                <option value="">Unassigned</option>
-                {issue.project.memberships
-                  .filter((m) => {
-                    const orgRole = m.user.memberships?.[0]?.role;
-                    return orgRole !== "ADMIN";
-                  })
-                  .map((m) => (
-                    <option key={m.user.id} value={m.user.id}>
-                      {m.user.name}
-                    </option>
-                  ))}
-              </Select>
+              {/* If Task: Single Assignee. If Bug: Collaborative / Open to All Project Members */}
+              {isTask ? (
+                <Select
+                  label="Assignee"
+                  value={issue.assignee?.id || ""}
+                  onChange={(e) => handleAssigneeChange(e.target.value)}
+                >
+                  <option value="">Unassigned</option>
+                  {issue.project.memberships
+                    .filter((m) => {
+                      const orgRole = m.user.memberships?.[0]?.role;
+                      return orgRole !== "ADMIN";
+                    })
+                    .map((m) => (
+                      <option key={m.user.id} value={m.user.id}>
+                        {m.user.name}
+                      </option>
+                    ))}
+                </Select>
+              ) : (
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                    Assigned To
+                  </label>
+                  <div className="p-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-xs text-emerald-800 dark:text-emerald-300 flex items-start gap-2.5">
+                    <Users className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                    <div>
+                      <span className="font-semibold text-emerald-900 dark:text-emerald-200">
+                        Open to All Project Members
+                      </span>
+                      <p className="text-[11px] text-emerald-700 dark:text-emerald-400 mt-0.5 leading-relaxed">
+                        Any member of {issue.project.name} can investigate, add diagnostic recordings, and mark this bug as resolved.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="pt-4 border-t border-slate-200 dark:border-slate-800 space-y-3 text-xs">

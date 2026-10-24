@@ -220,11 +220,14 @@ export class IssuesService {
     }
 
     // 2. Validate assignee is not an Admin and is a member of the project
-    if (input.assigneeId) {
+    // Bugs are collaborative and open to all project members, so they remain unassigned.
+    const effectiveAssigneeId = input.type === "BUG" ? null : (input.assigneeId || null);
+
+    if (effectiveAssigneeId) {
       const assigneeOrgMembership = await prisma.organizationMembership.findUnique({
         where: {
           userId_organizationId: {
-            userId: input.assigneeId,
+            userId: effectiveAssigneeId,
             organizationId: orgId,
           },
         },
@@ -240,7 +243,7 @@ export class IssuesService {
         where: {
           projectId_userId: {
             projectId: input.projectId,
-            userId: input.assigneeId,
+            userId: effectiveAssigneeId,
           },
         },
       });
@@ -275,7 +278,7 @@ export class IssuesService {
           description: input.description,
           priority: input.priority,
           reporterId,
-          assigneeId: input.assigneeId || null,
+          assigneeId: effectiveAssigneeId,
           dueDate: input.dueDate ? new Date(input.dueDate) : null,
           estimatedHours: input.estimatedHours || null,
           stepsToReproduce: input.stepsToReproduce || null,
