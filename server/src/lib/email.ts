@@ -52,6 +52,14 @@ export interface SendAdminWelcomeEmailOptions {
   dashboardUrl: string;
 }
 
+export interface SendLoginNotificationEmailOptions {
+  to: string;
+  recipientName?: string;
+  orgName?: string;
+  loginTime: string;
+  dashboardUrl: string;
+}
+
 interface OutgoingEmail {
   to: string;
   subject: string;
@@ -368,6 +376,56 @@ export class EmailService {
       logger.info(`📢 Subject: ${subject}`);
       if (inviteCode) logger.info(`🔑 Invite Code: ${inviteCode}`);
       logger.info(`🔗 Dashboard: ${dashboardUrl}`);
+      logger.info(`========================================================================`);
+    }
+  }
+
+  /**
+   * Dispatches a security notification email whenever a user signs into their account.
+   */
+  static async sendLoginNotificationEmail(options: SendLoginNotificationEmailOptions): Promise<void> {
+    const { to, recipientName, orgName, loginTime, dashboardUrl } = options;
+
+    const subject = `New sign-in to your TeamFlow account`;
+    const text = `Hello ${recipientName || "there"},\n\nWe detected a successful sign-in to your TeamFlow account.\n\nAccount: ${to}\n${orgName ? `Active Workspace: ${orgName}\n` : ""}Time: ${loginTime}\n\nAccess Dashboard: ${dashboardUrl}\n\nSecurity Notice: If this was not you, please secure your account by changing your password immediately.`;
+    const html = `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 28px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff;">
+        <div style="text-align: center; margin-bottom: 24px;">
+          <div style="display: inline-block; background-color: #4f46e5; color: #ffffff; padding: 8px 16px; border-radius: 8px; font-weight: 700; font-size: 16px; letter-spacing: -0.3px;">
+            TeamFlow
+          </div>
+        </div>
+        <h2 style="color: #1e293b; margin-top: 0; font-size: 20px; text-align: center;">New Sign-in to Your Account</h2>
+        <p style="color: #475569; font-size: 15px; line-height: 1.6; text-align: center; margin-top: 8px;">
+          Hello <strong>${recipientName || "there"}</strong>, a new sign-in was detected for your account.
+        </p>
+
+        <div style="padding: 18px; background-color: #f8fafc; border-radius: 10px; margin: 24px 0; border: 1px solid #e2e8f0;">
+          <p style="margin: 0 0 10px; font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Sign-in Details</p>
+          <div style="font-size: 14px; color: #1e293b; line-height: 1.8;">
+            <div><strong>Email Address:</strong> ${to}</div>
+            ${orgName ? `<div><strong>Active Workspace:</strong> ${orgName}</div>` : ""}
+            <div><strong>Date & Time:</strong> ${loginTime}</div>
+          </div>
+        </div>
+
+        <div style="margin: 28px 0; text-align: center;">
+          <a href="${dashboardUrl}" style="background-color: #4f46e5; color: #ffffff; padding: 12px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px; display: inline-block; box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2);">Go to Dashboard &rarr;</a>
+        </div>
+
+        <p style="color: #94a3b8; font-size: 12px; margin-top: 24px; text-align: center; border-top: 1px solid #f1f5f9; padding-top: 16px;">
+          Security Alert &bull; If you did not perform this login, please secure your account immediately.
+        </p>
+      </div>
+    `;
+
+    const dispatched = await this.dispatchEmail({ to, subject, text, html });
+    if (!dispatched) {
+      logger.info(`========================================================================`);
+      logger.info(`🔐 [LOGIN EMAIL] New Sign-in for ${to}`);
+      logger.info(`📧 To: ${to} ${recipientName ? `(${recipientName})` : ""}`);
+      logger.info(`📢 Subject: ${subject}`);
+      logger.info(`🕒 Time: ${loginTime}`);
       logger.info(`========================================================================`);
     }
   }

@@ -196,6 +196,21 @@ export class AuthService {
       tokenExpires
     );
 
+    // Dispatch login alert email to the user's specific email address
+    const clientOrigin = process.env.CLIENT_ORIGIN || "http://localhost:3000";
+    EmailService.sendLoginNotificationEmail({
+      to: user.email,
+      recipientName: user.name,
+      orgName: activeMembership?.organization?.name,
+      loginTime: new Date().toLocaleString("en-US", {
+        dateStyle: "medium",
+        timeStyle: "short",
+      }),
+      dashboardUrl: `${clientOrigin}/dashboard`,
+    }).catch(() => {
+      // Ignore background dispatch failures
+    });
+
     return {
       user: {
         id: user.id,
