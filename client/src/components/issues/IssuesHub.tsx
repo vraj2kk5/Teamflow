@@ -152,6 +152,45 @@ export function IssuesView({ pageMode = "ISSUES" }: IssuesViewProps) {
     }
   }, [modalProjId, eligibleAssignees, modalAssigneeId]);
 
+  // Clipboard paste listener to paste screenshot without saving to disk first
+  useEffect(() => {
+    if (!isModalOpen) return;
+
+    const handlePaste = (e: ClipboardEvent) => {
+      if (!e.clipboardData) return;
+      const items = Array.from(e.clipboardData.items);
+      const imageItems = items.filter((item) => item.type.startsWith("image/"));
+      if (imageItems.length === 0) return;
+
+      const pastedFiles: File[] = [];
+      imageItems.forEach((item, index) => {
+        const file = item.getAsFile();
+        if (file) {
+          const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+          const ext = file.type.split("/")[1] || "png";
+          const namedFile = new File(
+            [file],
+            `pasted-screenshot-${timestamp}-${index + 1}.${ext}`,
+            { type: file.type }
+          );
+          pastedFiles.push(namedFile);
+        }
+      });
+
+      if (pastedFiles.length > 0) {
+        setModalAttachments((prev) => [...prev, ...pastedFiles]);
+        toastSuccess(
+          pastedFiles.length === 1
+            ? "Screenshot pasted from clipboard!"
+            : `${pastedFiles.length} screenshots pasted from clipboard!`
+        );
+      }
+    };
+
+    window.addEventListener("paste", handlePaste);
+    return () => window.removeEventListener("paste", handlePaste);
+  }, [isModalOpen, toastSuccess]);
+
   // Update URL params
   const updateUrl = useCallback(() => {
     const params = new URLSearchParams();
@@ -985,10 +1024,10 @@ export function IssuesView({ pageMode = "ISSUES" }: IssuesViewProps) {
             >
               <Upload className="w-5 h-5 mx-auto text-slate-400 group-hover:text-indigo-500 transition-colors mb-1" />
               <p className="text-xs text-slate-600 dark:text-slate-300 font-medium">
-                Click to attach files (Screenshots, screen recordings, mockups, or audio)
+                Click to attach files or press <span className="font-semibold text-indigo-600 dark:text-indigo-400 underline underline-offset-2">Ctrl+V</span> to paste screenshot
               </p>
               <p className="text-[10px] text-slate-400 mt-0.5">
-                PNG, JPG, WebP, MP4, WebM up to 100MB
+                PNG, JPG, WebP, MP4, WebM up to 100MB (clipboard screenshot supported)
               </p>
               <input
                 ref={modalFileInputRef}
@@ -1006,34 +1045,45 @@ export function IssuesView({ pageMode = "ISSUES" }: IssuesViewProps) {
 
             {modalAttachments.length > 0 && (
               <div className="space-y-1.5 pt-1 max-h-36 overflow-y-auto">
-                {modalAttachments.map((file, idx) => (
-                  <div
-                    key={idx}
-                    className="flex items-center justify-between p-2 rounded-lg bg-slate-100 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700/60 text-xs"
-                  >
-                    <div className="flex items-center gap-2 truncate">
-                      <Paperclip className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
-                      <span className="truncate text-slate-800 dark:text-slate-200 font-medium">
-                        {file.name}
-                      </span>
-                      <span className="text-slate-400 text-[10px]">
-                        ({file.size / (1024 * 1024) < 1
-                          ? `${Math.round(file.size / 1024)} KB`
-                          : `${(file.size / (1024 * 1024)).toFixed(1)} MB`})
-                      </span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setModalAttachments((prev) => prev.filter((_, i) => i !== idx))
-                      }
-                      className="text-slate-400 hover:text-rose-500 p-1 transition-colors"
-                      title="Remove file"
+                {modalAttachments.map((file, idx) => {
+                  const isImage = file.type.startsWith("image/");
+                  return (
+                    <div
+                      key={idx}
+                      className="flex items-center justify-between p-2 rounded-lg bg-slate-100 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700/60 text-xs gap-2"
                     >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                ))}
+                      <div className="flex items-center gap-2 truncate">
+                        {isImage ? (
+                          <img
+                            src={URL.createObjectURL(file)}
+                            alt={file.name}
+                            className="w-7 h-7 rounded object-cover border border-slate-300 dark:border-slate-700 shrink-0"
+                          />
+                        ) : (
+                          <Paperclip className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                        )}
+                        <span className="truncate text-slate-800 dark:text-slate-200 font-medium">
+                          {file.name}
+                        </span>
+                        <span className="text-slate-400 text-[10px] shrink-0">
+                          ({file.size / (1024 * 1024) < 1
+                            ? `${Math.round(file.size / 1024)} KB`
+                            : `${(file.size / (1024 * 1024)).toFixed(1)} MB`})
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setModalAttachments((prev) => prev.filter((_, i) => i !== idx))
+                        }
+                        className="text-slate-400 hover:text-rose-500 p-1 transition-colors shrink-0"
+                        title="Remove file"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>

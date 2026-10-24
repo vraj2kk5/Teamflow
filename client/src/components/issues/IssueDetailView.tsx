@@ -201,6 +201,61 @@ export function IssueDetailView({ id, expectedType }: IssueDetailViewProps) {
     fetchIssue();
   }, [fetchIssue]);
 
+  // Clipboard paste listener to paste & upload screenshot directly to task
+  useEffect(() => {
+    const handlePaste = async (e: ClipboardEvent) => {
+      if (!e.clipboardData) return;
+      const items = Array.from(e.clipboardData.items);
+      const imageItems = items.filter((item) => item.type.startsWith("image/"));
+      if (imageItems.length === 0) return;
+
+      // Don't intercept if user is pasting text in an input or textarea
+      const activeEl = document.activeElement;
+      if (activeEl && (activeEl.tagName === "INPUT" || activeEl.tagName === "TEXTAREA")) {
+        if (e.clipboardData.getData("text/plain")) return;
+      }
+
+      setIsUploadingAttachment(true);
+      let successCount = 0;
+      try {
+        for (let i = 0; i < imageItems.length; i++) {
+          const file = imageItems[i].getAsFile();
+          if (!file) continue;
+          const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+          const ext = file.type.split("/")[1] || "png";
+          const namedFile = new File(
+            [file],
+            `pasted-screenshot-${timestamp}-${i + 1}.${ext}`,
+            { type: file.type }
+          );
+          const formData = new FormData();
+          formData.append("file", namedFile);
+          await api.uploadWithProgress(`/issues/${id}/attachments`, formData);
+          successCount++;
+        }
+        if (successCount > 0) {
+          toastSuccess(
+            successCount === 1
+              ? "Screenshot pasted & uploaded successfully!"
+              : `${successCount} screenshots pasted & uploaded!`
+          );
+          fetchIssue();
+        }
+      } catch (err: unknown) {
+        if (err instanceof ApiClientError) {
+          toastError(err.message, "Upload Failed");
+        } else {
+          toastError("Failed to upload pasted screenshot", "Error");
+        }
+      } finally {
+        setIsUploadingAttachment(false);
+      }
+    };
+
+    window.addEventListener("paste", handlePaste);
+    return () => window.removeEventListener("paste", handlePaste);
+  }, [id, fetchIssue, toastSuccess, toastError]);
+
   const isTask = (issue?.type || expectedType) === "TASK";
 
   const handleStatusChange = async (newStatus: IssueDetail["status"]) => {
@@ -527,10 +582,10 @@ export function IssueDetailView({ id, expectedType }: IssueDetailViewProps) {
               >
                 <Upload className="w-6 h-6 mx-auto text-slate-400 group-hover:text-indigo-500 transition-colors mb-2" />
                 <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                  Click to upload attachments
+                  Click to upload or press <span className="text-indigo-600 dark:text-indigo-400 underline underline-offset-2">Ctrl+V</span> to paste screenshot
                 </p>
                 <p className="text-[11px] text-slate-400 mt-1">
-                  Upload screenshots, screen recordings, mockups, or audio notes
+                  Upload or paste screenshots, screen recordings, mockups, or audio notes
                 </p>
               </div>
             ) : (
