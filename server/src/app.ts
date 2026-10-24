@@ -42,6 +42,41 @@ app.use(cookieParser());
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
+// Root endpoint guidance page
+app.get("/", (_req: Request, res: Response) => {
+  res.status(200).send(`
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <title>TeamFlow API Server</title>
+      <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f172a; color: #f8fafc; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        .card { background: #1e293b; border: 1px solid #334155; border-radius: 16px; padding: 32px; max-width: 480px; width: 90%; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5); text-align: center; }
+        .badge { display: inline-block; padding: 4px 12px; border-radius: 9999px; font-size: 12px; font-weight: 600; background: #064e3b; color: #6ee7b7; margin-bottom: 16px; border: 1px solid #059669; }
+        h1 { margin: 0 0 8px; font-size: 22px; }
+        p { color: #94a3b8; font-size: 14px; margin: 0 0 24px; line-height: 1.5; }
+        .btn { display: inline-block; background: #4f46e5; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px; }
+        .btn:hover { background: #4338ca; }
+        .links { margin-top: 24px; font-size: 12px; color: #64748b; }
+        .links a { color: #818cf8; text-decoration: none; }
+      </style>
+    </head>
+    <body>
+      <div class="card">
+        <div class="badge">● API Server Online</div>
+        <h1>TeamFlow Backend API</h1>
+        <p>This is the backend data & authentication engine (port 5000). The user interface is running on the frontend server.</p>
+        <a href="http://localhost:3000" class="btn">Open TeamFlow App (localhost:3000) &rarr;</a>
+        <div class="links">
+          Health Check: <a href="/api/health">/api/health</a> &bull; Database: <a href="http://localhost:5555">Prisma Studio (:5555)</a>
+        </div>
+      </div>
+    </body>
+    </html>
+  `);
+});
+
 // Health Check
 app.get("/api/health", async (req: Request, res: Response) => {
   let dbStatus = "connected";
