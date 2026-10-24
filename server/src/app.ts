@@ -33,7 +33,8 @@ app.use(
     origin: env.CLIENT_ORIGIN,
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Range"],
+    exposedHeaders: ["Content-Range", "Accept-Ranges", "Content-Length", "Content-Type"],
   })
 );
 
@@ -152,17 +153,18 @@ app.get("/api/files/:token", async (req: Request, res: Response, next) => {
     res.setHeader("X-Content-Type-Options", "nosniff");
     res.setHeader("Content-Disposition", "inline");
 
+    const totalSize = result.totalSize ?? result.contentLength;
+    const start = result.start ?? (range ? range.start : 0);
+    const end = result.end ?? (range ? (range.end ?? totalSize - 1) : totalSize - 1);
+
     if (range) {
       res.status(206);
-      res.setHeader(
-        "Content-Range",
-        `bytes ${range.start}-${range.end ?? result.contentLength - 1}/${result.contentLength}`
-      );
+      res.setHeader("Content-Range", `bytes ${start}-${end}/${totalSize}`);
       res.setHeader("Accept-Ranges", "bytes");
       res.setHeader("Content-Length", result.contentLength);
     } else {
       res.status(200);
-      res.setHeader("Content-Length", result.contentLength);
+      res.setHeader("Content-Length", totalSize);
       res.setHeader("Accept-Ranges", "bytes");
     }
 

@@ -66,9 +66,20 @@ export function MediaPlayer({
     <div className="rounded-xl overflow-hidden bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-3 space-y-2 shadow-sm">
       <div className="flex items-center justify-between text-xs pb-1">
         <span className="font-semibold text-slate-800 dark:text-white truncate max-w-sm">{filename}</span>
-        <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
-          {kind}
-        </span>
+        <div className="flex items-center gap-2">
+          {accessUrl && (
+            <a
+              href={accessUrl}
+              download={filename}
+              className="text-[11px] text-indigo-600 dark:text-indigo-400 hover:underline inline-flex items-center gap-1"
+            >
+              Download
+            </a>
+          )}
+          <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+            {kind}
+          </span>
+        </div>
       </div>
 
       {error ? (
@@ -124,7 +135,7 @@ export function MediaPlayer({
             <span>Load Audio Player</span>
           </Button>
         ) : accessUrl ? (
-          <audio src={accessUrl} controls preload="metadata" className="w-full h-10" />
+          <audio src={accessUrl} controls autoPlay preload="auto" className="w-full h-10" />
         ) : null
       ) : kind === "VIDEO" ? (
         !hasStarted ? (
@@ -142,7 +153,9 @@ export function MediaPlayer({
             <video
               src={accessUrl}
               controls
-              preload="metadata"
+              autoPlay
+              playsInline
+              preload="auto"
               className="w-full max-h-96 object-contain"
             />
           </div>

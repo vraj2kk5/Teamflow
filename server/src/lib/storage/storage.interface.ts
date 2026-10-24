@@ -3,6 +3,9 @@ import { Readable } from "stream";
 export interface StorageStreamResult {
   stream: Readable;
   contentLength: number;
+  totalSize?: number;
+  start?: number;
+  end?: number;
   contentType: string;
 }
 

@@ -87,15 +87,15 @@ export class LocalDiskDriver implements StorageDriver {
     }
 
     if (range) {
-      const start = range.start;
-      const end = range.end !== undefined ? range.end : totalSize - 1;
+      const start = Math.max(0, range.start);
+      const end = range.end !== undefined ? Math.min(range.end, totalSize - 1) : totalSize - 1;
       const stream = fs.createReadStream(filePath, { start, end });
-      const contentLength = end - start + 1;
-      return { stream, contentLength, contentType };
+      const contentLength = Math.max(0, end - start + 1);
+      return { stream, contentLength, totalSize, start, end, contentType };
     }
 
     const stream = fs.createReadStream(filePath);
-    return { stream, contentLength: totalSize, contentType };
+    return { stream, contentLength: totalSize, totalSize, start: 0, end: totalSize - 1, contentType };
   }
 
   async delete(key: string): Promise<void> {
