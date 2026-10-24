@@ -300,27 +300,46 @@ export default function NewBugReportPage() {
   if (overallSuccess && createdIssue) {
     return (
       <div className="max-w-2xl mx-auto py-12 space-y-6">
-        <Card className="p-8 text-center space-y-4 border-emerald-900/60 bg-emerald-950/20">
-          <div className="w-16 h-16 rounded-full bg-emerald-900/50 text-emerald-400 border border-emerald-700/60 flex items-center justify-center mx-auto">
+        <Card className="p-8 text-center space-y-5 border-emerald-200 dark:border-emerald-900/60 bg-white dark:bg-emerald-950/20 shadow-xl dark:shadow-none">
+          <div className="w-16 h-16 rounded-full bg-emerald-50 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-700/60 flex items-center justify-center mx-auto shadow-inner">
             <CheckCircle2 className="w-8 h-8" />
           </div>
 
-          <h2 className="text-2xl font-bold text-white tracking-tight">
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
             Bug Report Submitted Successfully!
           </h2>
 
-          <p className="text-sm text-slate-300 max-w-md mx-auto">
-            Issue <span className="font-mono font-bold text-indigo-400">{createdIssue.key}</span>{" "}
+          <p className="text-sm text-slate-600 dark:text-slate-300 max-w-md mx-auto leading-relaxed">
+            Issue <span className="font-mono font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/80 px-2 py-0.5 rounded border border-indigo-200 dark:border-indigo-800">{createdIssue.key}</span>{" "}
             has been logged with all visual diagnostics, recordings, and error traces.
           </p>
 
           <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link href={`/issues/${createdIssue.id}`}>
-              <Button variant="primary" className="w-full sm:w-auto">
+              <Button variant="primary" className="w-full sm:w-auto shadow-sm">
                 <span>View Bug Detail ({createdIssue.key})</span>
                 <ExternalLink className="w-4 h-4 ml-2" />
               </Button>
             </Link>
+
+            <Button
+              variant="outline"
+              onClick={() => {
+                setOverallSuccess(false);
+                setCreatedIssue(null);
+                setTitle("");
+                setDescription("");
+                setStepsToReproduce("");
+                setExpectedResult("");
+                setActualResult("");
+                setErrorLog("");
+                setAttachedFiles([]);
+                setRawImages([]);
+              }}
+              className="w-full sm:w-auto"
+            >
+              <span>Report Another Bug</span>
+            </Button>
 
             <Link href="/issues?type=BUG">
               <Button variant="secondary" className="w-full sm:w-auto">
@@ -339,7 +358,7 @@ export default function NewBugReportPage() {
       <div className="flex items-center justify-between">
         <Link
           href="/issues?type=BUG"
-          className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Back to Issues</span>
@@ -355,13 +374,13 @@ export default function NewBugReportPage() {
       {/* Header */}
       <div>
         <div className="flex items-center gap-2">
-          <h1 className="text-2xl font-bold text-white tracking-tight">Report a Bug</h1>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Report a Bug</h1>
           <Badge variant="danger" size="sm">
             <Bug className="w-3 h-3 mr-1 inline" />
             Visual Bug Reporting
           </Badge>
         </div>
-        <p className="text-sm text-slate-400 mt-1">
+        <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
           Record your screen or voice, paste terminal errors, and attach screenshots so teammates can reproduce and fix the bug quickly.
         </p>
       </div>
@@ -369,19 +388,19 @@ export default function NewBugReportPage() {
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Step 1: Core Information */}
         <Card className="space-y-4">
-          <CardHeader className="pb-2 border-b border-slate-800">
-            <CardTitle className="text-base text-white">1. Core Bug Information</CardTitle>
+          <CardHeader className="pb-2 border-b border-slate-100 dark:border-slate-800">
+            <CardTitle className="text-base text-slate-900 dark:text-white">1. Core Bug Information</CardTitle>
           </CardHeader>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="sm:col-span-2 space-y-1.5">
-              <label className="text-xs font-semibold text-slate-300">
+              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                 Target Project <span className="text-rose-500">*</span>
               </label>
               {isLoadingProjects ? (
-                <div className="h-10 bg-slate-800 rounded-lg animate-pulse" />
+                <div className="h-10 bg-slate-100 dark:bg-slate-800 rounded-lg animate-pulse" />
               ) : projects.length === 0 ? (
-                <p className="text-xs text-rose-400">
+                <p className="text-xs text-rose-500">
                   You do not belong to any projects yet. Ask an admin to add you.
                 </p>
               ) : (
@@ -401,7 +420,7 @@ export default function NewBugReportPage() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-300">
+              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                 Severity / Priority <span className="text-rose-500">*</span>
               </label>
               <Select
@@ -420,7 +439,7 @@ export default function NewBugReportPage() {
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-300">
+            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
               Bug Title <span className="text-rose-500">*</span>
             </label>
             <Input
@@ -433,7 +452,7 @@ export default function NewBugReportPage() {
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-300">
+            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
               Description / Summary <span className="text-rose-500">*</span>
             </label>
             <Textarea
@@ -449,14 +468,14 @@ export default function NewBugReportPage() {
 
         {/* Step 2: Diagnostic & Reproduction Details */}
         <Card className="space-y-4">
-          <CardHeader className="pb-2 border-b border-slate-800">
-            <CardTitle className="text-base text-white">
+          <CardHeader className="pb-2 border-b border-slate-100 dark:border-slate-800">
+            <CardTitle className="text-base text-slate-900 dark:text-white">
               2. Reproduction Steps & Diagnostic Details
             </CardTitle>
           </CardHeader>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-300">
+            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
               Steps to Reproduce
             </label>
             <Textarea
@@ -470,7 +489,7 @@ export default function NewBugReportPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-emerald-400">
+              <label className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
                 Expected Result
               </label>
               <Textarea
@@ -483,7 +502,7 @@ export default function NewBugReportPage() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-rose-400">
+              <label className="text-xs font-semibold text-rose-600 dark:text-rose-400">
                 Actual Result
               </label>
               <Textarea
@@ -499,8 +518,8 @@ export default function NewBugReportPage() {
           {/* Error Log / Stack Trace */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-                <Terminal className="w-3.5 h-3.5 text-indigo-400" />
+              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                <Terminal className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400" />
                 <span>Error Message or Stack Trace (Escaped Plain Text)</span>
               </label>
               <span className="text-[11px] text-slate-500 font-mono">
@@ -520,10 +539,10 @@ export default function NewBugReportPage() {
 
         {/* Step 3: Media Capture (Audio, Video, Images) */}
         <Card className="space-y-6">
-          <CardHeader className="pb-2 border-b border-slate-800">
-            <CardTitle className="text-base text-white flex items-center justify-between">
+          <CardHeader className="pb-2 border-b border-slate-100 dark:border-slate-800">
+            <CardTitle className="text-base text-slate-900 dark:text-white flex items-center justify-between">
               <span>3. Visual & Audio Media Capture</span>
-              <span className="text-xs font-normal text-slate-400">
+              <span className="text-xs font-normal text-slate-500 dark:text-slate-400">
                 {attachedFiles.length} item(s) attached
               </span>
             </CardTitle>
@@ -545,7 +564,7 @@ export default function NewBugReportPage() {
 
           {/* Screenshot Dropzone */}
           <div>
-            <h4 className="text-xs font-semibold text-slate-300 mb-2">
+            <h4 className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">
               Screenshots (PNG, JPEG, WebP - Drag & Drop or Ctrl+V)
             </h4>
             <ImageDropzone
@@ -560,9 +579,9 @@ export default function NewBugReportPage() {
         {/* Attached Files List & Upload Progress Queue */}
         {attachedFiles.length > 0 && (
           <Card className="space-y-3">
-            <CardHeader className="pb-2 border-b border-slate-800">
-              <CardTitle className="text-sm font-semibold text-white flex items-center gap-2">
-                <Paperclip className="w-4 h-4 text-indigo-400" />
+            <CardHeader className="pb-2 border-b border-slate-100 dark:border-slate-800">
+              <CardTitle className="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+                <Paperclip className="w-4 h-4 text-indigo-500 dark:text-indigo-400" />
                 <span>Ready for Submission ({attachedFiles.length})</span>
               </CardTitle>
             </CardHeader>
@@ -576,19 +595,19 @@ export default function NewBugReportPage() {
                   <div className="flex items-center gap-2.5 min-w-0">
                     <div className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300">
                       {item.kind === "AUDIO" ? (
-                        <Mic className="w-4 h-4 text-amber-400" />
+                        <Mic className="w-4 h-4 text-amber-500 dark:text-amber-400" />
                       ) : item.kind === "VIDEO" ? (
-                        <Video className="w-4 h-4 text-indigo-400" />
+                        <Video className="w-4 h-4 text-indigo-500 dark:text-indigo-400" />
                       ) : (
-                        <ImageIcon className="w-4 h-4 text-emerald-400" />
+                        <ImageIcon className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
                       )}
                     </div>
 
                     <div className="min-w-0">
-                      <p className="font-medium text-white truncate max-w-xs sm:max-w-md">
+                      <p className="font-medium text-slate-900 dark:text-white truncate max-w-xs sm:max-w-md">
                         {item.file.name}
                       </p>
-                      <p className="text-[11px] text-slate-400">
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400">
                         {item.kind} • {formatBytes(item.file.size)}
                         {item.durationSeconds ? ` • ${Math.round(item.durationSeconds)}s` : ""}
                       </p>
@@ -599,13 +618,13 @@ export default function NewBugReportPage() {
                     {/* Status / Progress Indicator */}
                     {item.status === "uploading" && (
                       <div className="flex items-center gap-2">
-                        <div className="w-24 bg-slate-800 rounded-full h-2 overflow-hidden">
+                        <div className="w-24 bg-slate-200 dark:bg-slate-800 rounded-full h-2 overflow-hidden">
                           <div
                             className="bg-indigo-500 h-2 rounded-full transition-all duration-200"
                             style={{ width: `${item.progress}%` }}
                           />
                         </div>
-                        <span className="font-mono text-[11px] text-indigo-400">
+                        <span className="font-mono text-[11px] text-indigo-600 dark:text-indigo-400">
                           {item.progress}%
                         </span>
                       </div>
@@ -620,7 +639,7 @@ export default function NewBugReportPage() {
 
                     {item.status === "error" && (
                       <div className="flex items-center gap-2">
-                        <span className="text-[11px] text-rose-400 truncate max-w-[150px]">
+                        <span className="text-[11px] text-rose-500 dark:text-rose-400 truncate max-w-[150px]">
                           {item.errorMessage || "Failed"}
                         </span>
                         {createdIssue && (
@@ -642,7 +661,7 @@ export default function NewBugReportPage() {
                         size="sm"
                         variant="ghost"
                         onClick={() => handleRemoveAttachment(item.id)}
-                        className="text-slate-400 hover:text-rose-400 h-7 px-2"
+                        className="text-slate-400 hover:text-rose-500 h-7 px-2"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </Button>
