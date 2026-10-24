@@ -156,12 +156,13 @@ export class DashboardService {
         },
       }),
 
-      // 11. My assigned open issues
+      // 11. My assigned open issues (or unassigned open tasks needing assignment for Admin)
       prisma.issue.findMany({
         where: {
           organizationId: orgId,
-          assigneeId: userId,
-          status: { not: "DONE" },
+          ...(role === Role.ADMIN
+            ? { assigneeId: null, status: { not: "DONE" } }
+            : { assigneeId: userId, status: { not: "DONE" } }),
         },
         take: 5,
         orderBy: { priority: "desc" },

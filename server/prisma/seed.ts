@@ -187,7 +187,7 @@ async function main() {
       actualResult: "Worker triggers OOM killer and exits with code 137.",
       errorLog: "FATAL ERROR: Ineffective mark-compacts near heap limit Allocation failed - JavaScript heap out of memory\n1: 0xb09c10 node::Abort() [node]\n2: 0xa1c42f [node]\n3: 0xce7e3e v8::Utils::ReportOOMFailure(v8::internal::Isolate*, char const*, bool) [node]",
       reporterId: memberUser.id,
-      assigneeId: adminUser.id,
+      assigneeId: memberUser.id,
     },
     {
       key: "TF-2",
@@ -267,7 +267,7 @@ async function main() {
       resolvedAt: new Date(),
       errorLog: "Access to fetch at 'http://localhost:5000/api/attachments/stream' from origin 'http://localhost:3000' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource.",
       reporterId: memberUser.id,
-      assigneeId: adminUser.id,
+      assigneeId: memberUser.id,
     },
   ];
 

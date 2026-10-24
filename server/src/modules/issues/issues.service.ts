@@ -140,7 +140,16 @@ export class IssuesService {
             memberships: {
               include: {
                 user: {
-                  select: { id: true, name: true, email: true, avatarUrl: true },
+                  select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                    avatarUrl: true,
+                    memberships: {
+                      where: { organizationId: orgId },
+                      select: { role: true },
+                    },
+                  },
                 },
               },
             },
@@ -209,8 +218,23 @@ export class IssuesService {
       throw new NotFoundError("Project not found in current organization");
     }
 
-    // 2. Validate assignee is a member of the project
+    // 2. Validate assignee is not an Admin and is a member of the project
     if (input.assigneeId) {
+      const assigneeOrgMembership = await prisma.organizationMembership.findUnique({
+        where: {
+          userId_organizationId: {
+            userId: input.assigneeId,
+            organizationId: orgId,
+          },
+        },
+      });
+
+      if (assigneeOrgMembership?.role === Role.ADMIN) {
+        throw new BadRequestError(
+          "Administrators cannot be assigned tasks to perform. Tasks must be assigned to team members."
+        );
+      }
+
       const isProjectMember = await prisma.projectMembership.findUnique({
         where: {
           projectId_userId: {
@@ -314,6 +338,21 @@ export class IssuesService {
     }
 
     if (input.assigneeId && input.assigneeId !== existing.assigneeId) {
+      const assigneeOrgMembership = await prisma.organizationMembership.findUnique({
+        where: {
+          userId_organizationId: {
+            userId: input.assigneeId,
+            organizationId: orgId,
+          },
+        },
+      });
+
+      if (assigneeOrgMembership?.role === Role.ADMIN) {
+        throw new BadRequestError(
+          "Administrators cannot be assigned tasks to perform. Tasks must be assigned to team members."
+        );
+      }
+
       const isProjectMember = await prisma.projectMembership.findUnique({
         where: {
           projectId_userId: {

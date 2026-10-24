@@ -2,15 +2,28 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { api, ApiClientError } from "../../lib/api";
 import { useAuth } from "../../contexts/AuthContext";
 import { useToast } from "../../components/ui/Toast";
 import { Card, CardHeader, CardTitle, CardContent } from "../../components/ui/Card";
 import { Badge } from "../../components/ui/Badge";
+import { Button } from "../../components/ui/Button";
 import { Select } from "../../components/ui/Select";
 import { Skeleton } from "../../components/ui/Skeleton";
 import { EmptyState } from "../../components/ui/EmptyState";
-import { CheckSquare, Bug, CheckCircle2, Clock, Calendar, ArrowRight } from "lucide-react";
+import {
+  CheckSquare,
+  Bug,
+  CheckCircle2,
+  Clock,
+  Calendar,
+  ArrowRight,
+  ShieldCheck,
+  Plus,
+  AlertCircle,
+  LayoutDashboard,
+} from "lucide-react";
 import { formatDate, cn } from "../../lib/utils";
 
 interface MyTaskItem {
@@ -29,7 +42,8 @@ interface MyTaskItem {
 }
 
 export default function MyTasksPage() {
-  const { user } = useAuth();
+  const router = useRouter();
+  const { user, role } = useAuth();
   const { success: toastSuccess, error: toastError } = useToast();
 
   const [tasks, setTasks] = useState<MyTaskItem[]>([]);
@@ -73,6 +87,61 @@ export default function MyTasksPage() {
       }
     }
   };
+
+  if (role === "ADMIN") {
+    return (
+      <div className="space-y-6 max-w-4xl">
+        <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="p-3 rounded-xl bg-indigo-50 dark:bg-indigo-950/70 border border-indigo-100 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400">
+              <ShieldCheck className="w-6 h-6" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-slate-900 dark:text-white">
+                Administrator Overview
+              </h1>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Administrators oversee organizations, create projects, and assign tasks to team members.
+              </p>
+            </div>
+          </div>
+
+          <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200/80 dark:border-slate-800 text-sm text-slate-600 dark:text-slate-300 space-y-2">
+            <p className="font-medium text-slate-900 dark:text-white">
+              Why don&apos;t you have personal tasks here?
+            </p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+              As an Administrator, you allocate and delegate tasks to developers and project managers. Tasks are not assigned to Administrators to perform. To assign tasks to team members or track progress, use the options below.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3 pt-2">
+            <Button
+              variant="primary"
+              onClick={() => router.push("/issues?create=true")}
+            >
+              <Plus className="w-4 h-4 mr-1.5" />
+              <span>Give / Create Task</span>
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => router.push("/issues")}
+            >
+              <AlertCircle className="w-4 h-4 mr-1.5" />
+              <span>View All Project Issues</span>
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => router.push("/dashboard")}
+            >
+              <LayoutDashboard className="w-4 h-4 mr-1.5" />
+              <span>Team Workload & Velocity</span>
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

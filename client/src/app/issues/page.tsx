@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, Suspense } from "react";
+import React, { useState, useEffect, useCallback, useMemo, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { api, ApiClientError } from "../../lib/api";
@@ -57,9 +57,20 @@ interface IssueRow {
   };
 }
 
+interface ProjectMemberOption {
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    avatarUrl?: string | null;
+    memberships?: { role: string }[];
+  };
+}
+
 interface ProjectOption {
   id: string;
   name: string;
+  memberships?: ProjectMemberOption[];
 }
 
 function IssuesView() {
@@ -102,8 +113,24 @@ function IssuesView() {
   const [modalDesc, setModalDesc] = useState("");
   const [modalPriority, setModalPriority] = useState("MEDIUM");
   const [modalDueDate, setModalDueDate] = useState("");
+  const [modalAssigneeId, setModalAssigneeId] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [modalError, setModalError] = useState("");
+
+  const currentModalProject = useMemo(() => {
+    return (Array.isArray(projects) ? projects : []).find((p) => p.id === modalProjId);
+  }, [projects, modalProjId]);
+
+  const eligibleAssignees = useMemo(() => {
+    if (!currentModalProject?.memberships) return [];
+    // Administrators cannot be assigned tasks to perform; only team members / PMs
+    return currentModalProject.memberships
+      .filter((m: ProjectMemberOption) => {
+        const orgRole = m.user.memberships?.[0]?.role;
+        return orgRole !== "ADMIN";
+      })
+      .map((m: ProjectMemberOption) => m.user);
+  }, [currentModalProject]);
 
   // Update URL params
   const updateUrl = useCallback(() => {
@@ -209,6 +236,7 @@ function IssuesView() {
         title: modalTitle.trim(),
         description: modalDesc.trim(),
         priority: modalPriority,
+        assigneeId: modalAssigneeId || undefined,
         dueDate: modalDueDate ? new Date(modalDueDate).toISOString() : undefined,
       });
 
@@ -217,6 +245,7 @@ function IssuesView() {
       setModalTitle("");
       setModalDesc("");
       setModalDueDate("");
+      setModalAssigneeId("");
       fetchIssues();
     } catch (err: unknown) {
       if (err instanceof ApiClientError) {
@@ -639,6 +668,19 @@ function IssuesView() {
               onChange={(e) => setModalDueDate(e.target.value)}
             />
           </div>
+
+          <Select
+            label="Give / Assign Task To"
+            value={modalAssigneeId}
+            onChange={(e) => setModalAssigneeId(e.target.value)}
+          >
+            <option value="">Unassigned</option>
+            {eligibleAssignees.map((u: ProjectMemberOption["user"]) => (
+              <option key={u.id} value={u.id}>
+                {u.name} ({u.email})
+              </option>
+            ))}
+          </Select>
 
           <div className="flex justify-end gap-3 pt-4 border-t border-slate-800">
             <Button

@@ -18,6 +18,7 @@ import {
   Bug,
   Activity,
   Sparkles,
+  Plus,
 } from "lucide-react";
 import { formatDate, cn } from "../../lib/utils";
 import { TeamActivityChart } from "../../components/dashboard/TeamActivityChart";
@@ -147,13 +148,24 @@ export default function DashboardPage() {
         </div>
 
         <div className="flex items-center gap-2.5">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => router.push("/my-tasks")}
-          >
-            <span>My Tasks</span>
-          </Button>
+          {role !== "ADMIN" ? (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => router.push("/my-tasks")}
+            >
+              <span>My Tasks</span>
+            </Button>
+          ) : (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => router.push("/issues?create=true")}
+            >
+              <Plus className="w-3.5 h-3.5 mr-1" />
+              <span>Give / New Task</span>
+            </Button>
+          )}
           <Button
             size="sm"
             variant="primary"
@@ -331,14 +343,14 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          {/* My Assigned Work Quick Table */}
+          {/* My Assigned Work Quick Table (or Tasks Needing Assignment for Admin) */}
           <Card className="space-y-4">
             <CardHeader className="pb-3 border-b border-slate-100 dark:border-slate-800 flex-row items-center justify-between space-y-0">
               <CardTitle className="text-base font-semibold text-slate-900 dark:text-white">
-                My Assigned Work
+                {role === "ADMIN" ? "Tasks Needing Assignment" : "My Assigned Work"}
               </CardTitle>
               <Link
-                href="/my-tasks"
+                href={role === "ADMIN" ? "/issues" : "/my-tasks"}
                 className="text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline"
               >
                 View All
@@ -348,7 +360,9 @@ export default function DashboardPage() {
             <CardContent className="space-y-2.5 pt-0">
               {myAssignedIssues.length === 0 ? (
                 <p className="text-xs text-slate-500 italic py-4 text-center">
-                  You have no pending assigned tasks. Good job!
+                  {role === "ADMIN"
+                    ? "All tasks are currently assigned to team members."
+                    : "You have no pending assigned tasks. Good job!"}
                 </p>
               ) : (
                 myAssignedIssues.map((issue) => (

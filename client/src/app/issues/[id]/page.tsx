@@ -61,6 +61,7 @@ interface IssueDetail {
         name: string;
         email: string;
         avatarUrl?: string | null;
+        memberships?: { role: string }[];
       };
     }[];
   };
@@ -609,11 +610,16 @@ export default function IssueDetailPage({
                 onChange={(e) => handleAssigneeChange(e.target.value)}
               >
                 <option value="">Unassigned</option>
-                {issue.project.memberships.map((m) => (
-                  <option key={m.user.id} value={m.user.id}>
-                    {m.user.name}
-                  </option>
-                ))}
+                {issue.project.memberships
+                  .filter((m) => {
+                    const orgRole = m.user.memberships?.[0]?.role;
+                    return orgRole !== "ADMIN";
+                  })
+                  .map((m) => (
+                    <option key={m.user.id} value={m.user.id}>
+                      {m.user.name}
+                    </option>
+                  ))}
               </Select>
             </div>
 

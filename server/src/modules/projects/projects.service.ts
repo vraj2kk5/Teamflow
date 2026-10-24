@@ -59,7 +59,16 @@ export class ProjectsService {
           memberships: {
             include: {
               user: {
-                select: { id: true, name: true, email: true, avatarUrl: true },
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
+                  avatarUrl: true,
+                  memberships: {
+                    where: { organizationId: orgId },
+                    select: { role: true },
+                  },
+                },
               },
             },
           },
@@ -133,6 +142,10 @@ export class ProjectsService {
                 email: true,
                 avatarUrl: true,
                 jobTitle: true,
+                memberships: {
+                  where: { organizationId: orgId },
+                  select: { role: true },
+                },
               },
             },
           },

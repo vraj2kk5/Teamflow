@@ -47,6 +47,14 @@ export function Sidebar({ onNavigate, className }: SidebarProps) {
   const pathname = usePathname();
   const { organization, role } = useAuth();
 
+  const filteredNavItems = navItems.filter((item) => {
+    // Admins assign tasks to team members but do not perform tasks, so hide "My Tasks"
+    if (item.href === "/my-tasks" && role === "ADMIN") {
+      return false;
+    }
+    return true;
+  });
+
   return (
     <aside
       className={cn(
@@ -103,7 +111,7 @@ export function Sidebar({ onNavigate, className }: SidebarProps) {
 
       {/* Navigation */}
       <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
-        {navItems.map((item) => {
+        {filteredNavItems.map((item) => {
           const isActive =
             pathname === item.href ||
             (item.href !== "/dashboard" && pathname.startsWith(item.href));
