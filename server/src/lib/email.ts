@@ -91,7 +91,26 @@ export class EmailService {
   private static async dispatchEmail(email: OutgoingEmail): Promise<boolean> {
     const { to, subject, text, html } = email;
 
-    // 1. Try Resend API (simplest & most modern - just an API key, no app passwords)
+    // 1. Try Standard SMTP Relay (Brevo, SendGrid, Mailgun - sends to ANY recipient without sandbox restrictions)
+    const transporter = this.getTransporter();
+    if (transporter) {
+      try {
+        const from = process.env.SMTP_FROM || `"TeamFlow Support" <${process.env.SMTP_USER}>`;
+        await transporter.sendMail({
+          from,
+          to,
+          subject,
+          text,
+          html,
+        });
+        logger.info(`✉️ [REAL EMAIL DELIVERED] Dispatched via SMTP to ${to}`);
+        return true;
+      } catch (err) {
+        logger.error(`Failed to dispatch via SMTP: ${err}`);
+      }
+    }
+
+    // 2. Try Resend API
     const resend = this.getResendClient();
     if (resend) {
       try {
@@ -112,25 +131,6 @@ export class EmailService {
         }
       } catch (err) {
         logger.error(`Failed to dispatch via Resend API: ${err}`);
-      }
-    }
-
-    // 2. Try Standard SMTP Relay (Brevo, SendGrid, Mailgun, or standard mail servers)
-    const transporter = this.getTransporter();
-    if (transporter) {
-      try {
-        const from = process.env.SMTP_FROM || `"TeamFlow Support" <${process.env.SMTP_USER}>`;
-        await transporter.sendMail({
-          from,
-          to,
-          subject,
-          text,
-          html,
-        });
-        logger.info(`✉️ [REAL EMAIL DELIVERED] Dispatched via SMTP Relay to ${to}`);
-        return true;
-      } catch (err) {
-        logger.error(`Failed to dispatch via SMTP: ${err}`);
       }
     }
 
