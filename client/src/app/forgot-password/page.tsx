@@ -2,30 +2,39 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { api, ApiClientError } from "../../lib/api";
 import { useToast } from "../../components/ui/Toast";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "../../components/ui/Card";
-import { KeyRound, ArrowLeft, ArrowRight, CheckCircle2, Copy, Check, Mail } from "lucide-react";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
+} from "../../components/ui/Card";
+import {
+  KeyRound,
+  ArrowLeft,
+  Mail,
+  ShieldCheck,
+  Clock,
+  RotateCcw,
+} from "lucide-react";
 
 interface ForgotPasswordResponse {
   message: string;
   email: string;
-  token?: string;
-  resetUrl?: string;
 }
 
 export default function ForgotPasswordPage() {
-  const router = useRouter();
   const { error: toastError, success: toastSuccess } = useToast();
 
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [fieldError, setFieldError] = useState<string | undefined>();
   const [result, setResult] = useState<ForgotPasswordResponse | null>(null);
-  const [copiedToken, setCopiedToken] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,10 +52,10 @@ export default function ForgotPasswordPage() {
 
     try {
       const res = await api.post<ForgotPasswordResponse>("/auth/forgot-password", {
-        email: email.trim(),
+        email: email.trim().toLowerCase(),
       });
       setResult(res);
-      toastSuccess("Password reset instructions generated!");
+      toastSuccess("Password reset instructions sent to your email!");
     } catch (err: unknown) {
       if (err instanceof ApiClientError) {
         toastError(err.message, "Request Failed");
@@ -56,13 +65,6 @@ export default function ForgotPasswordPage() {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleCopyToken = () => {
-    if (!result?.token) return;
-    navigator.clipboard.writeText(result.token);
-    setCopiedToken(true);
-    setTimeout(() => setCopiedToken(false), 2000);
   };
 
   return (
@@ -76,7 +78,7 @@ export default function ForgotPasswordPage() {
             Forgot Password?
           </h1>
           <p className="text-sm text-slate-600 dark:text-slate-400">
-            No worries! Enter your email and we will help you reset it
+            Enter your email to receive secure password reset instructions
           </p>
         </div>
 
@@ -131,78 +133,52 @@ export default function ForgotPasswordPage() {
           ) : (
             <div>
               <CardHeader className="pb-3 text-center">
-                <div className="mx-auto w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-950/80 flex items-center justify-center text-emerald-600 dark:text-emerald-400 mb-2">
-                  <CheckCircle2 className="w-6 h-6" />
+                <div className="mx-auto w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-950/80 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center text-emerald-600 dark:text-emerald-400 mb-2">
+                  <Mail className="w-6 h-6" />
                 </div>
-                <CardTitle className="text-xl font-bold">Reset Instructions Ready</CardTitle>
+                <CardTitle className="text-xl font-bold">Check Your Email</CardTitle>
                 <CardDescription className="text-slate-600 dark:text-slate-400">
-                  Password reset request created for <span className="font-semibold text-slate-900 dark:text-slate-200">{result.email}</span>
+                  If an account exists for{" "}
+                  <span className="font-semibold text-slate-900 dark:text-slate-200">
+                    {result.email}
+                  </span>
+                  , a secure reset link has been dispatched to your inbox.
                 </CardDescription>
               </CardHeader>
 
               <CardContent className="space-y-4 pt-2">
-                {result.token && (
-                  <div className="p-3.5 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-2">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="font-semibold text-slate-700 dark:text-slate-300">
-                        Reset Security Token
-                      </span>
-                      <button
-                        type="button"
-                        onClick={handleCopyToken}
-                        className="inline-flex items-center gap-1 text-[11px] font-medium text-indigo-600 dark:text-indigo-400 hover:underline"
-                      >
-                        {copiedToken ? (
-                          <>
-                            <Check className="w-3 h-3 text-emerald-500" />
-                            <span className="text-emerald-500">Copied</span>
-                          </>
-                        ) : (
-                          <>
-                            <Copy className="w-3 h-3" />
-                            <span>Copy Token</span>
-                          </>
-                        )}
-                      </button>
-                    </div>
-                    <p className="font-mono text-xs text-slate-600 dark:text-slate-400 break-all bg-white dark:bg-slate-900 p-2 rounded border border-slate-200 dark:border-slate-800/80 select-all">
-                      {result.token}
+                <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs text-slate-600 dark:text-slate-400 space-y-2.5">
+                  <div className="flex items-start gap-2.5">
+                    <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                    <p>
+                      For your protection, reset links are delivered out-of-band to the registered
+                      inbox and expire in 1 hour.
                     </p>
                   </div>
-                )}
-
-                {result.resetUrl ? (
-                  <Button
-                    type="button"
-                    variant="primary"
-                    className="w-full"
-                    size="md"
-                    onClick={() => router.push(result.resetUrl!)}
-                  >
-                    <span>Proceed to Reset Password</span>
-                    <ArrowRight className="w-4 h-4 ml-1.5" />
-                  </Button>
-                ) : (
-                  <Button
-                    type="button"
-                    variant="primary"
-                    className="w-full"
-                    size="md"
-                    onClick={() => router.push(`/reset-password?token=${result.token || ""}`)}
-                  >
-                    <span>Reset Password Now</span>
-                    <ArrowRight className="w-4 h-4 ml-1.5" />
-                  </Button>
-                )}
+                  <div className="flex items-start gap-2.5">
+                    <Clock className="w-4 h-4 text-indigo-500 shrink-0 mt-0.5" />
+                    <p>
+                      Open the link in your email to choose a new password. If you don&apos;t see the email,
+                      check your spam folder.
+                    </p>
+                  </div>
+                  <div className="pt-2 border-t border-slate-200 dark:border-slate-800 text-[11px] text-slate-500">
+                    💡 <span className="font-medium">Local Dev Mode:</span> Simulated email with the one-time link is logged to your backend server terminal.
+                  </div>
+                </div>
 
                 <Button
                   type="button"
                   variant="outline"
                   className="w-full"
                   size="md"
-                  onClick={() => setResult(null)}
+                  onClick={() => {
+                    setResult(null);
+                    setEmail("");
+                  }}
                 >
-                  Request with another email
+                  <RotateCcw className="w-4 h-4 mr-1.5" />
+                  <span>Try another email</span>
                 </Button>
               </CardContent>
 

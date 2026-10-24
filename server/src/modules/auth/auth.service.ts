@@ -11,6 +11,7 @@ import {
   ChangePasswordInput,
 } from "./auth.schema";
 import { ConflictError, UnauthorizedError, NotFoundError } from "../../lib/errors";
+import { EmailService } from "../../lib/email";
 
 export interface TokenPayload {
   userId: string;
@@ -237,20 +238,26 @@ export class AuthService {
   }
 
   static async forgotPassword(input: ForgotPasswordInput) {
+    const normalizedEmail = input.email.toLowerCase().trim();
     const user = await prisma.user.findUnique({
-      where: { email: input.email },
+      where: { email: normalizedEmail },
     });
 
+    // To prevent User Enumeration and Account Takeover attacks:
+    // 1. Always return an identical generic response whether the email exists or not.
+    // 2. NEVER return the reset token or reset URL in the HTTP response.
+    const genericResponse = {
+      message: "If an account exists with this email, a password reset link has been sent to your inbox.",
+      email: normalizedEmail,
+    };
+
     if (!user) {
-      return {
-        message: "If an account exists with this email, a reset link has been generated.",
-        email: input.email,
-      };
+      return genericResponse;
     }
 
     // Clean up any existing tokens for this email
     await prisma.passwordResetToken.deleteMany({
-      where: { email: input.email },
+      where: { email: user.email },
     });
 
     const token = crypto.randomBytes(32).toString("hex");
@@ -258,18 +265,24 @@ export class AuthService {
 
     await prisma.passwordResetToken.create({
       data: {
-        email: input.email,
+        email: user.email,
         token,
         expiresAt,
       },
     });
 
-    return {
-      message: "Password reset link generated successfully.",
-      email: input.email,
+    const clientOrigin = env.CLIENT_ORIGIN || "http://localhost:3000";
+    const resetUrl = `${clientOrigin}/reset-password?token=${token}`;
+
+    // Dispatch email securely (out-of-band to user's registered inbox / secure server logger)
+    await EmailService.sendPasswordResetEmail({
+      to: user.email,
+      recipientName: user.name,
       token,
-      resetUrl: `/reset-password?token=${token}`,
-    };
+      resetUrl,
+    });
+
+    return genericResponse;
   }
 
   static async resetPassword(input: ResetPasswordInput) {
