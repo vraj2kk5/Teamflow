@@ -96,6 +96,7 @@ export function IssuesView({ pageMode = "ISSUES" }: IssuesViewProps) {
   const initialStatus = searchParams.get("status") || "";
   const initialPriority = searchParams.get("priority") || "";
   const initialAssignee = searchParams.get("assigneeId") || "";
+  const initialReporter = searchParams.get("reporterId") || "";
   const initialType = searchParams.get("type") || (isTasksMode ? "TASK" : "BUG");
   const initialOverdue = searchParams.get("overdue") === "true";
   const initialPage = parseInt(searchParams.get("page") || "1", 10);
@@ -105,6 +106,7 @@ export function IssuesView({ pageMode = "ISSUES" }: IssuesViewProps) {
   const [status, setStatus] = useState(initialStatus);
   const [priority, setPriority] = useState(initialPriority);
   const [assigneeId, setAssigneeId] = useState(initialAssignee);
+  const [reporterId, setReporterId] = useState(initialReporter);
   const [type, setType] = useState(initialType);
   const [overdue, setOverdue] = useState(initialOverdue);
   const [page, setPage] = useState(initialPage);
@@ -200,6 +202,7 @@ export function IssuesView({ pageMode = "ISSUES" }: IssuesViewProps) {
     if (status) params.set("status", status);
     if (priority) params.set("priority", priority);
     if (assigneeId) params.set("assigneeId", assigneeId);
+    if (reporterId) params.set("reporterId", reporterId);
     if (type) params.set("type", type);
     if (overdue) params.set("overdue", "true");
     if (page > 1) params.set("page", String(page));
@@ -207,7 +210,7 @@ export function IssuesView({ pageMode = "ISSUES" }: IssuesViewProps) {
     const queryString = params.toString();
     const basePath = isTasksMode ? "/tasks" : "/issues";
     router.replace(`${basePath}${queryString ? `?${queryString}` : ""}`);
-  }, [q, projectId, status, priority, assigneeId, type, overdue, page, router, isTasksMode]);
+  }, [q, projectId, status, priority, assigneeId, reporterId, type, overdue, page, router, isTasksMode]);
 
   // Fetch Projects List for select filter and modals
   useEffect(() => {
@@ -258,6 +261,7 @@ export function IssuesView({ pageMode = "ISSUES" }: IssuesViewProps) {
         status: status || undefined,
         priority: priority || undefined,
         assigneeId: assigneeId || undefined,
+        reporterId: reporterId || undefined,
         type: type || undefined,
         overdue: overdue ? "true" : undefined,
         page,
@@ -290,6 +294,7 @@ export function IssuesView({ pageMode = "ISSUES" }: IssuesViewProps) {
     setStatus("");
     setPriority("");
     setAssigneeId("");
+    setReporterId("");
     setType(isTasksMode ? "TASK" : "BUG");
     setOverdue(false);
     setPage(1);
@@ -297,7 +302,7 @@ export function IssuesView({ pageMode = "ISSUES" }: IssuesViewProps) {
 
   const hasActiveFilters = isTasksMode
     ? Boolean(q || projectId || status || priority || assigneeId || overdue || (type && type !== "TASK"))
-    : Boolean(q || projectId || status || priority || assigneeId || overdue || (type && type !== "BUG"));
+    : Boolean(q || projectId || status || priority || assigneeId || reporterId || overdue || (type && type !== "BUG"));
 
   const handleCreateIssue = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -694,17 +699,21 @@ export function IssuesView({ pageMode = "ISSUES" }: IssuesViewProps) {
 
             <button
               onClick={() => {
-                setAssigneeId(assigneeId === "me" ? "" : "me");
+                if (isTasksMode) {
+                  setAssigneeId(assigneeId === "me" ? "" : "me");
+                } else {
+                  setReporterId(reporterId === "me" ? "" : "me");
+                }
                 setPage(1);
               }}
               className={cn(
                 "px-2.5 py-1 rounded-full font-medium transition-colors border",
-                assigneeId === "me"
+                (isTasksMode ? assigneeId === "me" : reporterId === "me")
                   ? "bg-indigo-950/80 text-indigo-300 border-indigo-800"
                   : "bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:text-slate-900 dark:hover:text-white"
               )}
             >
-              Assigned to Me
+              {isTasksMode ? "Assigned to Me" : "Reported by Me"}
             </button>
           </div>
 

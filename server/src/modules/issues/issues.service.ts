@@ -67,7 +67,7 @@ export class IssuesService {
     }
 
     if (query.reporterId) {
-      where.reporterId = query.reporterId;
+      where.reporterId = query.reporterId === "me" ? userId : query.reporterId;
     }
 
     if (query.q) {
