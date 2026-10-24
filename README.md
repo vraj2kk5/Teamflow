@@ -19,15 +19,18 @@
 4. [Technology Stack](#-technology-stack)
 5. [Prerequisites](#-prerequisites)
 6. [Quick Start & Local Setup](#-quick-start--local-setup)
-7. [Demo Accounts & Seed Data](#-demo-accounts--seed-data)
-8. [Automated Testing](#-automated-testing)
-9. [Storage Drivers: Local Disk vs Cloudflare R2](#-storage-drivers-local-disk-vs-cloudflare-r2)
-10. [Production Deployment Guide](#-production-deployment-guide)
-11. [Requirements Checklist](#-requirements-checklist)
+7. [Email Services & Real Inbox Notifications](#-email-services--real-inbox-notifications)
+8. [Demo Accounts & Seed Data](#-demo-accounts--seed-data)
+9. [Automated Testing](#-automated-testing)
+10. [Storage Drivers: Local Disk vs Cloudflare R2](#-storage-drivers-local-disk-vs-cloudflare-r2)
+11. [Production Deployment Guide](#-production-deployment-guide)
+12. [Requirements Checklist](#-requirements-checklist)
 
 ---
 
 ## 🌟 Overview & Key Features
+
+> ✉️ **Live Email Services Active:** TeamFlow has automated transactional email delivery enabled. When registering, testing invitations, or assigning tasks, **use your real, original email address** (e.g. your Gmail or Outlook) to receive real-time notifications in your inbox.
 
 TeamFlow provides a streamlined, original alternative to bloated legacy project management tools like Jira. Designed for fast-moving engineering teams, it combines agile task tracking with a first-class visual diagnostic reporting workflow.
 
@@ -176,6 +179,21 @@ npm run dev
 ```
 
 Visit **`http://localhost:3000`** in your browser.
+
+---
+
+## 📧 Email Services & Real Inbox Notifications
+
+> 💡 **Important:** When testing TeamFlow, **please use your actual/original email address**!
+
+TeamFlow integrates live transactional email delivery (powered by **Brevo SMTP** and **Resend API**). Real emails are dynamically delivered to recipients' inboxes for:
+
+1. **Workspace Welcome Email:** When an Admin registers an account and creates a workspace, they receive their welcome email with workspace details and invite code.
+2. **Login Security Alerts:** Users receive a notification whenever they log in, with security timestamps and dashboard deep-links.
+3. **Workspace Member Invitations:** Inviting a new user via their email address dispatches a personalized email with the workspace invite code and pre-configured role (`PROJECT_MANAGER` or `MEMBER`).
+4. **Task & Bug Assignment Notifications:** Whenever an Admin or Project Manager assigns a task or bug to a team member, that member receives an instant email containing the ticket key (e.g., `TF-1`), task title, reporter name, and a one-click button to view the task directly.
+
+Ensure you register with your **original email address** to experience and verify real email notifications!
 
 ---
 
