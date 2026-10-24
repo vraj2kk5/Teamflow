@@ -119,17 +119,32 @@ export default function TeamPage() {
     setIsAdding(true);
     setAddError("");
     try {
-      const res = await api.post<{ data?: { invited?: boolean; message?: string } }>(
+      const res = await api.post<{
+        invited?: boolean;
+        message?: string;
+        inviteCode?: string;
+        registerUrl?: string;
+      }>(
         `/organizations/${organization?.id}/members`,
         {
           email: addEmail.trim(),
           role: addRole,
         }
       );
-      const payload = res as unknown as { data?: { invited?: boolean; message?: string } };
-      const isInvited = payload?.data?.invited;
-      if (isInvited) {
-        toastSuccess(`Invitation sent to ${addEmail}! An invite link and organization code were sent via email.`);
+      const data = ((res as unknown as { data?: { invited?: boolean; message?: string; inviteCode?: string; registerUrl?: string } })?.data || res) as {
+        invited?: boolean;
+        message?: string;
+        inviteCode?: string;
+        registerUrl?: string;
+      };
+
+      if (data?.invited) {
+        if (data.registerUrl && typeof navigator !== "undefined" && navigator.clipboard) {
+          navigator.clipboard.writeText(data.registerUrl).catch(() => {});
+          toastSuccess(`Invitation created & link copied to clipboard! Code: ${data.inviteCode || ""}`);
+        } else {
+          toastSuccess(`Invitation created for ${addEmail}! Code: ${data.inviteCode || ""}`);
+        }
       } else {
         toastSuccess(`Added ${addEmail} to organization as ${addRole}`);
       }

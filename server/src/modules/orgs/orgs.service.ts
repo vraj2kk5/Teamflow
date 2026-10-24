@@ -117,6 +117,8 @@ export class OrgsService {
         invited: true,
         email: input.email,
         role: input.role,
+        inviteCode,
+        registerUrl,
         message: `An invitation email has been sent to ${input.email} with your organization invite code (${inviteCode}). Once registered, they will be part of ${org.name}.`,
       };
     }

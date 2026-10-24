@@ -17,15 +17,18 @@ import {
 import {
   KeyRound,
   ArrowLeft,
+  ArrowRight,
   Mail,
   ShieldCheck,
   Clock,
   RotateCcw,
+  Sparkles,
 } from "lucide-react";
 
 interface ForgotPasswordResponse {
   message: string;
   email: string;
+  devResetUrl?: string;
 }
 
 export default function ForgotPasswordPage() {
@@ -147,6 +150,30 @@ export default function ForgotPasswordPage() {
               </CardHeader>
 
               <CardContent className="space-y-4 pt-2">
+                {result.devResetUrl && (
+                  <div className="p-4 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-800 text-left space-y-3 animate-in fade-in zoom-in-95 duration-200">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5 text-xs font-bold text-indigo-900 dark:text-indigo-200 uppercase tracking-wider">
+                        <Sparkles className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+                        <span>Development Shortcut</span>
+                      </div>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-200/60 dark:bg-indigo-900/60 text-indigo-800 dark:text-indigo-300">
+                        No App Password Needed
+                      </span>
+                    </div>
+                    <p className="text-xs text-indigo-900/80 dark:text-indigo-200/80 leading-relaxed">
+                      Because SMTP app password is not configured, your one-time secure reset link is ready right here:
+                    </p>
+                    <a
+                      href={result.devResetUrl}
+                      className="inline-flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] text-white font-semibold text-xs shadow-md shadow-indigo-600/20 transition-all text-center"
+                    >
+                      <span>Click to Reset Password Now</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </a>
+                  </div>
+                )}
+
                 <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs text-slate-600 dark:text-slate-400 space-y-2.5">
                   <div className="flex items-start gap-2.5">
                     <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />

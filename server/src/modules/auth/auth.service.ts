@@ -282,7 +282,11 @@ export class AuthService {
       resetUrl,
     });
 
-    return genericResponse;
+    const isDev = env.NODE_ENV === "development";
+    return {
+      ...genericResponse,
+      ...(isDev && !process.env.SMTP_PASS ? { devResetUrl: resetUrl } : {}),
+    };
   }
 
   static async resetPassword(input: ResetPasswordInput) {
