@@ -331,10 +331,10 @@ export default function IssueDetailPage({
             </h1>
 
             <div className="pt-2 border-t border-slate-200 dark:border-slate-800">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">
                 Description
               </h3>
-              <p className="text-sm text-slate-200 whitespace-pre-wrap leading-relaxed">
+              <p className="text-sm text-slate-700 dark:text-slate-200 whitespace-pre-wrap leading-relaxed">
                 {issue.description}
               </p>
             </div>
@@ -365,20 +365,20 @@ export default function IssueDetailPage({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {issue.expectedResult && (
                     <div>
-                      <h4 className="text-xs font-semibold uppercase tracking-wider text-emerald-400 mb-1">
+                      <h4 className="text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-1">
                         Expected Result
                       </h4>
-                      <p className="text-xs text-slate-300 bg-emerald-950/20 border border-emerald-900/40 p-3 rounded-lg">
+                      <p className="text-xs text-emerald-950 dark:text-emerald-200 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/40 p-3 rounded-lg">
                         {issue.expectedResult}
                       </p>
                     </div>
                   )}
                   {issue.actualResult && (
                     <div>
-                      <h4 className="text-xs font-semibold uppercase tracking-wider text-rose-400 mb-1">
+                      <h4 className="text-xs font-semibold uppercase tracking-wider text-rose-600 dark:text-rose-400 mb-1">
                         Actual Result
                       </h4>
-                      <p className="text-xs text-slate-300 bg-rose-950/20 border border-rose-900/40 p-3 rounded-lg">
+                      <p className="text-xs text-rose-950 dark:text-rose-200 bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-900/40 p-3 rounded-lg">
                         {issue.actualResult}
                       </p>
                     </div>

@@ -146,7 +146,7 @@ export default function BugReportsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold text-white tracking-tight">Visual Bug Reports</h1>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Visual Bug Reports</h1>
             <Badge variant="danger" size="sm">
               <Bug className="w-3 h-3 mr-1 inline" />
               Live Tracker
@@ -344,12 +344,12 @@ export default function BugReportsPage() {
                       </Badge>
                     </div>
 
-                    <h3 className="text-sm font-semibold text-white group-hover:text-indigo-400 transition-colors line-clamp-1">
+                    <h3 className="text-sm font-semibold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-1">
                       {bug.title}
                     </h3>
 
                     {bug.description && (
-                      <p className="text-xs text-slate-400 line-clamp-1">
+                      <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-1">
                         {bug.description}
                       </p>
                     )}
