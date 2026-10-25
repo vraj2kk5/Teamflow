@@ -9,9 +9,10 @@ export class NotificationsService {
     message: string;
     link?: string;
     type?: NotificationType;
+    allowSelf?: boolean;
   }) {
-    // Avoid self-notification
-    if (data.actorId && data.actorId === data.userId) {
+    // Avoid self-notification unless explicitly allowed or when type is ASSIGNMENT
+    if (!data.allowSelf && data.actorId && data.actorId === data.userId && data.type !== "ASSIGNMENT") {
       return null;
     }
 

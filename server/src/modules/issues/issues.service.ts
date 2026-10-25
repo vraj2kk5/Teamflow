@@ -325,28 +325,47 @@ export class IssuesService {
         },
       });
 
-      if (issue.assignee && issue.assigneeId !== reporterId) {
+      if (issue.assignee) {
         const isBug = issue.type === "BUG";
+        const isSelf = issue.assigneeId === reporterId;
+
+        // Notification for the assignee (including self-assignment)
         await tx.notification.create({
           data: {
             userId: issue.assignee.id,
             actorId: reporterId,
             title: isBug ? "New Bug Assigned" : "New Task Assigned",
-            message: `${issue.reporter.name} assigned you to ${issue.key}: "${issue.title}"`,
+            message: isSelf
+              ? `You assigned yourself to ${issue.key}: "${issue.title}"`
+              : `${issue.reporter.name} assigned you to ${issue.key}: "${issue.title}"`,
             link: isBug ? `/issues/${issue.id}` : `/tasks/${issue.id}`,
             type: "ASSIGNMENT",
           },
         });
 
-        const clientOrigin = process.env.CLIENT_ORIGIN || "http://localhost:3000";
-        await EmailService.sendTaskAssignedEmail({
-          to: issue.assignee.email,
-          recipientName: issue.assignee.name,
-          taskKey: issue.key,
-          taskTitle: issue.title,
-          actorName: issue.reporter.name,
-          taskUrl: `${clientOrigin}/${isBug ? "issues" : "tasks"}/${issue.id}`,
-        });
+        // Confirmation notification for the assigner when assigning to a team member
+        if (!isSelf) {
+          await tx.notification.create({
+            data: {
+              userId: reporterId,
+              actorId: reporterId,
+              title: isBug ? "Bug Assigned" : "Task Assigned",
+              message: `You assigned ${issue.key}: "${issue.title}" to ${issue.assignee.name}`,
+              link: isBug ? `/issues/${issue.id}` : `/tasks/${issue.id}`,
+              type: "ASSIGNMENT",
+            },
+          });
+
+          const clientOrigin = process.env.CLIENT_ORIGIN || "http://localhost:3000";
+          await EmailService.sendTaskAssignedEmail({
+            to: issue.assignee.email,
+            recipientName: issue.assignee.name,
+            taskKey: issue.key,
+            taskTitle: issue.title,
+            actorName: issue.reporter.name,
+            taskUrl: `${clientOrigin}/${isBug ? "issues" : "tasks"}/${issue.id}`,
+          });
+        }
       }
 
       return issue;
@@ -469,12 +488,13 @@ export class IssuesService {
         });
       }
 
-      if (input.assigneeId && input.assigneeId !== existing.assigneeId && input.assigneeId !== actorId && updated.assignee) {
+      if (input.assigneeId && input.assigneeId !== existing.assigneeId && updated.assignee) {
         const actor = await prisma.user.findUnique({
           where: { id: actorId },
           select: { name: true },
         });
         const actorName = actor?.name || "A team member";
+        const isSelf = input.assigneeId === actorId;
 
         const isBug = updated.type === "BUG";
         await tx.notification.create({
@@ -482,21 +502,37 @@ export class IssuesService {
             userId: input.assigneeId,
             actorId,
             title: isBug ? "Bug Assigned to You" : "Task Assigned to You",
-            message: `${actorName} assigned you to ${updated.key}: "${updated.title}"`,
+            message: isSelf
+              ? `You assigned yourself to ${updated.key}: "${updated.title}"`
+              : `${actorName} assigned you to ${updated.key}: "${updated.title}"`,
             link: isBug ? `/issues/${updated.id}` : `/tasks/${updated.id}`,
             type: "ASSIGNMENT",
           },
         });
 
-        const clientOrigin = process.env.CLIENT_ORIGIN || "http://localhost:3000";
-        await EmailService.sendTaskAssignedEmail({
-          to: updated.assignee.email,
-          recipientName: updated.assignee.name,
-          taskKey: updated.key,
-          taskTitle: updated.title,
-          actorName,
-          taskUrl: `${clientOrigin}/${isBug ? "issues" : "tasks"}/${updated.id}`,
-        });
+        if (!isSelf) {
+          // Confirmation notification for the assigner when assigning to a team member
+          await tx.notification.create({
+            data: {
+              userId: actorId,
+              actorId,
+              title: isBug ? "Bug Assigned" : "Task Assigned",
+              message: `You assigned ${updated.key}: "${updated.title}" to ${updated.assignee.name}`,
+              link: isBug ? `/issues/${updated.id}` : `/tasks/${updated.id}`,
+              type: "ASSIGNMENT",
+            },
+          });
+
+          const clientOrigin = process.env.CLIENT_ORIGIN || "http://localhost:3000";
+          await EmailService.sendTaskAssignedEmail({
+            to: updated.assignee.email,
+            recipientName: updated.assignee.name,
+            taskKey: updated.key,
+            taskTitle: updated.title,
+            actorName,
+            taskUrl: `${clientOrigin}/${isBug ? "issues" : "tasks"}/${updated.id}`,
+          });
+        }
       }
 
       return updated;
