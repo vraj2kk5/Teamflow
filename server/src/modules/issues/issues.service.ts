@@ -194,7 +194,22 @@ export class IssuesService {
       throw new NotFoundError("Issue not found");
     }
 
-    return issue;
+    const storage = getStorageDriver();
+    const attachmentsWithUrls = await Promise.all(
+      issue.attachments.map(async (att) => {
+        try {
+          const accessUrl = await storage.getSignedUrl(att.storageKey, 3600, att.id);
+          return { ...att, accessUrl };
+        } catch {
+          return { ...att, accessUrl: null };
+        }
+      })
+    );
+
+    return {
+      ...issue,
+      attachments: attachmentsWithUrls,
+    };
   }
 
   static async createIssue(

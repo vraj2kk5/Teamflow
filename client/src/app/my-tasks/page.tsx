@@ -25,6 +25,7 @@ import {
   LayoutDashboard,
 } from "lucide-react";
 import { formatDate, cn } from "../../lib/utils";
+import { clientCache } from "../../lib/cache";
 
 interface MyTaskItem {
   id: string;
@@ -46,21 +47,27 @@ export default function MyTasksPage() {
   const { user, role } = useAuth();
   const { success: toastSuccess, error: toastError } = useToast();
 
-  const [tasks, setTasks] = useState<MyTaskItem[]>([]);
+  const [tasks, setTasks] = useState<MyTaskItem[]>(() =>
+    clientCache.get<MyTaskItem[]>("/my-tasks") || []
+  );
   const [filterStatus, setFilterStatus] = useState<string>("");
   const [filterType, setFilterType] = useState<string>("");
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(() => !clientCache.get<MyTaskItem[]>("/my-tasks"));
 
   const fetchTasks = useCallback(async () => {
-    setIsLoading(true);
+    if (tasks.length === 0) {
+      setIsLoading(true);
+    }
     try {
-      const res = await api.get<{ data: MyTaskItem[] }>("/issues", {
+      const res = await api.getCached<{ data: MyTaskItem[] }>("/issues", {
         assigneeId: "me",
         status: filterStatus || undefined,
         type: filterType || undefined,
         pageSize: 100,
       });
-      setTasks(Array.isArray(res) ? res : (res as unknown as { data?: MyTaskItem[] })?.data || []);
+      const list = Array.isArray(res) ? res : (res as unknown as { data?: MyTaskItem[] })?.data || [];
+      setTasks(list);
+      clientCache.set("/my-tasks", list);
     } catch (err: unknown) {
       if (err instanceof ApiClientError) {
         toastError(err.message, "Failed to load assigned tasks");
@@ -249,6 +256,8 @@ export default function MyTasksPage() {
 
                     <Link
                       href={task.type === "TASK" ? `/tasks/${task.id}` : `/issues/${task.id}`}
+                      onMouseEnter={() => clientCache.setIssuePreview(task.id, task)}
+                      onClick={() => clientCache.setIssuePreview(task.id, task)}
                       className="block text-sm font-semibold text-slate-900 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-300 transition-colors truncate"
                     >
                       {task.title}

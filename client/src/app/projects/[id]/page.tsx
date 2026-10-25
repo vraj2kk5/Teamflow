@@ -43,6 +43,7 @@ import {
   X,
 } from "lucide-react";
 import { cn, formatDate } from "../../../lib/utils";
+import { clientCache } from "../../../lib/cache";
 
 interface ProjectDetail {
   id: string;
@@ -88,11 +89,15 @@ export default function ProjectDetailPage({
   const { user, role } = useAuth();
   const { success: toastSuccess, error: toastError } = useToast();
 
-  const [project, setProject] = useState<ProjectDetail | null>(null);
-  const [issues, setIssues] = useState<IssueItem[]>([]);
+  const [project, setProject] = useState<ProjectDetail | null>(() =>
+    clientCache.get<ProjectDetail>(`/projects/${projectId}`)
+  );
+  const [issues, setIssues] = useState<IssueItem[]>(() =>
+    clientCache.get<IssueItem[]>(`/projects/${projectId}/issues`) || []
+  );
   const [orgMembers, setOrgMembers] = useState<{ id: string; user: { id: string; name: string; email: string } }[]>([]);
   const [activeTab, setActiveTab] = useState<"board" | "list" | "bugs" | "members" | "settings">("board");
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(() => !clientCache.get<ProjectDetail>(`/projects/${projectId}`));
   const [accessError, setAccessError] = useState<string | null>(null);
 
   // Create Issue Modal State
@@ -166,12 +171,14 @@ export default function ProjectDetailPage({
   const canManage = role === "ADMIN" || role === "PROJECT_MANAGER" || project?.ownerId === user?.id;
 
   const fetchProjectData = useCallback(async () => {
-    setIsLoading(true);
+    if (!project) {
+      setIsLoading(true);
+    }
     setAccessError(null);
     try {
       const [projData, issuesData] = await Promise.all([
-        api.get<ProjectDetail>(`/projects/${projectId}`),
-        api.get<{ data: IssueItem[] }>("/issues", { projectId, pageSize: 100 }),
+        api.getCached<ProjectDetail>(`/projects/${projectId}`),
+        api.getCached<{ data: IssueItem[] }>("/issues", { projectId, pageSize: 100 }),
       ]);
 
       setProject(projData);
@@ -182,6 +189,8 @@ export default function ProjectDetailPage({
         ? issuesData
         : (issuesData as { data?: IssueItem[] })?.data || [];
       setIssues(rawIssues);
+      clientCache.set(`/projects/${projectId}`, projData);
+      clientCache.set(`/projects/${projectId}/issues`, rawIssues);
     } catch (err: unknown) {
       if (err instanceof ApiClientError) {
         if (err.statusCode === 403 || err.message.toLowerCase().includes("not a member")) {

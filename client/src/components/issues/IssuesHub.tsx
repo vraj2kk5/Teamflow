@@ -33,6 +33,7 @@ import {
   Users,
 } from "lucide-react";
 import { formatDate, cn } from "../../lib/utils";
+import { clientCache } from "../../lib/cache";
 
 interface IssueRow {
   id: string;
@@ -216,7 +217,7 @@ export function IssuesView({ pageMode = "ISSUES" }: IssuesViewProps) {
   useEffect(() => {
     let isMounted = true;
     api
-      .get<{ data: ProjectOption[] }>("/projects", { pageSize: 100 })
+      .getCached<{ data: ProjectOption[] }>("/projects", { pageSize: 100 })
       .then((res) => {
         if (!isMounted) return;
         const list = Array.isArray(res) ? res : (res as unknown as { data?: ProjectOption[] })?.data || [];
@@ -250,9 +251,8 @@ export function IssuesView({ pageMode = "ISSUES" }: IssuesViewProps) {
 
   // Fetch issues
   const fetchIssues = useCallback(async () => {
-    setIsLoading(true);
     try {
-      const res = await api.get<{
+      const res = await api.getCached<{
         data: IssueRow[];
         pagination: { total: number; totalPages: number; page: number };
       }>("/issues", {
@@ -269,8 +269,8 @@ export function IssuesView({ pageMode = "ISSUES" }: IssuesViewProps) {
       });
 
       setIssues(Array.isArray(res) ? res : (res as unknown as { data?: IssueRow[] })?.data || []);
-      setTotalPages(res.pagination.totalPages || 1);
-      setTotalCount(res.pagination.total || 0);
+      setTotalPages(res.pagination?.totalPages || 1);
+      setTotalCount(res.pagination?.total || 0);
     } catch (err: unknown) {
       if (err instanceof ApiClientError) {
         toastError(err.message, "Failed to load issues");
@@ -791,18 +791,24 @@ export function IssuesView({ pageMode = "ISSUES" }: IssuesViewProps) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
-                {issues.map((i) => (
-                  <tr
-                    key={i.id}
-                    onClick={() =>
-                      router.push(
-                        i.type === "TASK" || isTasksMode
-                          ? `/tasks/${i.id}`
-                          : `/issues/${i.id}`
-                      )
-                    }
-                    className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer group"
-                  >
+                {issues.map((i) => {
+                  const targetUrl =
+                    i.type === "TASK" || isTasksMode
+                      ? `/tasks/${i.id}`
+                      : `/issues/${i.id}`;
+                  return (
+                    <tr
+                      key={i.id}
+                      onMouseEnter={() => {
+                        router.prefetch(targetUrl);
+                        clientCache.setIssuePreview(i.id, i);
+                      }}
+                      onClick={() => {
+                        clientCache.setIssuePreview(i.id, i);
+                        router.push(targetUrl);
+                      }}
+                      className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer group"
+                    >
                     <td className="px-4 py-3.5 font-mono text-xs text-indigo-400 font-semibold">
                       {i.key}
                     </td>
@@ -879,7 +885,8 @@ export function IssuesView({ pageMode = "ISSUES" }: IssuesViewProps) {
                       {i.dueDate ? formatDate(i.dueDate) : "-"}
                     </td>
                   </tr>
-                ))}
+                );
+              })}
               </tbody>
             </table>
           </div>

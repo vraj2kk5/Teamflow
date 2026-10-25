@@ -23,6 +23,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { formatDate } from "../../lib/utils";
+import { clientCache } from "../../lib/cache";
 
 interface OrgMember {
   id: string;
@@ -43,8 +44,10 @@ export default function TeamPage() {
   const { user, organization, role, refreshUser } = useAuth();
   const { success: toastSuccess, error: toastError } = useToast();
 
-  const [members, setMembers] = useState<OrgMember[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [members, setMembers] = useState<OrgMember[]>(() =>
+    clientCache.get<OrgMember[]>("/team-members") || []
+  );
+  const [isLoading, setIsLoading] = useState(() => !clientCache.get<OrgMember[]>("/team-members"));
   const [copiedCode, setCopiedCode] = useState(false);
 
   // Add Member Modal State
@@ -66,13 +69,17 @@ export default function TeamPage() {
 
   const fetchMembers = useCallback(async () => {
     if (!organization) return;
-    setIsLoading(true);
+    if (members.length === 0) {
+      setIsLoading(true);
+    }
     try {
-      const res = await api.get<{ data: OrgMember[] }>(
+      const res = await api.getCached<{ data: OrgMember[] }>(
         `/organizations/${organization.id}/members`
       );
       const list = Array.isArray(res) ? res : (res as unknown as { data?: OrgMember[] })?.data || [];
-      setMembers(Array.isArray(list) ? list : []);
+      const safeList = Array.isArray(list) ? list : [];
+      setMembers(safeList);
+      clientCache.set("/team-members", safeList);
     } catch (err: unknown) {
       if (err instanceof ApiClientError) {
         if (err.message.includes("no longer a member")) {

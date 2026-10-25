@@ -11,6 +11,7 @@ import { EmptyState } from "../../components/ui/EmptyState";
 import { Button } from "../../components/ui/Button";
 import { Activity, ChevronLeft, ChevronRight, FolderKanban, AlertCircle, Bug } from "lucide-react";
 import { formatDate, formatDateTime, formatActivityAction } from "../../lib/utils";
+import { clientCache } from "../../lib/cache";
 
 interface ActivityLogItem {
   id: string;
@@ -38,16 +39,20 @@ interface ActivityLogItem {
 export default function ActivityPage() {
   const { error: toastError } = useToast();
 
-  const [logs, setLogs] = useState<ActivityLogItem[]>([]);
+  const [logs, setLogs] = useState<ActivityLogItem[]>(() =>
+    clientCache.get<ActivityLogItem[]>("/activity") || []
+  );
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(() => !clientCache.get<ActivityLogItem[]>("/activity"));
 
   const fetchActivity = useCallback(async () => {
-    setIsLoading(true);
+    if (logs.length === 0) {
+      setIsLoading(true);
+    }
     try {
-      const res = await api.get<{
+      const res = await api.getCached<{
         data: ActivityLogItem[];
         pagination: { total: number; totalPages: number; page: number };
       }>("/activity", {
@@ -56,9 +61,11 @@ export default function ActivityPage() {
       });
 
       const list = Array.isArray(res) ? res : (res as unknown as { data?: ActivityLogItem[] })?.data || [];
-      setLogs(Array.isArray(list) ? list : []);
-      setTotalPages(res.pagination.totalPages || 1);
-      setTotalCount(res.pagination.total || 0);
+      const safeList = Array.isArray(list) ? list : [];
+      setLogs(safeList);
+      clientCache.set("/activity", safeList);
+      setTotalPages(res.pagination?.totalPages || 1);
+      setTotalCount(res.pagination?.total || 0);
     } catch (err: unknown) {
       if (err instanceof ApiClientError) {
         toastError(err.message, "Failed to load activity logs");

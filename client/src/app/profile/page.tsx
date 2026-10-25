@@ -26,6 +26,7 @@ import {
   Lock,
 } from "lucide-react";
 import { formatDate, cn } from "../../lib/utils";
+import { clientCache } from "../../lib/cache";
 
 interface UserProfileData {
   id: string;
@@ -59,11 +60,13 @@ export default function ProfilePage() {
   const { user, refreshUser } = useAuth();
   const { success: toastSuccess, error: toastError } = useToast();
 
-  const [profile, setProfile] = useState<UserProfileData | null>(null);
+  const [profile, setProfile] = useState<UserProfileData | null>(() =>
+    clientCache.get<UserProfileData>("/profile")
+  );
   const [assignedIssues, setAssignedIssues] = useState<IssueSnippet[]>([]);
   const [reportedIssues, setReportedIssues] = useState<IssueSnippet[]>([]);
   const [activeTab, setActiveTab] = useState<"assigned" | "reported">("assigned");
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(() => !clientCache.get<UserProfileData>("/profile"));
 
   // Edit Modal State
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -73,15 +76,18 @@ export default function ProfilePage() {
   const [isSaving, setIsSaving] = useState(false);
 
   const fetchProfile = useCallback(async () => {
-    setIsLoading(true);
+    if (!profile) {
+      setIsLoading(true);
+    }
     try {
       const [profData, assignedData, reportedData] = await Promise.all([
-        api.get<UserProfileData>("/users/me"),
-        api.get<IssueSnippet[]>("/users/me/issues?relation=assigned"),
-        api.get<IssueSnippet[]>("/users/me/issues?relation=reported"),
+        api.getCached<UserProfileData>("/users/me"),
+        api.getCached<IssueSnippet[]>("/users/me/issues?relation=assigned"),
+        api.getCached<IssueSnippet[]>("/users/me/issues?relation=reported"),
       ]);
 
       setProfile(profData);
+      clientCache.set("/profile", profData);
       setEditName(profData.name);
       setEditJobTitle(profData.jobTitle || "");
       setEditBio(profData.bio || "");

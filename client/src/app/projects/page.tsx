@@ -25,6 +25,7 @@ import {
   Copy,
   Trash2,
 } from "lucide-react";
+import { clientCache } from "../../lib/cache";
 
 interface ProjectStats {
   totalIssues: number;
@@ -61,8 +62,10 @@ export default function ProjectsPage() {
   const { role } = useAuth();
   const { success: toastSuccess, error: toastError } = useToast();
 
-  const [projects, setProjects] = useState<ProjectItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [projects, setProjects] = useState<ProjectItem[]>(() =>
+    clientCache.get<ProjectItem[]>("/projects") || []
+  );
+  const [isLoading, setIsLoading] = useState(() => !clientCache.get<ProjectItem[]>("/projects"));
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
 
@@ -87,13 +90,17 @@ export default function ProjectsPage() {
   const canCreate = role === "ADMIN" || role === "PROJECT_MANAGER";
 
   const fetchProjects = useCallback(async () => {
-    setIsLoading(true);
+    if (projects.length === 0) {
+      setIsLoading(true);
+    }
     try {
-      const res = await api.get<{ data: ProjectItem[] }>("/projects", {
+      const res = await api.getCached<{ data: ProjectItem[] }>("/projects", {
         q: search || undefined,
         status: statusFilter || undefined,
       });
-      setProjects(Array.isArray(res) ? res : (res as unknown as { data?: ProjectItem[] })?.data || []);
+      const list = Array.isArray(res) ? res : (res as unknown as { data?: ProjectItem[] })?.data || [];
+      setProjects(list);
+      clientCache.set("/projects", list);
     } catch (err: unknown) {
       if (err instanceof ApiClientError) {
         toastError(err.message, "Failed to load projects");

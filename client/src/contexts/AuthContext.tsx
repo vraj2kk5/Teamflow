@@ -74,10 +74,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         allOrganizations: (Organization & { role: UserRole })[];
       }>("/auth/me");
 
-      setUser(data.user);
-      setOrganization(data.organization);
-      setRole(data.role);
-      setAllOrganizations(data.allOrganizations || []);
+      setUser((prev) => (JSON.stringify(prev) === JSON.stringify(data.user) ? prev : data.user));
+      setOrganization((prev) => (JSON.stringify(prev) === JSON.stringify(data.organization) ? prev : data.organization));
+      setRole((prev) => (prev === data.role ? prev : data.role));
+      setAllOrganizations((prev) => (JSON.stringify(prev) === JSON.stringify(data.allOrganizations) ? prev : (data.allOrganizations || [])));
     } catch {
       setUser(null);
       setOrganization(null);
@@ -90,15 +90,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     refreshUser();
-    const handleFocus = () => {
-      refreshUser();
-    };
-    window.addEventListener("focus", handleFocus);
-    const interval = setInterval(refreshUser, 15000);
-    return () => {
-      window.removeEventListener("focus", handleFocus);
-      clearInterval(interval);
-    };
+    const interval = setInterval(refreshUser, 60000); // 60s background sync
+    return () => clearInterval(interval);
   }, [refreshUser]);
 
   const login = async (email: string, password: string, rememberMe = false) => {

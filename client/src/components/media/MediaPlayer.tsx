@@ -11,16 +11,28 @@ interface MediaPlayerProps {
   kind: "AUDIO" | "VIDEO" | "IMAGE";
   filename: string;
   mimeType: string;
+  initialAccessUrl?: string | null;
 }
 
 export function MediaPlayer({
   attachmentId,
   kind,
   filename,
+  initialAccessUrl,
 }: MediaPlayerProps) {
-  const [accessUrl, setAccessUrl] = useState<string | null>(null);
+  const [accessUrl, setAccessUrl] = useState<string | null>(() => {
+    if (!initialAccessUrl) return null;
+    let finalUrl = initialAccessUrl;
+    if (finalUrl.startsWith("/")) {
+      const apiOrigin = process.env.NEXT_PUBLIC_API_URL
+        ? process.env.NEXT_PUBLIC_API_URL.replace(/\/api\/?$/, "")
+        : "http://localhost:5000";
+      finalUrl = `${apiOrigin}${finalUrl}`;
+    }
+    return finalUrl;
+  });
   const [isLoading, setIsLoading] = useState(false);
-  const [hasStarted, setHasStarted] = useState(false);
+  const [hasStarted, setHasStarted] = useState(() => Boolean(initialAccessUrl));
   const [error, setError] = useState<string | null>(null);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
 
@@ -50,12 +62,12 @@ export function MediaPlayer({
     }
   }, [attachmentId]);
 
-  // For images, load access URL on mount; for audio/video, load on user play or on demand
+  // For images, load access URL on mount if not already provided; for audio/video, load on user play or on demand
   useEffect(() => {
-    if (kind === "IMAGE") {
+    if (kind === "IMAGE" && !accessUrl) {
       fetchAccessUrl();
     }
-  }, [kind, fetchAccessUrl]);
+  }, [kind, accessUrl, fetchAccessUrl]);
 
   const handlePlayClick = () => {
     setHasStarted(true);

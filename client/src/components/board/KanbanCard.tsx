@@ -13,6 +13,7 @@ import {
 import { Badge } from "../ui/Badge";
 import { Avatar } from "../ui/Avatar";
 import { cn, formatDate } from "../../lib/utils";
+import { clientCache } from "../../lib/cache";
 
 export interface IssueItem {
   id: string;
@@ -150,7 +151,8 @@ export function KanbanCard({
 
       {/* Title */}
       <Link
-        href={`/issues/${issue.id}`}
+        href={issue.type === "TASK" ? `/tasks/${issue.id}` : `/issues/${issue.id}`}
+        onClick={() => clientCache.setIssuePreview(issue.id, issue)}
         className="block text-sm font-semibold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-2"
       >
         {issue.title}

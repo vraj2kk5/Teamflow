@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { formatDate, cn, formatActivityAction } from "../../lib/utils";
 import { TeamActivityChart } from "../../components/dashboard/TeamActivityChart";
+import { clientCache } from "../../lib/cache";
 
 interface DashboardData {
   stats: {
@@ -85,14 +86,19 @@ export default function DashboardPage() {
   const { user, organization, role } = useAuth();
   const { error: toastError } = useToast();
 
-  const [data, setData] = useState<DashboardData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [data, setData] = useState<DashboardData | null>(() =>
+    clientCache.get<DashboardData>("/dashboard")
+  );
+  const [isLoading, setIsLoading] = useState(() => !clientCache.get<DashboardData>("/dashboard"));
 
   const fetchDashboard = useCallback(async () => {
-    setIsLoading(true);
+    if (!data) {
+      setIsLoading(true);
+    }
     try {
-      const res = await api.get<DashboardData>("/dashboard");
+      const res = await api.getCached<DashboardData>("/dashboard");
       setData(res);
+      clientCache.set("/dashboard", res);
     } catch (err: unknown) {
       if (err instanceof ApiClientError) {
         toastError(err.message, "Failed to load dashboard metrics");
@@ -100,7 +106,7 @@ export default function DashboardPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [toastError]);
+  }, [data, toastError]);
 
   useEffect(() => {
     fetchDashboard();

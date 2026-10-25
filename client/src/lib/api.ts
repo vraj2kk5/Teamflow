@@ -1,3 +1,5 @@
+import { clientCache } from "./cache";
+
 export interface ApiErrorDetail {
   field?: string;
   message: string;
@@ -114,21 +116,51 @@ export const api = {
     return this.request<T>(endpoint, { method: "GET", params });
   },
 
-  post<T>(endpoint: string, body?: unknown) {
+  async getCached<T>(
+    endpoint: string,
+    params?: Record<string, string | number | boolean | undefined | null>,
+    ttlMs?: number
+  ): Promise<T> {
+    const searchParams = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([k, v]) => {
+        if (v !== undefined && v !== null && v !== "") {
+          searchParams.append(k, String(v));
+        }
+      });
+    }
+    const cacheKey = `${endpoint}?${searchParams.toString()}`;
+    const cached = clientCache.get<T>(cacheKey);
+    if (cached !== null) {
+      // Revalidate in the background
+      this.get<T>(endpoint, params)
+        .then((fresh) => clientCache.set(cacheKey, fresh, ttlMs))
+        .catch(() => {});
+      return cached;
+    }
+    const fresh = await this.get<T>(endpoint, params);
+    clientCache.set(cacheKey, fresh, ttlMs);
+    return fresh;
+  },
+
+  async post<T>(endpoint: string, body?: unknown) {
+    clientCache.invalidate();
     return this.request<T>(endpoint, {
       method: "POST",
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
   },
 
-  patch<T>(endpoint: string, body?: unknown) {
+  async patch<T>(endpoint: string, body?: unknown) {
+    clientCache.invalidate();
     return this.request<T>(endpoint, {
       method: "PATCH",
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
   },
 
-  delete<T>(endpoint: string) {
+  async delete<T>(endpoint: string) {
+    clientCache.invalidate();
     return this.request<T>(endpoint, { method: "DELETE" });
   },
 
@@ -170,6 +202,7 @@ export const api = {
         try {
           const json = JSON.parse(xhr.responseText);
           if (xhr.status >= 200 && xhr.status < 300) {
+            clientCache.invalidate();
             resolve((json.data !== undefined ? json.data : json) as T);
           } else {
             const err = json.error || {

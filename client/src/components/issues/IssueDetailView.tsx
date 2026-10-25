@@ -37,6 +37,7 @@ import {
 } from "lucide-react";
 import { MediaPlayer } from "../media/MediaPlayer";
 import { formatDate, formatDateTime } from "../../lib/utils";
+import { clientCache } from "../../lib/cache";
 
 export interface IssueDetail {
   id: string;
@@ -129,8 +130,34 @@ export function IssueDetailView({ id, expectedType }: IssueDetailViewProps) {
   const { user, role } = useAuth();
   const { success: toastSuccess, error: toastError } = useToast();
 
-  const [issue, setIssue] = useState<IssueDetail | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [issue, setIssue] = useState<IssueDetail | null>(() => {
+    const cached = clientCache.get<IssueDetail>(`/issues/${id}`);
+    if (cached) return cached;
+    const preview = clientCache.getIssuePreview<any>(id);
+    if (preview) {
+      return {
+        id: preview.id,
+        projectId: preview.project?.id || preview.projectId || "",
+        key: preview.key || "",
+        title: preview.title || "",
+        description: preview.description || "",
+        type: preview.type || expectedType || "TASK",
+        status: preview.status || "TODO",
+        priority: preview.priority || "MEDIUM",
+        dueDate: preview.dueDate,
+        project: preview.project || { id: "", name: "", memberships: [] },
+        reporter: preview.reporter || { id: "", name: "", email: "" },
+        assignee: preview.assignee || null,
+        attachments: [],
+        comments: [],
+        activityLogs: [],
+        createdAt: preview.createdAt || new Date().toISOString(),
+        updatedAt: preview.updatedAt || new Date().toISOString(),
+      };
+    }
+    return null;
+  });
+  const [isLoading, setIsLoading] = useState(() => !issue);
   const [copiedLog, setCopiedLog] = useState(false);
 
   // Comments state
@@ -180,10 +207,13 @@ export function IssueDetailView({ id, expectedType }: IssueDetailViewProps) {
   };
 
   const fetchIssue = useCallback(async () => {
-    setIsLoading(true);
+    if (!issue) {
+      setIsLoading(true);
+    }
     try {
-      const data = await api.get<IssueDetail>(`/issues/${id}`);
+      const data = await api.getCached<IssueDetail>(`/issues/${id}`);
       setIssue(data);
+      clientCache.set(`/issues/${id}`, data);
 
       // Route alignment: if user is on /issues/:id but it's a TASK, automatically route to /tasks/:id
       if (typeof window !== "undefined") {
@@ -200,7 +230,7 @@ export function IssueDetailView({ id, expectedType }: IssueDetailViewProps) {
     } finally {
       setIsLoading(false);
     }
-  }, [id, router, toastError]);
+  }, [id, issue, router, toastError]);
 
   useEffect(() => {
     fetchIssue();
@@ -675,6 +705,7 @@ export function IssueDetailView({ id, expectedType }: IssueDetailViewProps) {
                         kind={att.kind}
                         filename={att.originalFilename}
                         mimeType={att.mimeType}
+                        initialAccessUrl={(att as any).accessUrl}
                       />
                     </div>
                   );
