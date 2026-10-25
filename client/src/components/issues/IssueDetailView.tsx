@@ -944,6 +944,64 @@ export function IssueDetailView({ id, expectedType }: IssueDetailViewProps) {
         </div>
       </div>
 
+      {/* Resolve / Root Cause Documentation Modal */}
+      <Modal
+        isOpen={isResolveModalOpen}
+        onClose={() => setIsResolveModalOpen(false)}
+        title={isTask ? "Complete Task" : "Resolve Bug & Document Root Cause"}
+      >
+        <div className="space-y-4">
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            {isTask
+              ? "Optionally add completion notes or summary before marking this task as Done."
+              : "Document how this bug was solved, the root cause, or fix details so other team members can reference it."}
+          </p>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wider">
+              {isTask ? "Completion Notes (Optional)" : "Root Cause & Resolution Notes"}
+            </label>
+            <Textarea
+              value={resolutionInput}
+              onChange={(e) => setResolutionInput(e.target.value)}
+              placeholder={
+                isTask
+                  ? "E.g., Finished implementing the flow, tested edge cases, and deployed..."
+                  : "E.g., Root cause was race condition in state update. Fixed by debouncing input and adding transactional lock..."
+              }
+              rows={4}
+              className="text-xs"
+            />
+          </div>
+
+          <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setIsResolveModalOpen(false);
+                handleStatusChange("DONE", "");
+              }}
+            >
+              Skip Notes & Mark Done
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => {
+                setIsResolveModalOpen(false);
+                handleStatusChange("DONE", resolutionInput.trim());
+              }}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white"
+            >
+              <CheckCircle2 className="w-4 h-4 mr-1.5" />
+              <span>Mark as Done</span>
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
       {/* Delete Confirmation Dialog */}
       <ConfirmDialog
         isOpen={isDeleteDialogOpen}
