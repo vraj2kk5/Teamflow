@@ -66,11 +66,10 @@ export class AttachmentsService {
     }
 
     // Permission check:
-    // Only the user who reported the bug (or admin) can add attachments to it.
+    // Only the user who reported the bug can add attachments to it.
     if (issue.type === "BUG") {
       const isReporter = issue.reporterId === userId;
-      const isAdmin = userRole === Role.ADMIN;
-      if (!isReporter && !isAdmin) {
+      if (!isReporter) {
         throw new ForbiddenError(
           "Only the user who reported this bug can add attachments to it"
         );
@@ -265,10 +264,18 @@ export class AttachmentsService {
     const isReporter = attachment.issue.reporterId === userId;
     const isAdmin = role === Role.ADMIN;
 
-    if (!isUploader && !isReporter && !isAdmin) {
-      throw new ForbiddenError(
-        "Only the user who reported the bug or added the attachment can delete it"
-      );
+    if (attachment.issue.type === "BUG") {
+      if (!isUploader && !isReporter) {
+        throw new ForbiddenError(
+          "Only the user who reported the bug or added the attachment can delete it"
+        );
+      }
+    } else {
+      if (!isUploader && !isReporter && !isAdmin) {
+        throw new ForbiddenError(
+          "You do not have permission to delete this attachment"
+        );
+      }
     }
 
     const storage = getStorageDriver();

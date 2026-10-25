@@ -180,7 +180,7 @@ export function IssueDetailView({ id, expectedType }: IssueDetailViewProps) {
   const isAdmin = role === "ADMIN";
 
   const canAddAttachment = isBug
-    ? isReporter || isAdmin
+    ? isReporter
     : isReporter || isAssignee || isAdmin;
 
   const handleDirectAttachmentUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -688,10 +688,9 @@ export function IssueDetailView({ id, expectedType }: IssueDetailViewProps) {
             ) : (
               <div className="space-y-4">
                 {issue.attachments.map((att) => {
-                  const canDeleteAtt =
-                    att.uploadedBy.id === user?.id ||
-                    isReporter ||
-                    isAdmin;
+                  const canDeleteAtt = isBug
+                    ? att.uploadedBy.id === user?.id || isReporter
+                    : att.uploadedBy.id === user?.id || isReporter || isAdmin;
 
                   return (
                     <div
