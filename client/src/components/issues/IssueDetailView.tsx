@@ -145,12 +145,16 @@ export function IssueDetailView({ id, expectedType }: IssueDetailViewProps) {
         status: preview.status || "TODO",
         priority: preview.priority || "MEDIUM",
         dueDate: preview.dueDate,
-        project: preview.project || { id: "", name: "", memberships: [] },
+        project: {
+          id: preview.project?.id || preview.projectId || "",
+          name: preview.project?.name || "",
+          memberships: Array.isArray(preview.project?.memberships) ? preview.project.memberships : [],
+        },
         reporter: preview.reporter || { id: "", name: "", email: "" },
         assignee: preview.assignee || null,
-        attachments: [],
-        comments: [],
-        activityLogs: [],
+        attachments: Array.isArray(preview.attachments) ? preview.attachments : [],
+        comments: Array.isArray(preview.comments) ? preview.comments : [],
+        activityLogs: Array.isArray(preview.activityLogs) ? preview.activityLogs : [],
         createdAt: preview.createdAt || new Date().toISOString(),
         updatedAt: preview.updatedAt || new Date().toISOString(),
       };
@@ -231,8 +235,19 @@ export function IssueDetailView({ id, expectedType }: IssueDetailViewProps) {
     }
     try {
       const data = await api.getCached<IssueDetail>(`/issues/${id}`);
-      setIssue(data);
-      clientCache.set(`/issues/${id}`, data);
+      if (data) {
+        setIssue({
+          ...data,
+          project: {
+            ...data.project,
+            memberships: Array.isArray(data.project?.memberships) ? data.project.memberships : [],
+          },
+          attachments: Array.isArray(data.attachments) ? data.attachments : [],
+          comments: Array.isArray(data.comments) ? data.comments : [],
+          activityLogs: Array.isArray(data.activityLogs) ? data.activityLogs : [],
+        });
+        clientCache.set(`/issues/${id}`, data);
+      }
 
       // Route alignment: if user is on /issues/:id but it's a TASK, automatically route to /tasks/:id
       if (typeof window !== "undefined") {
@@ -687,7 +702,7 @@ export function IssueDetailView({ id, expectedType }: IssueDetailViewProps) {
               )
             ) : (
               <div className="space-y-4">
-                {issue.attachments.map((att) => {
+                {(issue.attachments || []).map((att) => {
                   const canDeleteAtt = isBug
                     ? att.uploadedBy.id === user?.id || isReporter
                     : att.uploadedBy.id === user?.id || isReporter || isAdmin;
@@ -754,12 +769,12 @@ export function IssueDetailView({ id, expectedType }: IssueDetailViewProps) {
             <CardHeader className="pb-2 border-b border-slate-200 dark:border-slate-800">
               <CardTitle className="text-base flex items-center gap-2">
                 <MessageSquare className="w-4 h-4 text-indigo-400" />
-                <span>Discussion ({issue.comments.length})</span>
+                <span>Discussion ({(issue.comments || []).length})</span>
               </CardTitle>
             </CardHeader>
 
             <div className="space-y-4">
-              {issue.comments.map((comment) => (
+              {(issue.comments || []).map((comment) => (
                 <div
                   key={comment.id}
                   className="flex items-start gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800/80"
@@ -812,7 +827,7 @@ export function IssueDetailView({ id, expectedType }: IssueDetailViewProps) {
             </CardHeader>
 
             <div className="space-y-3">
-              {issue.activityLogs.map((log) => (
+              {(issue.activityLogs || []).map((log) => (
                 <div key={log.id} className="flex items-center gap-3 text-xs">
                   <Avatar name={log.actor.name} avatarUrl={log.actor.avatarUrl} size="sm" />
                   <div className="flex-1">
@@ -875,14 +890,14 @@ export function IssueDetailView({ id, expectedType }: IssueDetailViewProps) {
                   onChange={(e) => handleAssigneeChange(e.target.value)}
                 >
                   <option value="">Unassigned</option>
-                  {issue.project.memberships
+                  {(Array.isArray(issue.project?.memberships) ? issue.project.memberships : [])
                     .filter((m) => {
-                      const orgRole = m.user.memberships?.[0]?.role;
+                      const orgRole = m.user?.memberships?.[0]?.role;
                       return orgRole !== "ADMIN";
                     })
-                    .map((m) => (
-                      <option key={m.user.id} value={m.user.id}>
-                        {m.user.name}
+                    .map((m, idx) => (
+                      <option key={m.user?.id || idx} value={m.user?.id}>
+                        {m.user?.name || "Member"}
                       </option>
                     ))}
                 </Select>
