@@ -229,8 +229,13 @@ export function IssueDetailView({ id, expectedType }: IssueDetailViewProps) {
     }
   };
 
+  const issueRef = React.useRef(issue);
+  useEffect(() => {
+    issueRef.current = issue;
+  }, [issue]);
+
   const fetchIssue = useCallback(async () => {
-    if (!issue) {
+    if (!issueRef.current) {
       setIsLoading(true);
     }
     try {
@@ -264,7 +269,7 @@ export function IssueDetailView({ id, expectedType }: IssueDetailViewProps) {
     } finally {
       setIsLoading(false);
     }
-  }, [id, issue, router, toastError]);
+  }, [id, router, toastError]);
 
   useEffect(() => {
     fetchIssue();
