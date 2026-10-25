@@ -203,7 +203,7 @@ export default function DashboardPage() {
         <Card>
           <CardHeader className="pb-1 border-0 flex-row items-center justify-between space-y-0">
             <CardTitle className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400 tracking-wider">
-              Open Tasks
+              {role === "MEMBER" ? "My Open Tasks" : "Open Tasks"}
             </CardTitle>
             <CheckCircle2 className="w-4 h-4 text-amber-500 dark:text-amber-400" />
           </CardHeader>
@@ -212,7 +212,9 @@ export default function DashboardPage() {
               {stats.openTasks}
             </div>
             <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
-              {stats.inProgressIssues} in progress
+              {role === "MEMBER" && stats.openTasks === 0 && stats.inProgressIssues === 0
+                ? "All tasks completed!"
+                : `${stats.inProgressIssues} in progress`}
             </p>
           </CardContent>
         </Card>
@@ -237,7 +239,7 @@ export default function DashboardPage() {
         <Card>
           <CardHeader className="pb-1 border-0 flex-row items-center justify-between space-y-0">
             <CardTitle className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400 tracking-wider">
-              Overdue Items
+              {role === "MEMBER" ? "My Overdue Tasks" : "Overdue Items"}
             </CardTitle>
             <Clock
               className={cn(
@@ -260,7 +262,9 @@ export default function DashboardPage() {
               {stats.overdueIssues}
             </div>
             <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
-              {stats.completedIssues} tasks completed
+              {role === "MEMBER"
+                ? `${stats.completedIssues} tasks completed by you`
+                : `${stats.completedIssues} tasks completed`}
             </p>
           </CardContent>
         </Card>

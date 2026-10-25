@@ -28,6 +28,7 @@ export class DashboardService {
     }
 
     const now = new Date();
+    const isMember = role === Role.MEMBER;
 
     const [
       totalProjects,
@@ -45,40 +46,47 @@ export class DashboardService {
       // 1. Total projects
       prisma.project.count({ where: projectWhere }),
 
-      // 2. Open Tasks (TODO)
+      // 2. Open Tasks (TODO) - For Members, scoped to their own assigned tasks
       prisma.issue.count({
         where: {
           ...issueWhere,
           type: "TASK",
           status: "TODO",
+          ...(isMember ? { assigneeId: userId } : {}),
         },
       }),
 
-      // 3. In Progress
+      // 3. In Progress - For Members, scoped to their own assigned tasks
       prisma.issue.count({
         where: {
           ...issueWhere,
+          type: "TASK",
           status: "IN_PROGRESS",
+          ...(isMember ? { assigneeId: userId } : {}),
         },
       }),
 
-      // 4. In Review
+      // 4. In Review - For Members, scoped to their own assigned tasks
       prisma.issue.count({
         where: {
           ...issueWhere,
+          type: "TASK",
           status: "IN_REVIEW",
+          ...(isMember ? { assigneeId: userId } : {}),
         },
       }),
 
-      // 5. Completed
+      // 5. Completed - For Members, scoped to their own assigned tasks
       prisma.issue.count({
         where: {
           ...issueWhere,
+          type: "TASK",
           status: "DONE",
+          ...(isMember ? { assigneeId: userId } : {}),
         },
       }),
 
-      // 6. Open Bugs
+      // 6. Open Bugs - Collaborative for all project members
       prisma.issue.count({
         where: {
           ...issueWhere,
@@ -93,15 +101,17 @@ export class DashboardService {
           ...issueWhere,
           priority: { in: ["HIGH", "CRITICAL"] },
           status: { not: "DONE" },
+          ...(isMember ? { OR: [{ assigneeId: userId }, { type: "BUG" }] } : {}),
         },
       }),
 
-      // 8. Overdue tasks
+      // 8. Overdue tasks - For Members, only alert on tasks assigned to them
       prisma.issue.count({
         where: {
           ...issueWhere,
           dueDate: { lt: now },
           status: { not: "DONE" },
+          ...(isMember ? { assigneeId: userId } : {}),
         },
       }),
 
