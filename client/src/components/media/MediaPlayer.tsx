@@ -32,7 +32,6 @@ export function MediaPlayer({
     return finalUrl;
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [hasStarted, setHasStarted] = useState(() => Boolean(initialAccessUrl));
   const [error, setError] = useState<string | null>(null);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
 
@@ -68,11 +67,6 @@ export function MediaPlayer({
       fetchAccessUrl();
     }
   }, [kind, accessUrl, fetchAccessUrl]);
-
-  const handlePlayClick = () => {
-    setHasStarted(true);
-    fetchAccessUrl();
-  };
 
   return (
     <div className="rounded-xl overflow-hidden bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-3 space-y-2 shadow-sm">
@@ -141,18 +135,28 @@ export function MediaPlayer({
           </div>
         ) : null
       ) : kind === "AUDIO" ? (
-        !hasStarted ? (
-          <Button size="sm" variant="outline" onClick={handlePlayClick} className="w-full">
+        accessUrl ? (
+          <audio src={accessUrl} controls preload="metadata" className="w-full h-10" />
+        ) : (
+          <Button size="sm" variant="outline" onClick={fetchAccessUrl} className="w-full">
             <Play className="w-3.5 h-3.5 mr-1 text-indigo-600 dark:text-indigo-400 fill-current" />
             <span>Load Audio Player</span>
           </Button>
-        ) : accessUrl ? (
-          <audio src={accessUrl} controls autoPlay preload="auto" className="w-full h-10" />
-        ) : null
+        )
       ) : kind === "VIDEO" ? (
-        !hasStarted ? (
+        accessUrl ? (
+          <div className="rounded-lg overflow-hidden bg-black max-w-2xl">
+            <video
+              src={accessUrl}
+              controls
+              playsInline
+              preload="metadata"
+              className="w-full max-h-96 object-contain"
+            />
+          </div>
+        ) : (
           <div
-            onClick={handlePlayClick}
+            onClick={fetchAccessUrl}
             className="h-56 rounded-lg bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-indigo-500/60 transition-colors group"
           >
             <div className="w-12 h-12 rounded-full bg-indigo-600 flex items-center justify-center text-white shadow-lg group-hover:scale-105 transition-transform">
@@ -160,18 +164,7 @@ export function MediaPlayer({
             </div>
             <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Play Screen Recording</span>
           </div>
-        ) : accessUrl ? (
-          <div className="rounded-lg overflow-hidden bg-black max-w-2xl">
-            <video
-              src={accessUrl}
-              controls
-              autoPlay
-              playsInline
-              preload="auto"
-              className="w-full max-h-96 object-contain"
-            />
-          </div>
-        ) : null
+        )
       ) : null}
     </div>
   );
