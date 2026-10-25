@@ -739,15 +739,7 @@ export function IssuesView({ pageMode = "ISSUES" }: IssuesViewProps) {
       ) : issues.length === 0 ? (
         <EmptyState
           icon={isTasksMode ? ListTodo : Bug}
-          title={
-            hasActiveFilters
-              ? isTasksMode
-                ? "No tasks match your filters"
-                : "No issues match your filters"
-              : isTasksMode
-              ? "No tasks found"
-              : "No issues or bugs found"
-          }
+          title={isTasksMode ? "No tasks found" : "No issues found"}
           description={
             hasActiveFilters
               ? "Try resetting or clearing some filter criteria."
