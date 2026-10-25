@@ -39,7 +39,8 @@ export class AttachmentsController {
         auth.organizationId,
         auth.userId,
         req.file,
-        duration
+        duration,
+        auth.role
       );
 
       res.status(201).json({ data: attachment });

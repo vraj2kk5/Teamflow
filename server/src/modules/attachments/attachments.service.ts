@@ -46,7 +46,8 @@ export class AttachmentsService {
     orgId: string,
     userId: string,
     file: Express.Multer.File,
-    durationSeconds?: number
+    durationSeconds?: number,
+    userRole?: Role
   ) {
     if (!file || !file.buffer || file.buffer.length === 0) {
       throw new BadRequestError("Empty file uploaded");
@@ -62,6 +63,28 @@ export class AttachmentsService {
 
     if (!issue) {
       throw new NotFoundError("Issue not found in current organization");
+    }
+
+    // Permission check:
+    // Only the user who reported the bug (or admin) can add attachments to it.
+    if (issue.type === "BUG") {
+      const isReporter = issue.reporterId === userId;
+      const isAdmin = userRole === Role.ADMIN;
+      if (!isReporter && !isAdmin) {
+        throw new ForbiddenError(
+          "Only the user who reported this bug can add attachments to it"
+        );
+      }
+    } else {
+      // For tasks, only the reporter, assignee, or admin can add attachments
+      const isReporter = issue.reporterId === userId;
+      const isAssignee = issue.assigneeId === userId;
+      const isAdmin = userRole === Role.ADMIN;
+      if (!isReporter && !isAssignee && !isAdmin) {
+        throw new ForbiddenError(
+          "You do not have permission to add attachments to this task"
+        );
+      }
     }
 
     if (issue._count.attachments >= 10) {
@@ -239,13 +262,12 @@ export class AttachmentsService {
     }
 
     const isUploader = attachment.uploadedById === userId;
+    const isReporter = attachment.issue.reporterId === userId;
     const isAdmin = role === Role.ADMIN;
-    const isProjectOwner =
-      role === Role.PROJECT_MANAGER && attachment.issue.project.ownerId === userId;
 
-    if (!isUploader && !isAdmin && !isProjectOwner) {
+    if (!isUploader && !isReporter && !isAdmin) {
       throw new ForbiddenError(
-        "You do not have permission to delete this attachment"
+        "Only the user who reported the bug or added the attachment can delete it"
       );
     }
 

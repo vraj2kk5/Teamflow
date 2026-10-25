@@ -174,9 +174,28 @@ export function IssueDetailView({ id, expectedType }: IssueDetailViewProps) {
   const attachmentInputRef = React.useRef<HTMLInputElement>(null);
   const [isUploadingAttachment, setIsUploadingAttachment] = useState(false);
 
+  const isBug = (issue?.type || expectedType) === "BUG";
+  const isReporter = issue?.reporter.id === user?.id;
+  const isAssignee = issue?.assignee?.id === user?.id;
+  const isAdmin = role === "ADMIN";
+
+  const canAddAttachment = isBug
+    ? isReporter || isAdmin
+    : isReporter || isAssignee || isAdmin;
+
   const handleDirectAttachmentUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
+
+    if (!canAddAttachment) {
+      toastError(
+        isBug
+          ? "Only the user who reported this bug can add attachments"
+          : "You do not have permission to add attachments to this task",
+        "Permission Denied"
+      );
+      return;
+    }
 
     setIsUploadingAttachment(true);
     let successCount = 0;
@@ -240,6 +259,7 @@ export function IssueDetailView({ id, expectedType }: IssueDetailViewProps) {
   useEffect(() => {
     const handlePaste = async (e: ClipboardEvent) => {
       if (!e.clipboardData) return;
+      if (!canAddAttachment) return;
       const items = Array.from(e.clipboardData.items);
       const imageItems = items.filter((item) => item.type.startsWith("image/"));
       if (imageItems.length === 0) return;
@@ -613,49 +633,65 @@ export function IssueDetailView({ id, expectedType }: IssueDetailViewProps) {
                   <Paperclip className="w-4 h-4 text-indigo-400" />
                   <span className="font-semibold text-base">Media Attachments ({issue.attachments.length})</span>
                 </div>
-                <div>
-                  <input
-                    ref={attachmentInputRef}
-                    type="file"
-                    className="hidden"
-                    multiple
-                    accept="image/*,video/*,audio/*"
-                    onChange={handleDirectAttachmentUpload}
-                  />
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => attachmentInputRef.current?.click()}
-                    isLoading={isUploadingAttachment}
-                    className="h-8 text-xs font-medium"
-                  >
-                    <Plus className="w-3.5 h-3.5 mr-1" />
-                    <span>Add Attachment</span>
-                  </Button>
-                </div>
+                {canAddAttachment && (
+                  <div>
+                    <input
+                      ref={attachmentInputRef}
+                      type="file"
+                      className="hidden"
+                      multiple
+                      accept="image/*,video/*,audio/*"
+                      onChange={handleDirectAttachmentUpload}
+                    />
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => attachmentInputRef.current?.click()}
+                      isLoading={isUploadingAttachment}
+                      className="h-8 text-xs font-medium"
+                    >
+                      <Plus className="w-3.5 h-3.5 mr-1" />
+                      <span>Add Attachment</span>
+                    </Button>
+                  </div>
+                )}
               </div>
             </CardHeader>
 
             {issue.attachments.length === 0 ? (
-              <div
-                onClick={() => attachmentInputRef.current?.click()}
-                className="p-6 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl text-center cursor-pointer hover:border-indigo-400 dark:hover:border-indigo-500/50 hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors group"
-              >
-                <Upload className="w-6 h-6 mx-auto text-slate-400 group-hover:text-indigo-500 transition-colors mb-2" />
-                <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                  Click to upload or press <span className="text-indigo-600 dark:text-indigo-400 underline underline-offset-2">Ctrl+V</span> to paste screenshot
-                </p>
-                <p className="text-[11px] text-slate-400 mt-1">
-                  Upload or paste screenshots, screen recordings, mockups, or audio notes
-                </p>
-              </div>
+              canAddAttachment ? (
+                <div
+                  onClick={() => attachmentInputRef.current?.click()}
+                  className="p-6 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl text-center cursor-pointer hover:border-indigo-400 dark:hover:border-indigo-500/50 hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors group"
+                >
+                  <Upload className="w-6 h-6 mx-auto text-slate-400 group-hover:text-indigo-500 transition-colors mb-2" />
+                  <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    Click to upload or press <span className="text-indigo-600 dark:text-indigo-400 underline underline-offset-2">Ctrl+V</span> to paste screenshot
+                  </p>
+                  <p className="text-[11px] text-slate-400 mt-1">
+                    Upload or paste screenshots, screen recordings, mockups, or audio notes
+                  </p>
+                </div>
+              ) : (
+                <div className="p-6 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl text-center">
+                  <Paperclip className="w-6 h-6 mx-auto text-slate-400 mb-2" />
+                  <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    No media attachments
+                  </p>
+                  <p className="text-[11px] text-slate-500 mt-1">
+                    {isBug
+                      ? "Only the user who reported this bug can attach screenshots or recordings."
+                      : "No attachments added to this task."}
+                  </p>
+                </div>
+              )
             ) : (
               <div className="space-y-4">
                 {issue.attachments.map((att) => {
                   const canDeleteAtt =
-                    role === "ADMIN" ||
-                    role === "PROJECT_MANAGER" ||
-                    att.uploadedBy.id === user?.id;
+                    att.uploadedBy.id === user?.id ||
+                    isReporter ||
+                    isAdmin;
 
                   return (
                     <div
