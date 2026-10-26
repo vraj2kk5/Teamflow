@@ -37,8 +37,6 @@ import {
   Users,
 } from "lucide-react";
 import { MediaPlayer } from "../media/MediaPlayer";
-import { AIBugAnalysisModal } from "./AIBugAnalysisModal";
-import { CodeLocatorCard, AffectedFileLocation } from "./CodeLocatorCard";
 import { useRealtime, RealtimeMessage } from "../../hooks/useRealtime";
 import { formatDate, formatDateTime } from "../../lib/utils";
 import { clientCache } from "../../lib/cache";
@@ -175,8 +173,6 @@ export function IssueDetailView({ id, expectedType }: IssueDetailViewProps) {
   // Delete state
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [isAIModalOpen, setIsAIModalOpen] = useState(false);
-  const [affectedFiles, setAffectedFiles] = useState<AffectedFileLocation[]>([]);
   const [isResolveModalOpen, setIsResolveModalOpen] = useState(false);
   const [resolutionInput, setResolutionInput] = useState("");
 
@@ -402,25 +398,6 @@ export function IssueDetailView({ id, expectedType }: IssueDetailViewProps) {
   };
 
   
-  // Automatically identify and locate problematic files for this issue
-  useEffect(() => {
-    if (!issue) return;
-    api
-      .post<{ data: AffectedFileLocation[] }>("/issues/locate-files", {
-        title: issue.title,
-        description: issue.description,
-        errorLog: issue.errorLog,
-        actualResult: issue.actualResult,
-      })
-      .then((res: any) => {
-        const files: AffectedFileLocation[] = Array.isArray(res) ? res : res?.data || [];
-        if (files.length > 0) setAffectedFiles(files);
-      })
-      .catch(() => {
-        // Non-critical background enhancement
-      });
-  }, [issue?.id, issue?.errorLog, issue?.title, issue?.description, issue?.actualResult]);
-
   const handleCopyErrorLog = () => {
     if (!issue?.errorLog) return;
     navigator.clipboard.writeText(issue.errorLog);
@@ -503,15 +480,6 @@ export function IssueDetailView({ id, expectedType }: IssueDetailViewProps) {
         </div>
 
         <div className="flex items-center gap-2">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setIsAIModalOpen(true)}
-              className="border-indigo-200 dark:border-indigo-500/40 bg-indigo-50 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 text-xs flex items-center gap-1.5 shadow-sm transition-colors"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 animate-pulse" />
-              <span>AI Root Cause Diagnosis</span>
-            </Button>
             {canDelete && (
               <Button
                 size="sm"
@@ -684,11 +652,6 @@ export function IssueDetailView({ id, expectedType }: IssueDetailViewProps) {
                 </div>
               )}
             </Card>
-          )}
-
-          {/* Pinpointed Code & File Locations */}
-          {affectedFiles.length > 0 && (
-            <CodeLocatorCard files={affectedFiles} />
           )}
 
           {/* Media Attachments Section */}
@@ -1103,32 +1066,6 @@ export function IssueDetailView({ id, expectedType }: IssueDetailViewProps) {
         message={`Are you sure you want to delete this ${isTask ? "task" : "issue"}? Comments, attachments, and logs will be permanently removed.`}
         confirmText={`Yes, Delete ${isTask ? "Task" : "Issue"}`}
         isLoading={isDeleting}
-      />
-      {/* AI Bug Analysis & Diagnostics Modal */}
-      <AIBugAnalysisModal
-        isOpen={isAIModalOpen}
-        onClose={() => setIsAIModalOpen(false)}
-        initialData={{
-          title: issue?.title,
-          description: issue?.description,
-          errorLog: issue?.errorLog || undefined,
-          stepsToReproduce: issue?.stepsToReproduce || undefined,
-          expectedResult: issue?.expectedResult || undefined,
-          actualResult: issue?.actualResult || undefined,
-        }}
-        onApplyDiagnosis={async (suggested) => {
-          if (suggested.priority) {
-            if (isBug && !isReporter) {
-              toastError("Bug priority is locked to the original reporter", "Permission Notice");
-            } else {
-              await handlePriorityChange(suggested.priority);
-            }
-          }
-          if (suggested.resolutionNotes) {
-            setResolutionInput(suggested.resolutionNotes);
-          }
-          toastSuccess("AI diagnosis applied!");
-        }}
       />
     </div>
   );

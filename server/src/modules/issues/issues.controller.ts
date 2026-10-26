@@ -1,5 +1,4 @@
-import { AIBugAnalyzer } from "../../lib/ai-analyzer";
-import { CodeLocator } from "../../lib/code-locator";
+
 import { Request, Response, NextFunction } from "express";
 import { IssuesService } from "./issues.service";
 import {
@@ -121,27 +120,7 @@ export class IssuesController {
     }
   }
 
-  static async aiAnalyze(req: Request, res: Response, next: NextFunction): Promise<void> {
-    try {
-      const auth = req.auth;
-      if (!auth) throw new UnauthorizedError();
-      const analysis = await AIBugAnalyzer.analyze(req.body);
-      res.status(200).json({ data: analysis });
-    } catch (err) {
-      next(err);
-    }
-  }
 
-  static async locateFiles(req: Request, res: Response, next: NextFunction): Promise<void> {
-    try {
-      const auth = req.auth;
-      if (!auth) throw new UnauthorizedError();
-      const locations = CodeLocator.locate(req.body);
-      res.status(200).json({ data: locations });
-    } catch (err) {
-      next(err);
-    }
-  }
 
   static async getActivity(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {

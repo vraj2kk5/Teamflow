@@ -19,7 +19,6 @@ import { Avatar } from "../../../components/ui/Avatar";
 import { EmptyState } from "../../../components/ui/EmptyState";
 import { KanbanBoard } from "../../../components/board/KanbanBoard";
 import { ProjectAnalyticsView } from "../../../components/analytics/ProjectAnalyticsView";
-import { AIBugAnalysisModal } from "../../../components/issues/AIBugAnalysisModal";
 import { useRealtime, RealtimeMessage } from "../../../hooks/useRealtime";
 import { IssueItem } from "../../../components/board/KanbanCard";
 import {
@@ -108,7 +107,6 @@ export default function ProjectDetailPage({
 
   // Create Issue Modal State
   const [editWebhookUrl, setEditWebhookUrl] = useState("");
-  const [isAIModalOpen, setIsAIModalOpen] = useState(false);
   const [isIssueModalOpen, setIsIssueModalOpen] = useState(false);
   const [issueType, setIssueType] = useState<"TASK" | "BUG">("TASK");
   const [issueTitle, setIssueTitle] = useState("");
@@ -1148,25 +1146,6 @@ export default function ProjectDetailPage({
           )}
 
           
-            {issueType === "BUG" && (
-              <div className="flex items-center justify-between p-3 rounded-xl bg-indigo-950/40 border border-indigo-800/40">
-                <div className="flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-indigo-400 animate-pulse" />
-                  <span className="text-xs font-semibold text-indigo-200">AI Root Cause Diagnostics</span>
-                </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsAIModalOpen(true)}
-                  className="border-indigo-500/40 text-indigo-300 hover:bg-indigo-500/20 text-xs py-1 h-7"
-                >
-                  <Sparkles className="w-3.5 h-3.5 mr-1" />
-                  Diagnose with AI
-                </Button>
-              </div>
-            )}
-
           {/* Media Attachments Section */}
           <div className="space-y-2">
             <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
@@ -1311,22 +1290,6 @@ export default function ProjectDetailPage({
         message="Are you sure you want to delete this project? All associated tasks, bug reports, and media will be permanently deleted."
         confirmText="Yes, Delete Project"
         isLoading={isDeleting}
-      />
-      {/* AI Bug Analysis & Diagnostics Modal */}
-      <AIBugAnalysisModal
-        isOpen={isAIModalOpen}
-        onClose={() => setIsAIModalOpen(false)}
-        initialData={{
-          title: issueTitle,
-          description: issueDesc,
-        }}
-        onApplyDiagnosis={(suggested) => {
-          if (suggested.priority) setIssuePriority(suggested.priority);
-          if (suggested.resolutionNotes && !issueDesc.includes(suggested.resolutionNotes)) {
-            setIssueDesc((prev) => prev ? `${prev}\n\n[AI Diagnosis & Fix]: ${suggested.resolutionNotes}` : suggested.resolutionNotes!);
-          }
-          toastSuccess("AI suggested priority & fix applied to bug report!");
-        }}
       />
     </div>
   );

@@ -26,8 +26,7 @@ const uploadLimiter = rateLimit({
 
 issuesRouter.get("/", IssuesController.getIssues);
 issuesRouter.post("/", IssuesController.createIssue);
-issuesRouter.post("/ai-analyze", IssuesController.aiAnalyze);
-issuesRouter.post("/locate-files", IssuesController.locateFiles);
+
 
 issuesRouter.get("/:id", requireIssueAccess, IssuesController.getIssue);
 issuesRouter.patch("/:id", requireIssueAccess, IssuesController.updateIssue);
