@@ -615,7 +615,11 @@ export default function NewBugReportPage() {
                   key={preset}
                   type="button"
                   onClick={() => setFilePath(preset)}
-                  className="text-[11px] font-mono px-2 py-0.5 rounded-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:border-indigo-400 dark:hover:border-indigo-600 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                  className={`text-[11px] font-mono px-2.5 py-1 rounded-md border transition-all ${
+                    filePath === preset
+                      ? "bg-indigo-600 text-white border-indigo-600 font-semibold shadow-sm"
+                      : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:border-indigo-400 dark:hover:border-indigo-600 hover:text-indigo-600 dark:hover:text-indigo-400"
+                  }`}
                 >
                   {preset.split("/").pop()}
                 </button>
