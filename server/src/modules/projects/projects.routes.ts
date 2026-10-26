@@ -18,6 +18,7 @@ projectsRouter.post("/join", ProjectsController.joinProject);
 
 projectsRouter.get("/:id", requireProjectAccess, ProjectsController.getProject);
 projectsRouter.get("/:id/analytics", requireProjectAccess, ProjectsController.getAnalytics);
+projectsRouter.get("/:id/files", requireProjectAccess, ProjectsController.getProjectFiles);
 projectsRouter.patch(
   "/:id",
   requireProjectAccess,

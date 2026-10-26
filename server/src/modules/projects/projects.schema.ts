@@ -6,6 +6,8 @@ export const createProjectSchema = z.object({
   description: z.string().trim().max(1000).optional(),
   status: z.nativeEnum(ProjectStatus).default(ProjectStatus.ACTIVE),
   webhookUrl: z.string().url("Invalid Webhook URL").optional().nullable().or(z.literal("")),
+  repositoryUrl: z.string().trim().max(300).optional().nullable().or(z.literal("")),
+  defaultBranch: z.string().trim().max(100).optional().nullable().or(z.literal("")),
 });
 
 export const updateProjectSchema = z.object({
@@ -13,6 +15,8 @@ export const updateProjectSchema = z.object({
   description: z.string().trim().max(1000).optional(),
   status: z.nativeEnum(ProjectStatus).optional(),
   webhookUrl: z.string().url("Invalid Webhook URL").optional().nullable().or(z.literal("")),
+  repositoryUrl: z.string().trim().max(300).optional().nullable().or(z.literal("")),
+  defaultBranch: z.string().trim().max(100).optional().nullable().or(z.literal("")),
 });
 
 export const addProjectMemberSchema = z.object({

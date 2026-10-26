@@ -140,6 +140,8 @@ export class IssuesService {
             id: true,
             name: true,
             status: true,
+            repositoryUrl: true,
+            defaultBranch: true,
             memberships: {
               include: {
                 user: {

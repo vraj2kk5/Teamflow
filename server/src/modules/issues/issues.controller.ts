@@ -9,6 +9,7 @@ import {
 import path from "path";
 import fs from "fs";
 import { UnauthorizedError, NotFoundError, ForbiddenError, BadRequestError } from "../../lib/errors";
+import { prisma } from "../../lib/prisma";
 
 function param(val: string | string[] | undefined): string {
   if (Array.isArray(val)) return val[0];
@@ -141,40 +142,79 @@ export class IssuesController {
   static async getCodeFile(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const filePathQuery = req.query.path as string;
+      const projectId = req.query.projectId as string | undefined;
       if (!filePathQuery || typeof filePathQuery !== "string") {
         throw new BadRequestError("Missing 'path' query parameter");
       }
 
-      const projectRoot = path.resolve(__dirname, "../../../../");
-      const normalizedRelative = path.normalize(filePathQuery).replace(/^(\.\.(\/|\\|$))+/, "");
-      const fullPath = path.resolve(projectRoot, normalizedRelative);
+      const normalizedRelative = path.normalize(filePathQuery).replace(/^(\.\.(\/|\\|$))+/, "").replace(/\\/g, "/");
 
-      if (!fullPath.startsWith(projectRoot)) {
-        throw new ForbiddenError("Access outside workspace is restricted");
+      let content: string | null = null;
+      let repositoryUrl: string | null = null;
+      let defaultBranch = "main";
+
+      if (projectId) {
+        const project = await prisma.project.findFirst({
+          where: { id: projectId },
+          select: { repositoryUrl: true, defaultBranch: true },
+        });
+        if (project) {
+          repositoryUrl = project.repositoryUrl;
+          defaultBranch = project.defaultBranch || "main";
+
+          if (project.repositoryUrl) {
+            const ghMatch = project.repositoryUrl.match(/(?:github\.com\/|^)([\w.-]+)\/([\w.-]+?)(?:\.git|\/|$)/i);
+            if (ghMatch) {
+              const owner = ghMatch[1];
+              const repo = ghMatch[2];
+              try {
+                const rawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${defaultBranch}/${normalizedRelative}`;
+                const rawRes = await fetch(rawUrl);
+                if (rawRes.ok) {
+                  content = await rawRes.text();
+                }
+              } catch {
+                // fallback to local
+              }
+            }
+          }
+        }
       }
 
-      if (
-        normalizedRelative.includes("node_modules") ||
-        normalizedRelative.includes(".git") ||
-        path.basename(normalizedRelative).startsWith(".env")
-      ) {
-        throw new ForbiddenError("Access to internal files is restricted");
+      if (content === null) {
+        const projectRoot = path.resolve(__dirname, "../../../../");
+        const fullPath = path.resolve(projectRoot, normalizedRelative);
+
+        if (!fullPath.startsWith(projectRoot)) {
+          throw new ForbiddenError("Access outside workspace is restricted");
+        }
+
+        if (
+          normalizedRelative.includes("node_modules") ||
+          normalizedRelative.includes(".git") ||
+          path.basename(normalizedRelative).startsWith(".env")
+        ) {
+          throw new ForbiddenError("Access to internal files is restricted");
+        }
+
+        if (!fs.existsSync(fullPath) || !fs.statSync(fullPath).isFile()) {
+          throw new NotFoundError(`File "${normalizedRelative}" not found in project repository`);
+        }
+
+        content = fs.readFileSync(fullPath, "utf-8");
       }
 
-      if (!fs.existsSync(fullPath) || !fs.statSync(fullPath).isFile()) {
-        throw new NotFoundError(`File "${normalizedRelative}" not found in project repository`);
-      }
-
-      const content = fs.readFileSync(fullPath, "utf-8");
       const lines = content.split("\n");
 
       res.status(200).json({
         data: {
-          relativePath: normalizedRelative.replace(/\\/g, "/"),
+          relativePath: normalizedRelative,
           fileName: path.basename(normalizedRelative),
           content,
           lineCount: lines.length,
           sizeBytes: Buffer.byteLength(content, "utf-8"),
+          repositoryUrl,
+          defaultBranch,
         },
       });
     } catch (err) {
@@ -185,12 +225,45 @@ export class IssuesController {
   static async downloadCodeFile(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const filePathQuery = req.query.path as string;
+      const projectId = req.query.projectId as string | undefined;
       if (!filePathQuery || typeof filePathQuery !== "string") {
         throw new BadRequestError("Missing 'path' query parameter");
       }
 
+      const normalizedRelative = path.normalize(filePathQuery).replace(/^(\.\.(\/|\\|$))+/, "").replace(/\\/g, "/");
+
+      let content: string | null = null;
+      if (projectId) {
+        const project = await prisma.project.findFirst({
+          where: { id: projectId },
+          select: { repositoryUrl: true, defaultBranch: true },
+        });
+        if (project?.repositoryUrl) {
+          const ghMatch = project.repositoryUrl.match(/(?:github\.com\/|^)([\w.-]+)\/([\w.-]+?)(?:\.git|\/|$)/i);
+          if (ghMatch) {
+            const owner = ghMatch[1];
+            const repo = ghMatch[2];
+            const branch = project.defaultBranch || "main";
+            try {
+              const rawRes = await fetch(`https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${normalizedRelative}`);
+              if (rawRes.ok) {
+                content = await rawRes.text();
+              }
+            } catch {
+              // fallback
+            }
+          }
+        }
+      }
+
+      if (content !== null) {
+        res.setHeader("Content-Disposition", `attachment; filename="${path.basename(normalizedRelative)}"`);
+        res.setHeader("Content-Type", "text/plain; charset=utf-8");
+        res.send(content);
+        return;
+      }
+
       const projectRoot = path.resolve(__dirname, "../../../../");
-      const normalizedRelative = path.normalize(filePathQuery).replace(/^(\.\.(\/|\\|$))+/, "");
       const fullPath = path.resolve(projectRoot, normalizedRelative);
 
       if (!fullPath.startsWith(projectRoot)) {

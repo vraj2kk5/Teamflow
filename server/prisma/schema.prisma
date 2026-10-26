@@ -129,6 +129,9 @@ model Project {
   ownerId        String
   inviteCode     String?       @unique
   webhookUrl     String?
+  repositoryUrl  String?
+  defaultBranch  String?       @default("main")
+  gitHubToken    String?
   issueSequence  Int           @default(0)
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt

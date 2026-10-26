@@ -23,6 +23,9 @@ export interface CodeFileViewerProps {
   codeSnippet?: string | null;
   errorLog?: string | null;
   title?: string;
+  projectId?: string | null;
+  repositoryUrl?: string | null;
+  defaultBranch?: string | null;
 }
 
 interface LoadedFileState {
@@ -30,6 +33,8 @@ interface LoadedFileState {
   fileName: string;
   content: string;
   lineCount: number;
+  repositoryUrl?: string | null;
+  defaultBranch?: string | null;
 }
 
 export function CodeFileViewer({
@@ -38,6 +43,9 @@ export function CodeFileViewer({
   codeSnippet,
   errorLog,
   title = "Problematic Code File & Line Location",
+  projectId,
+  repositoryUrl: propRepoUrl,
+  defaultBranch: propDefaultBranch,
 }: CodeFileViewerProps) {
   const [copied, setCopied] = useState<"path" | "code" | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -91,8 +99,11 @@ export function CodeFileViewer({
     setIsLoading(true);
     setLoadError(null);
 
+    const params: Record<string, string> = { path: effectivePath };
+    if (projectId) params.projectId = projectId;
+
     api
-      .get<LoadedFileState | { data: LoadedFileState }>(`/issues/code-file`, { path: effectivePath })
+      .get<LoadedFileState | { data: LoadedFileState }>(`/issues/code-file`, params)
       .then((res: any) => {
         if (!isMounted) return;
         const data: LoadedFileState = res?.data || res;
@@ -109,7 +120,7 @@ export function CodeFileViewer({
             lineCount: codeSnippet.split("\n").length,
           });
         } else {
-          setLoadError(err?.message || "File could not be loaded from project directory");
+          setLoadError(err?.message || "File could not be loaded from project repository");
         }
       })
       .finally(() => {
@@ -119,7 +130,7 @@ export function CodeFileViewer({
     return () => {
       isMounted = false;
     };
-  }, [effectivePath, codeSnippet]);
+  }, [effectivePath, codeSnippet, projectId]);
 
   // Scroll to target line when expanded or loaded
   useEffect(() => {
@@ -165,17 +176,39 @@ export function CodeFileViewer({
   };
 
   const handleDownload = () => {
-    if (!fileData?.content) return;
-    const blob = new Blob([fileData.content], { type: "text/plain;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = fileData.fileName || "source-file.txt";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    if (fileData?.content) {
+      const blob = new Blob([fileData.content], { type: "text/plain;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = fileData.fileName || "source-file.txt";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } else if (effectivePath) {
+      const downloadUrl = `/api/issues/code-file/download?path=${encodeURIComponent(effectivePath)}${
+        projectId ? `&projectId=${encodeURIComponent(projectId)}` : ""
+      }`;
+      window.open(downloadUrl, "_blank");
+    }
   };
+
+  // Build GitHub deep link if repository is linked
+  const effectiveRepoUrl = fileData?.repositoryUrl || propRepoUrl;
+  const effectiveBranch = fileData?.defaultBranch || propDefaultBranch || "main";
+
+  let gitHubFileUrl: string | null = null;
+  if (effectiveRepoUrl && effectivePath) {
+    const ghMatch = effectiveRepoUrl.match(/(?:github\.com\/|^)([\w.-]+)\/([\w.-]+?)(?:\.git|\/|$)/i);
+    if (ghMatch) {
+      const owner = ghMatch[1];
+      const repo = ghMatch[2];
+      gitHubFileUrl = `https://github.com/${owner}/${repo}/blob/${effectiveBranch}/${effectivePath}${
+        effectiveLine ? `#L${effectiveLine}` : ""
+      }`;
+    }
+  }
 
   // Build VS Code deep link
   const vsCodeUrl = effectivePath
@@ -232,15 +265,29 @@ export function CodeFileViewer({
           </div>
         </div>
 
-        {/* Action Buttons: Download, Copy, VS Code */}
+        {/* Action Buttons: GitHub Link, Download, Copy, VS Code */}
         <div className="flex items-center gap-2 shrink-0">
+          {/* View on GitHub */}
+          {gitHubFileUrl && (
+            <a
+              href={gitHubFileUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-lg bg-slate-900 hover:bg-black dark:bg-slate-800 dark:hover:bg-slate-700 text-white border border-slate-700 h-8 transition-colors shadow-sm"
+              title="Open file and line directly on GitHub"
+            >
+              <ExternalLink className="w-3.5 h-3.5 text-indigo-400" />
+              <span className="hidden sm:inline">View on GitHub</span>
+            </a>
+          )}
+
           {/* Download File Button */}
           <Button
             type="button"
             variant="primary"
             size="sm"
             onClick={handleDownload}
-            disabled={!fileData?.content}
+            disabled={!fileData?.content && !effectivePath}
             className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold py-1.5 h-8 flex items-center gap-1.5 shadow-sm"
             title="Download the full file to your machine"
           >

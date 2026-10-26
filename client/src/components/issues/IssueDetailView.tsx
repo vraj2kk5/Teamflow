@@ -67,6 +67,8 @@ export interface IssueDetail {
   project: {
     id: string;
     name: string;
+    repositoryUrl?: string | null;
+    defaultBranch?: string | null;
     memberships: {
       user: {
         id: string;
@@ -665,6 +667,9 @@ export function IssueDetailView({ id, expectedType }: IssueDetailViewProps) {
               lineNumber={issue.lineNumber}
               codeSnippet={issue.codeSnippet}
               errorLog={issue.errorLog}
+              projectId={issue.projectId}
+              repositoryUrl={issue.project?.repositoryUrl}
+              defaultBranch={issue.project?.defaultBranch}
             />
           )}
 
