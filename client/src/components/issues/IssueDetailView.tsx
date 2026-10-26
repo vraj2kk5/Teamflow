@@ -506,9 +506,9 @@ export function IssueDetailView({ id, expectedType }: IssueDetailViewProps) {
               size="sm"
               variant="outline"
               onClick={() => setIsAIModalOpen(true)}
-              className="border-indigo-500/40 text-indigo-300 hover:bg-indigo-500/20 text-xs flex items-center gap-1.5"
+              className="border-indigo-200 dark:border-indigo-500/40 bg-indigo-50 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 text-xs flex items-center gap-1.5 shadow-sm transition-colors"
             >
-              <Sparkles className="w-3.5 h-3.5 text-indigo-400 animate-pulse" />
+              <Sparkles className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 animate-pulse" />
               <span>AI Root Cause Diagnosis</span>
             </Button>
             {canDelete && (
@@ -931,9 +931,9 @@ export function IssueDetailView({ id, expectedType }: IssueDetailViewProps) {
                         issue.priority === "CRITICAL"
                           ? "danger"
                           : issue.priority === "HIGH"
-                          ? "orange"
-                          : issue.priority === "MEDIUM"
                           ? "warning"
+                          : issue.priority === "MEDIUM"
+                          ? "cyan"
                           : "neutral"
                       }
                     >
@@ -1124,7 +1124,7 @@ export function IssueDetailView({ id, expectedType }: IssueDetailViewProps) {
             }
           }
           if (suggested.resolutionNotes) {
-            setResolutionNotes(suggested.resolutionNotes);
+            setResolutionInput(suggested.resolutionNotes);
           }
           toastSuccess("AI diagnosis applied!");
         }}

@@ -376,24 +376,24 @@ export default function NewBugReportPage() {
 
       {/* Header */}
       <div>
-        <div className="flex items-center gap-2">
-          <div className="flex-1 flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
             <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Report a Bug</h1>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setIsAIModalOpen(true)}
-              className="border-indigo-500/50 bg-indigo-950/30 text-indigo-300 hover:bg-indigo-500/20 text-xs py-1.5 h-8 flex items-center gap-1.5 shadow-sm"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-indigo-400 animate-pulse" />
-              <span>✨ AI Root Cause Diagnosis</span>
-            </Button>
+            <Badge variant="danger" size="sm">
+              <Bug className="w-3 h-3 mr-1 inline" />
+              Visual Bug Reporting
+            </Badge>
           </div>
-          <Badge variant="danger" size="sm">
-            <Bug className="w-3 h-3 mr-1 inline" />
-            Visual Bug Reporting
-          </Badge>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setIsAIModalOpen(true)}
+            className="border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-xs font-semibold py-1.5 h-8 flex items-center gap-1.5 shadow-sm transition-colors"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 animate-pulse" />
+            <span>✨ AI Root Cause Diagnosis</span>
+          </Button>
         </div>
         <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
           Record your screen or voice, paste terminal errors, and attach screenshots so teammates can reproduce and fix the bug quickly.
@@ -482,26 +482,26 @@ export default function NewBugReportPage() {
         </Card>
 
         {/* AI Diagnostic & Auto-Fill Assistant */}
-        <div className="flex items-center justify-between p-4 rounded-2xl bg-gradient-to-r from-indigo-950/60 to-purple-950/60 border border-indigo-800/40 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-800/50 shadow-sm transition-colors">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center">
+            <div className="w-9 h-9 rounded-xl bg-indigo-600/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
               <Sparkles className="w-5 h-5 animate-pulse" />
             </div>
             <div>
-              <h4 className="text-sm font-semibold text-white">AI Bug Triage & Code Locator</h4>
-              <p className="text-xs text-indigo-300/80">
+              <h4 className="text-sm font-semibold text-slate-900 dark:text-white">AI Bug Triage & Code Locator</h4>
+              <p className="text-xs text-slate-600 dark:text-indigo-300/80 mt-0.5">
                 Paste an error message or describe the issue to automatically predict priority, root cause & failing files.
               </p>
             </div>
           </div>
           <Button
             type="button"
-            variant="outline"
+            variant="primary"
             size="sm"
             onClick={() => setIsAIModalOpen(true)}
-            className="border-indigo-500/50 bg-indigo-900/40 text-indigo-200 hover:bg-indigo-500/30 text-xs font-semibold py-1.5 h-9 shrink-0 flex items-center gap-1.5"
+            className="bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-500 text-white text-xs font-semibold py-1.5 h-9 shrink-0 flex items-center gap-1.5 shadow-sm"
           >
-            <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+            <Sparkles className="w-3.5 h-3.5" />
             <span>Analyze with AI</span>
           </Button>
         </div>

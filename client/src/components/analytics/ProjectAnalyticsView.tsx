@@ -400,7 +400,7 @@ export function ProjectAnalyticsView({ projectId }: { projectId: string }) {
               className="p-4 sm:px-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-800/20 transition-colors"
             >
               <div className="flex items-center gap-3">
-                <Avatar name={member.name} src={member.avatarUrl} size="md" />
+                <Avatar name={member.name} avatarUrl={member.avatarUrl} size="md" />
                 <div>
                   <h4 className="text-sm font-semibold text-white">{member.name}</h4>
                   <p className="text-xs text-slate-400">
@@ -424,7 +424,7 @@ export function ProjectAnalyticsView({ projectId }: { projectId: string }) {
                 </div>
 
                 <Badge
-                  variant={member.done > 0 ? "success" : "default"}
+                  variant={member.done > 0 ? "success" : "neutral"}
                   className="font-medium shrink-0"
                 >
                   {member.done} Delivered

@@ -25,7 +25,7 @@ export interface BugAnalysisResult {
   suggestedStepsToReproduce: string[];
   reproductionConfidence: number;
   aiEngine: "Gemini AI" | "Heuristic Diagnostics Engine";
-  affectedFiles: AffectedFileLocation[];
+  affectedFiles?: AffectedFileLocation[];
 }
 
 export class AIBugAnalyzer {
@@ -93,7 +93,7 @@ Actual Result: ${input.actualResult || "N/A"}`;
       return null;
     }
 
-    const data = await response.json();
+    const data = (await response.json()) as any;
     const candidateText = data.candidates?.[0]?.content?.parts?.[0]?.text;
     if (!candidateText) return null;
 
