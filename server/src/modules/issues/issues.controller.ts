@@ -1,3 +1,4 @@
+import { AIBugAnalyzer } from "../../lib/ai-analyzer";
 import { Request, Response, NextFunction } from "express";
 import { IssuesService } from "./issues.service";
 import {
@@ -114,6 +115,17 @@ export class IssuesController {
         auth.userId
       );
       res.status(200).json({ data: result });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async aiAnalyze(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const auth = req.auth;
+      if (!auth) throw new UnauthorizedError();
+      const analysis = await AIBugAnalyzer.analyze(req.body);
+      res.status(200).json({ data: analysis });
     } catch (err) {
       next(err);
     }

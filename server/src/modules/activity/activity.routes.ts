@@ -6,6 +6,7 @@ const activityRouter = Router();
 
 activityRouter.use(requireAuth);
 
+activityRouter.get("/stream", ActivityController.streamEvents);
 activityRouter.get("/", ActivityController.getActivity);
 
 export { activityRouter };

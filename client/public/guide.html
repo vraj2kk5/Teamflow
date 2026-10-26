@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>TeamFlow - Technical Presentation & Showcase Guide</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 15mm 15mm 15mm 15mm;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: #0f172a;
+      background: #ffffff;
+      line-height: 1.5;
+      font-size: 10pt;
+    }
+
+    .header {
+      border-bottom: 2px solid #6366f1;
+      padding-bottom: 14px;
+      margin-bottom: 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+
+    .title-area h1 {
+      font-size: 20pt;
+      font-weight: 800;
+      color: #1e1b4b;
+      letter-spacing: -0.5px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .title-area p {
+      font-size: 10pt;
+      color: #64748b;
+      margin-top: 3px;
+    }
+
+    .badge-container {
+      text-align: right;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 8px;
+      font-size: 8pt;
+      font-weight: 600;
+      border-radius: 9999px;
+      background: #e0e7ff;
+      color: #4338ca;
+      margin-bottom: 4px;
+    }
+
+    .meta-text {
+      font-size: 8pt;
+      color: #94a3b8;
+    }
+
+    h2 {
+      font-size: 12.5pt;
+      font-weight: 700;
+      color: #1e293b;
+      margin-top: 16px;
+      margin-bottom: 8px;
+      border-left: 3.5px solid #6366f1;
+      padding-left: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    h3 {
+      font-size: 10.5pt;
+      font-weight: 700;
+      color: #334155;
+      margin-top: 10px;
+      margin-bottom: 4px;
+    }
+
+    p {
+      margin-bottom: 6px;
+      color: #334155;
+    }
+
+    ul, ol {
+      margin-left: 18px;
+      margin-bottom: 8px;
+      color: #334155;
+    }
+
+    li {
+      margin-bottom: 3px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 8px 0 14px 0;
+      font-size: 9pt;
+      page-break-inside: avoid;
+    }
+
+    th {
+      background: #f1f5f9;
+      color: #334155;
+      font-weight: 600;
+      text-align: left;
+      padding: 6px 10px;
+      border: 1px solid #cbd5e1;
+    }
+
+    td {
+      padding: 6px 10px;
+      border: 1px solid #e2e8f0;
+      color: #334155;
+      vertical-align: top;
+    }
+
+    tr:nth-child(even) td {
+      background: #f8fafc;
+    }
+
+    .card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin-bottom: 10px;
+      page-break-inside: avoid;
+    }
+
+    .card-title {
+      font-size: 10pt;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 4px;
+    }
+
+    .say-box {
+      background: #f8fafc;
+      border-left: 3px solid #3b82f6;
+      border-radius: 0 6px 6px 0;
+      padding: 8px 12px;
+      margin: 6px 0 10px 0;
+      font-style: italic;
+      color: #1e293b;
+      font-size: 9.5pt;
+      page-break-inside: avoid;
+    }
+
+    .say-box strong {
+      font-style: normal;
+      color: #1d4ed8;
+    }
+
+    .action-pill {
+      display: inline-block;
+      background: #fef3c7;
+      color: #92400e;
+      font-size: 8pt;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 4px;
+      margin-right: 4px;
+      font-style: normal;
+    }
+
+    .code-pill {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 8pt;
+      background: #f1f5f9;
+      color: #0f172a;
+      padding: 1px 4px;
+      border-radius: 3px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 10px;
+      page-break-inside: avoid;
+    }
+
+    .page-break {
+      page-break-before: always;
+    }
+
+    .highlight-box {
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: 6px;
+      padding: 8px 12px;
+      margin-bottom: 10px;
+      font-size: 9pt;
+      color: #166534;
+      page-break-inside: avoid;
+    }
+
+    .highlight-box strong {
+      color: #14532d;
+    }
+
+    .qa-box {
+      background: #faf5ff;
+      border: 1px solid #e9d5ff;
+      border-radius: 6px;
+      padding: 8px 12px;
+      margin-bottom: 8px;
+      page-break-inside: avoid;
+    }
+
+    .qa-question {
+      font-weight: 700;
+      color: #6b21a8;
+      font-size: 9.5pt;
+      margin-bottom: 3px;
+    }
+
+    .qa-answer {
+      font-size: 9pt;
+      color: #3b0764;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="title-area">
+      <h1>TeamFlow 🚀</h1>
+      <p>Technical Presentation, Architecture Walkthrough & Live Demo Guide</p>
+    </div>
+    <div class="badge-container">
+      <span class="badge">Rewamp Digital Internship Selection</span>
+      <div class="meta-text">Stack: Next.js 15 • Express • Prisma • PostgreSQL</div>
+    </div>
+  </div>
+
+  <!-- Agenda -->
+  <h2>⏱️ 5–7 Minute Showcase Agenda</h2>
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 18%;">Time</th>
+        <th style="width: 32%;">Segment</th>
+        <th style="width: 50%;">Key Focus & Takeaway</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>0:00 – 1:00</strong></td>
+        <td><strong>Pitch & Architecture</strong></td>
+        <td>Monorepo layout, clean tech stack, 100% real database aggregates, zero mock data.</td>
+      </tr>
+      <tr>
+        <td><strong>1:00 – 2:30</strong></td>
+        <td><strong>Visual Bug Reporting (Differentiator)</strong></td>
+        <td>Screen recording, voice memos, clipboard paste (Ctrl+V), error log viewer, HTTP 206 streaming.</td>
+      </tr>
+      <tr>
+        <td><strong>2:30 – 4:00</strong></td>
+        <td><strong>Core Agile Workflows & Collaboration</strong></td>
+        <td>Tasks vs Bugs separation, Kanban boards, Resolution Modal, in-app notification bell & audio chime.</td>
+      </tr>
+      <tr>
+        <td><strong>4:00 – 5:00</strong></td>
+        <td><strong>Security & Engineering Architecture</strong></td>
+        <td>Magic-byte file sniffing, scoped 404 security, reporter-only permissions, signed streaming tokens.</td>
+      </tr>
+      <tr>
+        <td><strong>5:00 – 6:00</strong></td>
+        <td><strong>Verification, Testing & Q&A</strong></td>
+        <td>35 passing integration tests, strict TypeScript (0 errors), live transactional email delivery.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Step-by-Step Demo Script -->
+  <h2>🖥️ Live Demo Walkthrough (Step-by-Step Script)</h2>
+
+  <div class="card">
+    <div class="card-title">Part 1: Introduction & Architecture Setup (0:00 – 1:00)</div>
+    <div class="say-box">
+      <strong>Say:</strong> "Good morning/afternoon! Today I’m showcasing <strong>TeamFlow</strong>, an agile team collaboration and visual bug reporting platform built with Next.js 15, TypeScript, Express.js, Prisma ORM, and PostgreSQL.<br><br>
+      I designed TeamFlow as a production-grade monorepo where <strong>every metric, task, recording, and notification is 100% real and backed by PostgreSQL database aggregates and file storage</strong>—there are zero simulated counters or fake timers."
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Part 2: The Core Differentiator — Visual Bug Reporting (1:00 – 2:30)</div>
+    <p><span class="action-pill">ACTION</span> Click the red <strong>"Report a Bug"</strong> button in the top navigation bar.</p>
+    <div class="say-box">
+      <strong>Say:</strong> "In traditional issue trackers, developers receive vague reports like 'the checkout button is broken'. In TeamFlow, we solved this with an integrated <strong>Visual Bug Reporting suite</strong>:
+      <ul>
+        <li><strong>Live Screen Recording:</strong> Click 'Record Screen', select the window, and record a live video with microphone audio.</li>
+        <li><strong>Voice Memo Audio:</strong> Record audio voice notes with waveform pulsation and accessible timers.</li>
+        <li><strong>Clipboard Paste (Ctrl+V):</strong> Paste screenshots straight from the OS clipboard into the ticket with automatic thumbnails.</li>
+        <li><strong>Diagnostic Error Log Viewer:</strong> Paste stack traces into an escaped, monospaced viewer with one-click copy.</li>
+      </ul>
+      Our upload engine uses a <strong>Two-Step Resilient Architecture</strong>: the backend ticket is created first, then media files upload sequentially with real progress percentages. If an upload fails, users can retry individual files without duplicating tickets.<br><br>
+      When opened on the issue page, videos and audio stream via <strong>HTTP 206 Partial Content Range requests</strong>, allowing teammates to seek and scrub immediately without waiting for the full file to download."
+    </div>
+  </div>
+
+  <div class="page-break"></div>
+
+  <div class="card">
+    <div class="card-title">Part 3: Workflows, Notifications & Resolution Documentation (2:30 – 4:00)</div>
+    <p><span class="action-pill">ACTION</span> Navigate to <strong>Tasks</strong>, open the Kanban board, and move an item to <strong>DONE</strong>.</p>
+    <div class="say-box">
+      <strong>Say:</strong> "Next, let's look at TeamFlow's task management and collaboration workflows:
+      <ul>
+        <li><strong>Dedicated Workflows:</strong> We cleanly separate <strong>Tasks</strong> (assigned work items) from <strong>Issues/Bugs</strong> (defect tracking). Bugs follow a <strong>Collaborative Bug Solving</strong> model—open to all project members to investigate—while Tasks are assigned to specific team members.</li>
+        <li><strong>Strict Media Security:</strong> To preserve audit integrity, media attachments on bug reports can strictly only be added or deleted by the original reporter.</li>
+        <li><strong>Interactive Resolution Notes:</strong> When moving an issue to 'DONE', TeamFlow prompts for root cause and resolution documentation, automatically appending a formatted note to the discussion thread so team knowledge is preserved.</li>
+        <li><strong>Real-Time Notification Bell:</strong> Click the bell icon. Whenever a task is assigned, updated, or commented on, teammates receive an in-app alert with an unread badge and an audio chime, alongside transactional emails."</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Part 4: Role-Based Metrics & Scoped Dashboards (4:00 – 5:00)</div>
+    <p><span class="action-pill">ACTION</span> Switch between Admin view and Member view.</p>
+    <div class="say-box">
+      <strong>Say:</strong> "Notice our dashboard design:
+      <ul>
+        <li>When an <strong>Admin</strong> logs in, they see organization-wide operational health: active projects, unassigned tasks, and overdue items.</li>
+        <li>When a <strong>Member</strong> logs in, their dashboard counters ('My Open Tasks', 'My Overdue Tasks') are strictly scoped to their personal workload—preventing other members' tasks from cluttering their view."</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Engineering Implementation Highlights -->
+  <h2>💡 Engineering Implementation & Architectural Highlights</h2>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">1. Pluggable Storage Driver Architecture</div>
+      <p>Clean driver abstraction (<code class="code-pill">StorageDriver</code>) decoupling business logic from file storage:</p>
+      <ul>
+        <li><strong>LocalDiskDriver (Dev):</strong> Zero-credential local development with custom HTTP 206 byte-range chunk streaming.</li>
+        <li><strong>S3Driver (Production):</strong> Cloudflare R2 / AWS S3 object storage compatibility.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-title">2. Magic-Byte Security & Scoped 404s</div>
+      <p>Multi-layered backend security enforcement:</p>
+      <ul>
+        <li><strong>Raw Magic-Byte Sniffing:</strong> Reads raw buffers using <code class="code-pill">file-type</code> to block executable files disguised with fake extensions and block SVG XSS vectors.</li>
+        <li><strong>Scoped 404s:</strong> Cross-organization access attempts return 404 instead of 403, preventing resource enumeration leaks.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">3. Performance & Defensive State</div>
+      <p>Optimized for sub-100ms UI responsiveness:</p>
+      <ul>
+        <li><strong>Client Preview Cache:</strong> Instant 0ms issue rendering while background revalidation finishes.</li>
+        <li><strong>Decoupled Dependencies:</strong> React hooks use stable refs to completely prevent infinite re-render cycles.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-title">4. Real Email Delivery & Notifications</div>
+      <p>Complete communication pipeline:</p>
+      <ul>
+        <li><strong>In-App Bell & Web Audio Chime:</strong> Real-time notifications for task assignments, self-assignments, and comments.</li>
+        <li><strong>Live SMTP / Resend:</strong> Automated transactional email dispatch for invites, security logins, and task assignments.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="highlight-box">
+    <strong>✅ Quality Assurance Summary:</strong> 35 automated integration tests running via Vitest with 100% pass rate. TypeScript type check passes with 0 errors (<code class="code-pill">npx tsc --noEmit</code>).
+  </div>
+
+  <!-- Likely Interview Questions & Answers -->
+  <h2>🎯 Anticipated Interview Questions & Winning Answers</h2>
+
+  <div class="qa-box">
+    <div class="qa-question">Q1: Why did you choose PostgreSQL and Prisma instead of MongoDB?</div>
+    <div class="qa-answer"><strong>Answer:</strong> "Project management is inherently relational. Tasks belong to Projects, Projects belong to Organizations, and Issues have Repositories, Assignees, and Comment threads. PostgreSQL guarantees referential integrity, foreign key cascades, and ACID transactions. Prisma provides end-to-end type safety, auto-generated migrations, and prevents SQL injection by default."</div>
+  </div>
+
+  <div class="qa-box">
+    <div class="qa-question">Q2: How does your media streaming work locally without AWS S3?</div>
+    <div class="qa-answer"><strong>Answer:</strong> "I implemented an HTTP 206 Partial Content Range streaming engine in <code class="code-pill">LocalDiskDriver</code>. When a browser requests bytes 0-1048576, the server parses the <code class="code-pill">Range</code> header, creates a readable fs stream with start/end offsets, and streams raw chunks with <code class="code-pill">Content-Range</code> headers. This allows users to scrub through 5-minute screen recordings immediately without waiting for a 50MB file to finish downloading."</div>
+  </div>
+
+  <div class="qa-box">
+    <div class="qa-question">Q3: How do you handle role permissions between Admins, PMs, and Members?</div>
+    <div class="qa-answer"><strong>Answer:</strong> "RBAC is enforced centrally in backend middleware using organization memberships. Admins have global org management; Project Managers can create projects and assign tasks; and Members are restricted to visual bug reporting, commenting, and updating their assigned tasks. Even if someone tampers with client-side UI, the backend rejects unauthorized actions with 403 or scoped 404s."</div>
+  </div>
+
+  <div class="qa-box">
+    <div class="qa-question">Q4: What would you improve or add if you had another week?</div>
+    <div class="qa-answer"><strong>Answer:</strong> "I would add WebSockets/Socket.io for collaborative multi-user live cursors on the Kanban board, and integration with GitHub/GitLab to automatically close TeamFlow issues when commit messages reference ticket keys like <code class="code-pill">TF-1</code>."</div>
+  </div>
+
+  <!-- Source Code Architecture & Implementation Mapping -->
+  <div class="page-break"></div>
+  <h2>📂 Source Code Mapping: "How and From Where You Achieved This"</h2>
+  <p>When asked to walk through the exact codebase and implementation files, refer directly to this architecture map:</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 25%;">Feature / Capability</th>
+        <th style="width: 35%;">Source Code Location</th>
+        <th style="width: 40%;">Underlying APIs & Implementation Mechanism</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Live Screen Recording</strong></td>
+        <td><code class="code-pill">client/src/hooks/useScreenRecorder.ts</code></td>
+        <td>Browser <code class="code-pill">navigator.mediaDevices.getDisplayMedia</code> + Web Audio API <code class="code-pill">AudioContext</code> to mix system audio and mic commentary into a <code class="code-pill">MediaRecorder</code> stream (<code class="code-pill">video/webm</code>).</td>
+      </tr>
+      <tr>
+        <td><strong>Voice Memo Recording</strong></td>
+        <td><code class="code-pill">client/src/hooks/useAudioRecorder.ts</code></td>
+        <td><code class="code-pill">navigator.mediaDevices.getUserMedia({ audio: true })</code> + <code class="code-pill">MediaRecorder</code> with real-time waveform pulse timer and accessible <code class="code-pill">aria-live</code> status indicators.</td>
+      </tr>
+      <tr>
+        <td><strong>Two-Step Resilient Upload</strong></td>
+        <td><code class="code-pill">client/src/app/bug-reports/new/page.tsx</code></td>
+        <td>Step 1 creates the PostgreSQL ticket (<code class="code-pill">POST /api/issues</code>); Step 2 uploads media sequentially via native <code class="code-pill">XMLHttpRequest.upload.onprogress</code> for real upload % with per-file retry.</td>
+      </tr>
+      <tr>
+        <td><strong>HTTP 206 Streaming Engine</strong></td>
+        <td><code class="code-pill">server/src/lib/storage/local-disk.driver.ts</code></td>
+        <td>Parses <code class="code-pill">Range: bytes=start-end</code> headers, creates <code class="code-pill">fs.createReadStream(path, { start, end })</code>, and returns status 206 with <code class="code-pill">Content-Range</code> for instant seeking/scrubbing.</td>
+      </tr>
+      <tr>
+        <td><strong>Raw Magic-Byte Sniffing</strong></td>
+        <td><code class="code-pill">server/src/modules/attachments/attachments.service.ts</code></td>
+        <td>Reads raw Uint8Array buffer signatures via <code class="code-pill">file-type</code> library; refuses to trust file extensions or client MIME types to block disguised executables and SVG XSS attacks.</td>
+      </tr>
+      <tr>
+        <td><strong>In-App Notification Bell & Chime</strong></td>
+        <td><code class="code-pill">client/src/components/ui/NotificationBell.tsx</code><br><code class="code-pill">server/src/modules/notifications/</code></td>
+        <td>Stores alerts in PostgreSQL <code class="code-pill">notifications</code> table. Client polls every 30s; synthesizes a pleasant dual-tone chime (D5 587Hz &rarr; A5 880Hz) via native Web Audio oscillators without external MP3s.</td>
+      </tr>
+      <tr>
+        <td><strong>Role-Based Access & Scoped 404s</strong></td>
+        <td><code class="code-pill">server/src/middleware/policies.ts</code><br><code class="code-pill">server/src/modules/issues/issues.service.ts</code></td>
+        <td>Enforces <code class="code-pill">Role.ADMIN</code>, <code class="code-pill">Role.PROJECT_MANAGER</code>, and <code class="code-pill">Role.MEMBER</code>. Cross-organization access returns 404 instead of 403 to prevent resource enumeration attacks.</td>
+      </tr>
+      <tr>
+        <td><strong>Resolution Documentation Modal</strong></td>
+        <td><code class="code-pill">client/src/components/issues/IssueDetailView.tsx</code><br><code class="code-pill">server/src/modules/issues/issues.service.ts</code></td>
+        <td>Prompts for root cause and resolution notes when moving status to <code class="code-pill">DONE</code>. Saves to <code class="code-pill">Issue.resolutionNotes</code> and auto-posts an audit comment to the discussion thread.</td>
+      </tr>
+      <tr>
+        <td><strong>Role-Scoped Dashboard Metrics</strong></td>
+        <td><code class="code-pill">server/src/modules/dashboard/dashboard.service.ts</code><br><code class="code-pill">client/src/app/dashboard/page.tsx</code></td>
+        <td>Live database aggregates (<code class="code-pill">prisma.issue.count</code>). Scopes Member metrics strictly to <code class="code-pill">assigneeId: userId</code> while Admins see workspace-wide totals.</td>
+      </tr>
+      <tr>
+        <td><strong>Relational Database Schema</strong></td>
+        <td><code class="code-pill">server/prisma/schema.prisma</code></td>
+        <td>Full relational schema with <code class="code-pill">User</code>, <code class="code-pill">Organization</code>, <code class="code-pill">Project</code>, <code class="code-pill">Issue</code>, <code class="code-pill">Comment</code>, <code class="code-pill">Attachment</code>, <code class="code-pill">ActivityLog</code>, and <code class="code-pill">Notification</code>.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Quick Demo Credentials Reference -->
+  <h2>🔑 Quick Demo Reference</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Role</th>
+        <th>Email</th>
+        <th>Password</th>
+        <th>Port / URL</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>ADMIN</strong></td>
+        <td><code class="code-pill">admin@teamflow.dev</code></td>
+        <td><code class="code-pill">Password123!</code></td>
+        <td><code class="code-pill">http://localhost:3000</code></td>
+      </tr>
+      <tr>
+        <td><strong>PROJECT_MANAGER</strong></td>
+        <td><code class="code-pill">pm@teamflow.dev</code></td>
+        <td><code class="code-pill">Password123!</code></td>
+        <td><code class="code-pill">http://localhost:3000</code></td>
+      </tr>
+      <tr>
+        <td><strong>MEMBER</strong></td>
+        <td><code class="code-pill">member@teamflow.dev</code></td>
+        <td><code class="code-pill">Password123!</code></td>
+        <td><code class="code-pill">http://localhost:3000</code></td>
+      </tr>
+    </tbody>
+  </table>
+
+</body>
+</html>

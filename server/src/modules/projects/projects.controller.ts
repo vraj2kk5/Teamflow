@@ -167,4 +167,14 @@ export class ProjectsController {
       next(err);
     }
   }
+  static async getAnalytics(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const auth = req.auth!;
+      const projectId = param(req.params.id);
+      const analytics = await ProjectsService.getProjectAnalytics(projectId, auth.organizationId);
+      res.status(200).json({ data: analytics });
+    } catch (err) {
+      next(err);
+    }
+  }
 }

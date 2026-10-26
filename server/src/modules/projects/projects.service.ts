@@ -219,6 +219,7 @@ export class ProjectsService {
           status: input.status,
           ownerId: creatorId,
           inviteCode,
+          webhookUrl: input.webhookUrl || null,
         },
       });
 
@@ -258,6 +259,7 @@ export class ProjectsService {
           name: input.name,
           description: input.description,
           status: input.status,
+          webhookUrl: input.webhookUrl !== undefined ? (input.webhookUrl || null) : undefined,
         },
       });
 
@@ -540,5 +542,151 @@ export class ProjectsService {
       orderBy: { createdAt: "desc" },
       take: 50,
     });
+  }
+  static async getProjectAnalytics(projectId: string, orgId: string) {
+    const project = await prisma.project.findFirst({
+      where: { id: projectId, organizationId: orgId },
+      include: {
+        issues: {
+          select: {
+            id: true,
+            key: true,
+            title: true,
+            type: true,
+            status: true,
+            priority: true,
+            estimatedHours: true,
+            createdAt: true,
+            resolvedAt: true,
+            assignee: {
+              select: { id: true, name: true, avatarUrl: true },
+            },
+          },
+        },
+        memberships: {
+          include: {
+            user: {
+              select: { id: true, name: true, email: true, avatarUrl: true },
+            },
+          },
+        },
+      },
+    });
+
+    if (!project) {
+      throw new NotFoundError("Project not found");
+    }
+
+    const totalIssues = project.issues.length;
+    const completedIssues = project.issues.filter((i) => i.status === "DONE");
+    const openIssues = project.issues.filter((i) => i.status !== "DONE");
+
+    let totalEstimatedHours = 0;
+    let completedHours = 0;
+    project.issues.forEach((i) => {
+      const hours = i.estimatedHours ? Number(i.estimatedHours) : 0;
+      totalEstimatedHours += hours;
+      if (i.status === "DONE") completedHours += hours;
+    });
+
+    let totalResolutionDays = 0;
+    completedIssues.forEach((i) => {
+      if (i.resolvedAt) {
+        const diffMs = new Date(i.resolvedAt).getTime() - new Date(i.createdAt).getTime();
+        totalResolutionDays += Math.max(0.1, diffMs / (1000 * 60 * 60 * 24));
+      }
+    });
+    const avgResolutionDays = completedIssues.length > 0
+      ? Number((totalResolutionDays / completedIssues.length).toFixed(1))
+      : 0;
+
+    const burndown = [];
+    const now = new Date();
+    const days = 14;
+    for (let d = days - 1; d >= 0; d--) {
+      const dayDate = new Date(now);
+      dayDate.setDate(dayDate.getDate() - d);
+      dayDate.setHours(23, 59, 59, 999);
+
+      const label = dayDate.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+      const createdUntilDay = project.issues.filter((i) => new Date(i.createdAt) <= dayDate);
+      const resolvedUntilDay = project.issues.filter((i) => i.status === "DONE" && i.resolvedAt && new Date(i.resolvedAt) <= dayDate);
+
+      const remainingCount = Math.max(0, createdUntilDay.length - resolvedUntilDay.length);
+      const idealRemaining = Math.max(0, Math.round(totalIssues - ((totalIssues / (days - 1)) * (days - 1 - d))));
+
+      burndown.push({
+        date: label,
+        actualRemaining: remainingCount,
+        idealRemaining,
+        completed: resolvedUntilDay.length,
+      });
+    }
+
+    const velocityWeekly = [];
+    for (let w = 3; w >= 0; w--) {
+      const start = new Date(now);
+      start.setDate(start.getDate() - (w + 1) * 7);
+      const end = new Date(now);
+      end.setDate(end.getDate() - w * 7);
+
+      const weekLabel = `Week ${4 - w}`;
+      const resolvedInWeek = completedIssues.filter((i) => {
+        if (!i.resolvedAt) return false;
+        const resTime = new Date(i.resolvedAt).getTime();
+        return resTime >= start.getTime() && resTime < end.getTime();
+      });
+
+      const tasksCompleted = resolvedInWeek.filter((i) => i.type === "TASK").length;
+      const bugsResolved = resolvedInWeek.filter((i) => i.type === "BUG").length;
+
+      velocityWeekly.push({
+        week: weekLabel,
+        tasks: tasksCompleted,
+        bugs: bugsResolved,
+        total: tasksCompleted + bugsResolved,
+      });
+    }
+
+    const memberStats = project.memberships.map((m) => {
+      const memberIssues = project.issues.filter((i) => i.assignee?.id === m.user.id);
+      const done = memberIssues.filter((i) => i.status === "DONE").length;
+      const inProgress = memberIssues.filter((i) => i.status === "IN_PROGRESS" || i.status === "IN_REVIEW").length;
+      const todo = memberIssues.filter((i) => i.status === "TODO").length;
+
+      return {
+        id: m.user.id,
+        name: m.user.name,
+        avatarUrl: m.user.avatarUrl,
+        total: memberIssues.length,
+        done,
+        inProgress,
+        todo,
+        velocityRate: memberIssues.length > 0 ? Math.round((done / memberIssues.length) * 100) : 0,
+      };
+    });
+
+    const priorityDistribution = {
+      CRITICAL: project.issues.filter((i) => i.priority === "CRITICAL").length,
+      HIGH: project.issues.filter((i) => i.priority === "HIGH").length,
+      MEDIUM: project.issues.filter((i) => i.priority === "MEDIUM").length,
+      LOW: project.issues.filter((i) => i.priority === "LOW").length,
+    };
+
+    return {
+      summary: {
+        totalIssues,
+        completedIssues: completedIssues.length,
+        openIssues: openIssues.length,
+        completionPercentage: totalIssues > 0 ? Math.round((completedIssues.length / totalIssues) * 100) : 0,
+        totalEstimatedHours,
+        completedHours,
+        avgResolutionDays,
+      },
+      burndown,
+      velocityWeekly,
+      priorityDistribution,
+      memberStats,
+    };
   }
 }

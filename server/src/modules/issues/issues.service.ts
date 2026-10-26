@@ -1,3 +1,5 @@
+import { realtimeHub } from "../../lib/events";
+import { WebhookService } from "../../lib/webhook";
 import { prisma } from "../../lib/prisma";
 import { NotFoundError, BadRequestError, ForbiddenError } from "../../lib/errors";
 import {
@@ -368,6 +370,31 @@ export class IssuesService {
         }
       }
 
+      // Broadcast real-time event to connected organization boards
+      realtimeHub.broadcast({
+        type: "ISSUE_CREATED",
+        organizationId: orgId,
+        projectId: input.projectId,
+        issueId: issue.id,
+        actorId: reporterId,
+        payload: { issue },
+      });
+
+      // Dispatch webhook (Discord / Slack / generic)
+      const clientOrigin = process.env.CLIENT_ORIGIN || "http://localhost:3000";
+      WebhookService.send(project.webhookUrl, {
+        event: issue.type === "BUG" ? "BUG_REPORTED" : "ISSUE_CREATED",
+        taskKey: issue.key,
+        title: issue.title,
+        type: issue.type,
+        status: issue.status,
+        priority: issue.priority,
+        actorName: issue.reporter?.name || "TeamFlow User",
+        assigneeName: issue.assignee?.name,
+        taskUrl: `${clientOrigin}/${issue.type === "BUG" ? "issues" : "tasks"}/${issue.id}`,
+        description: issue.description,
+      });
+
       return issue;
     });
   }
@@ -535,6 +562,15 @@ export class IssuesService {
         }
       }
 
+      realtimeHub.broadcast({
+        type: "ISSUE_UPDATED",
+        organizationId: orgId,
+        projectId: existing.projectId,
+        issueId,
+        actorId,
+        payload: { issue: updated },
+      });
+
       return updated;
     });
   }
@@ -610,6 +646,39 @@ export class IssuesService {
           },
         });
       }
+
+      // Broadcast status change to connected boards
+      realtimeHub.broadcast({
+        type: "STATUS_CHANGED",
+        organizationId: orgId,
+        projectId: existing.projectId,
+        issueId,
+        actorId,
+        payload: {
+          issueId,
+          from: existing.status,
+          to: input.status,
+          issue: updated,
+        },
+      });
+
+      // Dispatch webhook for status update
+      const project = await prisma.project.findUnique({
+        where: { id: existing.projectId },
+        select: { webhookUrl: true },
+      });
+      const clientOrigin = process.env.CLIENT_ORIGIN || "http://localhost:3000";
+      WebhookService.send(project?.webhookUrl, {
+        event: "STATUS_CHANGED",
+        taskKey: updated.key,
+        title: updated.title,
+        type: updated.type,
+        status: updated.status,
+        priority: updated.priority,
+        actorName: updated.reporter?.name || "TeamFlow User",
+        assigneeName: updated.assignee?.name,
+        taskUrl: `${clientOrigin}/${updated.type === "BUG" ? "issues" : "tasks"}/${updated.id}`,
+      });
 
       return updated;
     });

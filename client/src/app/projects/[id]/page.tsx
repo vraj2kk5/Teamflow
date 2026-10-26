@@ -18,9 +18,14 @@ import { Skeleton } from "../../../components/ui/Skeleton";
 import { Avatar } from "../../../components/ui/Avatar";
 import { EmptyState } from "../../../components/ui/EmptyState";
 import { KanbanBoard } from "../../../components/board/KanbanBoard";
+import { ProjectAnalyticsView } from "../../../components/analytics/ProjectAnalyticsView";
+import { AIBugAnalysisModal } from "../../../components/issues/AIBugAnalysisModal";
+import { useRealtime, RealtimeMessage } from "../../../hooks/useRealtime";
 import { IssueItem } from "../../../components/board/KanbanCard";
 import {
   FolderKanban,
+  BarChart3,
+  Sparkles,
   LayoutGrid,
   List,
   Bug,
@@ -52,6 +57,7 @@ interface ProjectDetail {
   status: "ACTIVE" | "ON_HOLD" | "COMPLETED" | "ARCHIVED";
   ownerId: string;
   inviteCode?: string | null;
+  webhookUrl?: string | null;
   owner: {
     id: string;
     name: string;
@@ -96,11 +102,13 @@ export default function ProjectDetailPage({
     clientCache.get<IssueItem[]>(`/projects/${projectId}/issues`) || []
   );
   const [orgMembers, setOrgMembers] = useState<{ id: string; user: { id: string; name: string; email: string } }[]>([]);
-  const [activeTab, setActiveTab] = useState<"board" | "list" | "bugs" | "members" | "settings">("board");
+  const [activeTab, setActiveTab] = useState<"board" | "list" | "bugs" | "analytics" | "members" | "settings">("board");
   const [isLoading, setIsLoading] = useState(() => !clientCache.get<ProjectDetail>(`/projects/${projectId}`));
   const [accessError, setAccessError] = useState<string | null>(null);
 
   // Create Issue Modal State
+  const [editWebhookUrl, setEditWebhookUrl] = useState("");
+  const [isAIModalOpen, setIsAIModalOpen] = useState(false);
   const [isIssueModalOpen, setIsIssueModalOpen] = useState(false);
   const [issueType, setIssueType] = useState<"TASK" | "BUG">("TASK");
   const [issueTitle, setIssueTitle] = useState("");
@@ -372,6 +380,7 @@ export default function ProjectDetailPage({
         name: editName.trim(),
         description: editDesc.trim() || undefined,
         status: editStatus,
+        webhookUrl: editWebhookUrl.trim() || null,
       });
       toastSuccess("Project settings saved");
       fetchProjectData();
@@ -621,6 +630,20 @@ export default function ProjectDetailPage({
           </span>
         </button>
 
+        
+        <button
+          onClick={() => setActiveTab("analytics")}
+          className={cn(
+            "flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-t-xl transition-all border-b-2",
+            activeTab === "analytics"
+              ? "border-indigo-600 text-indigo-600 dark:text-white bg-indigo-50/60 dark:bg-slate-900/50"
+              : "border-transparent text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200"
+          )}
+        >
+          <BarChart3 className="w-4 h-4 text-emerald-400" />
+          <span>Velocity & Burndown</span>
+        </button>
+
         <button
           onClick={() => setActiveTab("members")}
           className={cn(
@@ -818,6 +841,12 @@ export default function ProjectDetailPage({
       )}
 
       {/* Tab 4: Members View */}
+      
+      {/* Tab: Sprint Velocity & Burndown */}
+      {activeTab === "analytics" && (
+        <ProjectAnalyticsView projectId={projectId} />
+      )}
+
       {activeTab === "members" && (
         <div className="space-y-4">
           {/* Project Invitation Code Banner */}
@@ -945,6 +974,19 @@ export default function ProjectDetailPage({
                     { value: "ARCHIVED", label: "Archived" },
                   ]}
                 />
+                
+                <div className="space-y-1">
+                  <Input
+                    label="Discord / Slack Webhook URL"
+                    value={editWebhookUrl}
+                    onChange={(e) => setEditWebhookUrl(e.target.value)}
+                    placeholder="https://discord.com/api/webhooks/... or https://hooks.slack.com/..."
+                  />
+                  <p className="text-[11px] text-slate-500">
+                    Real-time notifications will be dispatched to your team channel on new tasks and status updates.
+                  </p>
+                </div>
+
                 <div className="pt-2">
                   <Button type="submit" isLoading={isSavingSettings}>
                     Save Changes
@@ -1106,6 +1148,26 @@ export default function ProjectDetailPage({
             </div>
           )}
 
+          
+            {issueType === "BUG" && (
+              <div className="flex items-center justify-between p-3 rounded-xl bg-indigo-950/40 border border-indigo-800/40">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-indigo-400 animate-pulse" />
+                  <span className="text-xs font-semibold text-indigo-200">AI Root Cause Diagnostics</span>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsAIModalOpen(true)}
+                  className="border-indigo-500/40 text-indigo-300 hover:bg-indigo-500/20 text-xs py-1 h-7"
+                >
+                  <Sparkles className="w-3.5 h-3.5 mr-1" />
+                  Diagnose with AI
+                </Button>
+              </div>
+            )}
+
           {/* Media Attachments Section */}
           <div className="space-y-2">
             <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
@@ -1250,6 +1312,22 @@ export default function ProjectDetailPage({
         message="Are you sure you want to delete this project? All associated tasks, bug reports, and media will be permanently deleted."
         confirmText="Yes, Delete Project"
         isLoading={isDeleting}
+      />
+      {/* AI Bug Analysis & Diagnostics Modal */}
+      <AIBugAnalysisModal
+        isOpen={isAIModalOpen}
+        onClose={() => setIsAIModalOpen(false)}
+        initialData={{
+          title: issueTitle,
+          description: issueDesc,
+        }}
+        onApplyDiagnosis={(suggested) => {
+          if (suggested.priority) setIssuePriority(suggested.priority);
+          if (suggested.resolutionNotes && !issueDesc.includes(suggested.resolutionNotes)) {
+            setIssueDesc((prev) => prev ? `${prev}\n\n[AI Diagnosis & Fix]: ${suggested.resolutionNotes}` : suggested.resolutionNotes!);
+          }
+          toastSuccess("AI suggested priority & fix applied to bug report!");
+        }}
       />
     </div>
   );

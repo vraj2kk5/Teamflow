@@ -47,6 +47,11 @@ export async function requireAuth(
       token = req.cookies?.token;
     }
 
+    // Support EventSource query token (?token=...)
+    if (!token && typeof req.query?.token === "string") {
+      token = req.query.token;
+    }
+
     if (!token) {
       throw new UnauthorizedError("Authentication token is missing");
     }
