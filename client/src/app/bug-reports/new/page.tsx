@@ -12,11 +12,13 @@ import { Textarea } from "../../../components/ui/Textarea";
 import { Card, CardHeader, CardTitle, CardContent } from "../../../components/ui/Card";
 import { Badge } from "../../../components/ui/Badge";
 import { AudioRecorderCard } from "../../../components/media/AudioRecorderCard";
+import { AIBugAnalysisModal } from "../../../components/issues/AIBugAnalysisModal";
 import { ScreenRecorderCard } from "../../../components/media/ScreenRecorderCard";
 import { ImageDropzone } from "../../../components/media/ImageDropzone";
 import { formatBytes } from "../../../lib/utils";
 import {
   Bug,
+  Sparkles,
   ArrowLeft,
   Terminal,
   Paperclip,
@@ -63,6 +65,7 @@ export default function NewBugReportPage() {
   const [expectedResult, setExpectedResult] = useState("");
   const [actualResult, setActualResult] = useState("");
   const [errorLog, setErrorLog] = useState("");
+  const [isAIModalOpen, setIsAIModalOpen] = useState(false);
 
   // Media Attachments
   const [attachedFiles, setAttachedFiles] = useState<AttachedMediaItem[]>([]);
@@ -374,7 +377,19 @@ export default function NewBugReportPage() {
       {/* Header */}
       <div>
         <div className="flex items-center gap-2">
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Report a Bug</h1>
+          <div className="flex-1 flex items-center justify-between">
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Report a Bug</h1>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setIsAIModalOpen(true)}
+              className="border-indigo-500/50 bg-indigo-950/30 text-indigo-300 hover:bg-indigo-500/20 text-xs py-1.5 h-8 flex items-center gap-1.5 shadow-sm"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-indigo-400 animate-pulse" />
+              <span>✨ AI Root Cause Diagnosis</span>
+            </Button>
+          </div>
           <Badge variant="danger" size="sm">
             <Bug className="w-3 h-3 mr-1 inline" />
             Visual Bug Reporting
@@ -465,6 +480,31 @@ export default function NewBugReportPage() {
             />
           </div>
         </Card>
+
+        {/* AI Diagnostic & Auto-Fill Assistant */}
+        <div className="flex items-center justify-between p-4 rounded-2xl bg-gradient-to-r from-indigo-950/60 to-purple-950/60 border border-indigo-800/40 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center">
+              <Sparkles className="w-5 h-5 animate-pulse" />
+            </div>
+            <div>
+              <h4 className="text-sm font-semibold text-white">AI Bug Triage & Code Locator</h4>
+              <p className="text-xs text-indigo-300/80">
+                Paste an error message or describe the issue to automatically predict priority, root cause & failing files.
+              </p>
+            </div>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setIsAIModalOpen(true)}
+            className="border-indigo-500/50 bg-indigo-900/40 text-indigo-200 hover:bg-indigo-500/30 text-xs font-semibold py-1.5 h-9 shrink-0 flex items-center gap-1.5"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+            <span>Analyze with AI</span>
+          </Button>
+        </div>
 
         {/* Step 2: Diagnostic & Reproduction Details */}
         <Card className="space-y-4">
@@ -699,6 +739,35 @@ export default function NewBugReportPage() {
           </Button>
         </div>
       </form>
+      {/* AI Bug Analysis & Code Locator Modal */}
+      <AIBugAnalysisModal
+        isOpen={isAIModalOpen}
+        onClose={() => setIsAIModalOpen(false)}
+        initialData={{
+          title,
+          description,
+          errorLog,
+          stepsToReproduce,
+          expectedResult,
+          actualResult,
+        }}
+        onApplyDiagnosis={(suggested) => {
+          if (suggested.priority) {
+            setPriority(suggested.priority);
+          }
+          if (suggested.resolutionNotes) {
+            setDescription((prev) =>
+              prev
+                ? `${prev}\n\n[AI Root Cause & Fix]:\n${suggested.resolutionNotes}`
+                : `[AI Root Cause & Fix]:\n${suggested.resolutionNotes}`
+            );
+          }
+          if (suggested.stepsToReproduce && !stepsToReproduce) {
+            setStepsToReproduce(suggested.stepsToReproduce);
+          }
+          toastSuccess("AI suggested priority, diagnosis & steps applied to form!");
+        }}
+      />
     </div>
   );
 }
