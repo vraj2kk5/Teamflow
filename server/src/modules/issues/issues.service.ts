@@ -413,6 +413,15 @@ export class IssuesService {
       throw new NotFoundError("Issue not found");
     }
 
+    // Bug priority restriction: Only the user who reported this bug can update its priority
+    if (existing.type === "BUG" && input.priority && input.priority !== existing.priority) {
+      if (existing.reporterId !== actorId) {
+        throw new ForbiddenError(
+          "Only the user who reported this bug can update its priority"
+        );
+      }
+    }
+
     if (input.assigneeId && input.assigneeId !== existing.assigneeId) {
       const assigneeOrgMembership = await prisma.organizationMembership.findUnique({
         where: {

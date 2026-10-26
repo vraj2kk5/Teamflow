@@ -371,6 +371,10 @@ export function IssueDetailView({ id, expectedType }: IssueDetailViewProps) {
 
   const handlePriorityChange = async (newPriority: IssueDetail["priority"]) => {
     if (!issue) return;
+    if (isBug && !isReporter) {
+      toastError("Only the user who reported this bug can update its priority", "Permission Denied");
+      return;
+    }
     try {
       await api.patch(`/issues/${id}`, { priority: newPriority });
       setIssue((prev) => (prev ? { ...prev, priority: newPriority } : null));
@@ -915,18 +919,44 @@ export function IssueDetailView({ id, expectedType }: IssueDetailViewProps) {
                 ]}
               />
 
-              {/* Priority Select */}
-              <Select
-                label="Priority"
-                value={issue.priority}
-                onChange={(e) => handlePriorityChange(e.target.value as IssueDetail["priority"])}
-                options={[
-                  { value: "LOW", label: "Low" },
-                  { value: "MEDIUM", label: "Medium" },
-                  { value: "HIGH", label: "High" },
-                  { value: "CRITICAL", label: "Critical" },
-                ]}
-              />
+              {/* Priority Select (Editable only by reporter if bug) */}
+              {isBug && !isReporter ? (
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+                    Priority
+                  </label>
+                  <div className="flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-sm">
+                    <Badge
+                      variant={
+                        issue.priority === "CRITICAL"
+                          ? "danger"
+                          : issue.priority === "HIGH"
+                          ? "orange"
+                          : issue.priority === "MEDIUM"
+                          ? "warning"
+                          : "neutral"
+                      }
+                    >
+                      {issue.priority}
+                    </Badge>
+                    <span className="text-[11px] text-slate-500 italic">
+                      Locked (defined by reporter: {issue.reporter.name})
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <Select
+                  label="Priority"
+                  value={issue.priority}
+                  onChange={(e) => handlePriorityChange(e.target.value as IssueDetail["priority"])}
+                  options={[
+                    { value: "LOW", label: "Low" },
+                    { value: "MEDIUM", label: "Medium" },
+                    { value: "HIGH", label: "High" },
+                    { value: "CRITICAL", label: "Critical" },
+                  ]}
+                />
+              )}
 
               {/* If Task: Single Assignee. If Bug: Collaborative / Open to All Project Members */}
               {isTask ? (
@@ -1087,12 +1117,16 @@ export function IssueDetailView({ id, expectedType }: IssueDetailViewProps) {
         }}
         onApplyDiagnosis={async (suggested) => {
           if (suggested.priority) {
-            await handlePriorityChange(suggested.priority);
+            if (isBug && !isReporter) {
+              toastError("Bug priority is locked to the original reporter", "Permission Notice");
+            } else {
+              await handlePriorityChange(suggested.priority);
+            }
           }
           if (suggested.resolutionNotes) {
             setResolutionNotes(suggested.resolutionNotes);
           }
-          toastSuccess("AI suggested priority applied to issue!");
+          toastSuccess("AI diagnosis applied!");
         }}
       />
     </div>
