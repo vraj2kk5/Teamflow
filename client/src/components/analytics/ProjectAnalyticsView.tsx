@@ -67,8 +67,9 @@ export function ProjectAnalyticsView({ projectId }: { projectId: string }) {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await api.get<{ data: AnalyticsData }>(`/projects/${projectId}/analytics`);
-      setData(res.data);
+      const res = await api.get<any>(`/projects/${projectId}/analytics`);
+      const analyticsData: AnalyticsData = res?.data || res;
+      setData(analyticsData);
     } catch (err: any) {
       setError(err?.message || "Failed to load project analytics");
     } finally {

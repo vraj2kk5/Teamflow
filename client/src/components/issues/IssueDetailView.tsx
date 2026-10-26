@@ -412,8 +412,9 @@ export function IssueDetailView({ id, expectedType }: IssueDetailViewProps) {
         errorLog: issue.errorLog,
         actualResult: issue.actualResult,
       })
-      .then((res) => {
-        if (res.data) setAffectedFiles(res.data);
+      .then((res: any) => {
+        const files: AffectedFileLocation[] = Array.isArray(res) ? res : res?.data || [];
+        if (files.length > 0) setAffectedFiles(files);
       })
       .catch(() => {
         // Non-critical background enhancement

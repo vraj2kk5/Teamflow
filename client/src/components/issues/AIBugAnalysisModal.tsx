@@ -57,13 +57,30 @@ export function AIBugAnalysisModal({
   const [result, setResult] = useState<AIAnalysisResult | null>(null);
   const [copiedFix, setCopiedFix] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [promptText, setPromptText] = useState("");
 
-  const runAnalysis = async () => {
+  const runAnalysis = async (customPrompt?: string) => {
     setIsAnalyzing(true);
     setError(null);
     try {
-      const res = await api.post<{ data: AIAnalysisResult }>("/issues/ai-analyze", initialData);
-      setResult(res.data);
+      const activeText = customPrompt !== undefined ? customPrompt : promptText;
+      const payload = {
+        title: initialData.title || (activeText ? activeText.slice(0, 80) : undefined),
+        description: initialData.description || activeText || undefined,
+        errorLog: initialData.errorLog || activeText || undefined,
+        stepsToReproduce: initialData.stepsToReproduce || undefined,
+        expectedResult: initialData.expectedResult || undefined,
+        actualResult: initialData.actualResult || undefined,
+      };
+
+      const res = await api.post<any>("/issues/ai-analyze", payload);
+      const analysisData: AIAnalysisResult = (res && res.suggestedPriority) ? res : (res?.data || res);
+      
+      if (analysisData && analysisData.suggestedPriority) {
+        setResult(analysisData);
+      } else {
+        throw new Error("Unable to parse diagnosis results from the AI service");
+      }
     } catch (err: any) {
       setError(err?.message || "Failed to analyze bug with AI engine");
     } finally {
@@ -72,8 +89,17 @@ export function AIBugAnalysisModal({
   };
 
   React.useEffect(() => {
-    if (isOpen && !result && !isAnalyzing) {
-      runAnalysis();
+    if (isOpen) {
+      const initialText =
+        initialData.errorLog?.trim() ||
+        initialData.description?.trim() ||
+        initialData.title?.trim() ||
+        "";
+      setPromptText(initialText);
+      runAnalysis(initialText);
+    } else {
+      setResult(null);
+      setError(null);
     }
   }, [isOpen]);
 
@@ -97,7 +123,7 @@ export function AIBugAnalysisModal({
       title="AI Bug Diagnosis & Root Cause Analysis"
       maxWidth="2xl"
     >
-      <div className="space-y-5">
+      <div className="space-y-4">
         {/* Header Engine Banner */}
         <div className="flex items-center justify-between p-3.5 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950/60 dark:to-purple-950/60 border border-indigo-100 dark:border-indigo-800/40 rounded-xl">
           <div className="flex items-center gap-2.5">
@@ -118,6 +144,45 @@ export function AIBugAnalysisModal({
               {result.reproductionConfidence}% Confidence
             </Badge>
           )}
+        </div>
+
+        {/* Quick Context Input Bar */}
+        <div className="p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl space-y-2">
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+              Diagnostic Context (Error Log, Symptoms or Stack Trace)
+            </label>
+            <span className="text-[11px] text-slate-500">
+              {promptText ? "Synced with form" : "Paste error text & hit Enter"}
+            </span>
+          </div>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={promptText}
+              onChange={(e) => setPromptText(e.target.value)}
+              placeholder="e.g., Cannot read properties of undefined, or Prisma error P2002..."
+              disabled={isAnalyzing}
+              className="flex-1 px-3 py-1.5 text-xs bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-indigo-500"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  runAnalysis(promptText);
+                }
+              }}
+            />
+            <Button
+              type="button"
+              size="sm"
+              variant="primary"
+              disabled={isAnalyzing}
+              onClick={() => runAnalysis(promptText)}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs px-3 h-8 shrink-0 flex items-center gap-1.5"
+            >
+              <RotateCw className={`w-3 h-3 ${isAnalyzing ? "animate-spin" : ""}`} />
+              <span>{isAnalyzing ? "Analyzing..." : "Re-Diagnose"}</span>
+            </Button>
+          </div>
         </div>
 
         {/* Loading State */}
@@ -142,7 +207,7 @@ export function AIBugAnalysisModal({
               <h5 className="text-sm font-semibold text-rose-800 dark:text-rose-300">Analysis Error</h5>
               <p className="text-xs text-rose-700 dark:text-rose-300/80 mt-1">{error}</p>
               <button
-                onClick={runAnalysis}
+                onClick={() => runAnalysis()}
                 className="mt-3 text-xs font-semibold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 flex items-center gap-1.5"
               >
                 <RotateCw className="w-3.5 h-3.5" /> Retry Diagnostics
