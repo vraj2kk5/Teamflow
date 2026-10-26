@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { CodeLocatorCard, AffectedFileLocation } from "./CodeLocatorCard";
 import { Modal } from "../ui/Modal";
 import { Button } from "../ui/Button";
 import { Badge } from "../ui/Badge";
@@ -25,6 +26,7 @@ interface AIAnalysisResult {
   suggestedStepsToReproduce: string[];
   reproductionConfidence: number;
   aiEngine: string;
+  affectedFiles?: AffectedFileLocation[];
 }
 
 interface AIBugAnalysisModalProps {
@@ -212,6 +214,11 @@ export function AIBugAnalysisModal({
                   ))}
                 </ol>
               </div>
+            )}
+
+            {/* Pinpointed Code Locations */}
+            {result.affectedFiles && result.affectedFiles.length > 0 && (
+              <CodeLocatorCard files={result.affectedFiles} />
             )}
 
             {/* Actions */}

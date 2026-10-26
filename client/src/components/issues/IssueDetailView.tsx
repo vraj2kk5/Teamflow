@@ -38,6 +38,7 @@ import {
 } from "lucide-react";
 import { MediaPlayer } from "../media/MediaPlayer";
 import { AIBugAnalysisModal } from "./AIBugAnalysisModal";
+import { CodeLocatorCard, AffectedFileLocation } from "./CodeLocatorCard";
 import { useRealtime, RealtimeMessage } from "../../hooks/useRealtime";
 import { formatDate, formatDateTime } from "../../lib/utils";
 import { clientCache } from "../../lib/cache";
@@ -175,6 +176,7 @@ export function IssueDetailView({ id, expectedType }: IssueDetailViewProps) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isAIModalOpen, setIsAIModalOpen] = useState(false);
+  const [affectedFiles, setAffectedFiles] = useState<AffectedFileLocation[]>([]);
   const [isResolveModalOpen, setIsResolveModalOpen] = useState(false);
   const [resolutionInput, setResolutionInput] = useState("");
 
@@ -394,6 +396,25 @@ export function IssueDetailView({ id, expectedType }: IssueDetailViewProps) {
       }
     }
   };
+
+  
+  // Automatically identify and locate problematic files for this issue
+  useEffect(() => {
+    if (!issue) return;
+    api
+      .post<{ data: AffectedFileLocation[] }>("/issues/locate-files", {
+        title: issue.title,
+        description: issue.description,
+        errorLog: issue.errorLog,
+        actualResult: issue.actualResult,
+      })
+      .then((res) => {
+        if (res.data) setAffectedFiles(res.data);
+      })
+      .catch(() => {
+        // Non-critical background enhancement
+      });
+  }, [issue?.id, issue?.errorLog, issue?.title, issue?.description, issue?.actualResult]);
 
   const handleCopyErrorLog = () => {
     if (!issue?.errorLog) return;
@@ -658,6 +679,11 @@ export function IssueDetailView({ id, expectedType }: IssueDetailViewProps) {
                 </div>
               )}
             </Card>
+          )}
+
+          {/* Pinpointed Code & File Locations */}
+          {affectedFiles.length > 0 && (
+            <CodeLocatorCard files={affectedFiles} />
           )}
 
           {/* Media Attachments Section */}

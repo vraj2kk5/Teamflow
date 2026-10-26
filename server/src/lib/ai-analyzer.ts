@@ -1,3 +1,4 @@
+import { CodeLocator, AffectedFileLocation } from "./code-locator";
 import { Priority } from "@prisma/client";
 import { logger } from "./logger";
 
@@ -24,6 +25,7 @@ export interface BugAnalysisResult {
   suggestedStepsToReproduce: string[];
   reproductionConfidence: number;
   aiEngine: "Gemini AI" | "Heuristic Diagnostics Engine";
+  affectedFiles: AffectedFileLocation[];
 }
 
 export class AIBugAnalyzer {
@@ -31,18 +33,24 @@ export class AIBugAnalyzer {
    * Analyzes bug details using Gemini AI if key exists, with fallback to intelligent local diagnostic engine.
    */
   static async analyze(input: BugAnalysisInput): Promise<BugAnalysisResult> {
+    const affectedFiles = CodeLocator.locate(input);
     const geminiKey = process.env.GEMINI_API_KEY?.trim();
 
+    let result: BugAnalysisResult | null = null;
     if (geminiKey) {
       try {
-        const result = await this.callGemini(geminiKey, input);
-        if (result) return result;
+        result = await this.callGemini(geminiKey, input);
       } catch (err) {
         logger.warn("[AI-ANALYZER] Gemini API call failed, falling back to heuristic engine", err);
       }
     }
 
-    return this.heuristicAnalyze(input);
+    if (!result) {
+      result = this.heuristicAnalyze(input);
+    }
+
+    result.affectedFiles = affectedFiles;
+    return result;
   }
 
   private static async callGemini(
@@ -145,6 +153,7 @@ Actual Result: ${input.actualResult || "N/A"}`;
         ],
         reproductionConfidence: 95,
         aiEngine: "Heuristic Diagnostics Engine",
+        affectedFiles: [],
       };
     }
 
@@ -173,6 +182,7 @@ Actual Result: ${input.actualResult || "N/A"}`;
         ],
         reproductionConfidence: 90,
         aiEngine: "Heuristic Diagnostics Engine",
+        affectedFiles: [],
       };
     }
 
