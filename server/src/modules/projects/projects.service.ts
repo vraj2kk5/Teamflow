@@ -220,8 +220,6 @@ export class ProjectsService {
           ownerId: creatorId,
           inviteCode,
           webhookUrl: input.webhookUrl || null,
-          repositoryUrl: input.repositoryUrl || null,
-          defaultBranch: input.defaultBranch || "main",
         },
       });
 
@@ -262,8 +260,6 @@ export class ProjectsService {
           description: input.description,
           status: input.status,
           webhookUrl: input.webhookUrl !== undefined ? (input.webhookUrl || null) : undefined,
-          repositoryUrl: input.repositoryUrl !== undefined ? (input.repositoryUrl || null) : undefined,
-          defaultBranch: input.defaultBranch !== undefined ? (input.defaultBranch || "main") : undefined,
         },
       });
 

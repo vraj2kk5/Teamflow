@@ -129,9 +129,6 @@ model Project {
   ownerId        String
   inviteCode     String?       @unique
   webhookUrl     String?
-  repositoryUrl  String?
-  defaultBranch  String?       @default("main")
-  gitHubToken    String?
   issueSequence  Int           @default(0)
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
@@ -182,9 +179,6 @@ model Issue {
   expectedResult   String?
   actualResult     String?
   errorLog         String?   @db.Text
-  filePath         String?
-  lineNumber       Int?
-  codeSnippet      String?   @db.Text
   resolvedAt       DateTime?
   resolutionNotes  String?   @db.Text
 

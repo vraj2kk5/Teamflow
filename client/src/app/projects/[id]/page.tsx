@@ -32,7 +32,6 @@ import {
   Settings,
   Plus,
   Trash2,
-  FolderGit2,
   Calendar,
   CheckCircle2,
   AlertCircle,
@@ -58,8 +57,6 @@ interface ProjectDetail {
   ownerId: string;
   inviteCode?: string | null;
   webhookUrl?: string | null;
-  repositoryUrl?: string | null;
-  defaultBranch?: string | null;
   owner: {
     id: string;
     name: string;
@@ -110,8 +107,6 @@ export default function ProjectDetailPage({
 
   // Create Issue Modal State
   const [editWebhookUrl, setEditWebhookUrl] = useState("");
-  const [editRepositoryUrl, setEditRepositoryUrl] = useState("");
-  const [editDefaultBranch, setEditDefaultBranch] = useState("main");
   const [isIssueModalOpen, setIsIssueModalOpen] = useState(false);
   const [issueType, setIssueType] = useState<"TASK" | "BUG">("TASK");
   const [issueTitle, setIssueTitle] = useState("");
@@ -196,9 +191,6 @@ export default function ProjectDetailPage({
       setEditName(projData.name);
       setEditDesc(projData.description || "");
       setEditStatus(projData.status);
-      setEditWebhookUrl(projData.webhookUrl || "");
-      setEditRepositoryUrl(projData.repositoryUrl || "");
-      setEditDefaultBranch(projData.defaultBranch || "main");
       const rawIssues = Array.isArray(issuesData)
         ? issuesData
         : (issuesData as { data?: IssueItem[] })?.data || [];
@@ -387,8 +379,6 @@ export default function ProjectDetailPage({
         description: editDesc.trim() || undefined,
         status: editStatus,
         webhookUrl: editWebhookUrl.trim() || null,
-        repositoryUrl: editRepositoryUrl.trim() || null,
-        defaultBranch: editDefaultBranch.trim() || "main",
       });
       toastSuccess("Project settings saved");
       fetchProjectData();
@@ -993,52 +983,6 @@ export default function ProjectDetailPage({
                   <p className="text-[11px] text-slate-500">
                     Real-time notifications will be dispatched to your team channel on new tasks and status updates.
                   </p>
-                </div>
-
-                {/* Git Repository Integration */}
-                <div className="space-y-3 p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-                        <FolderGit2 className="w-4 h-4 text-indigo-500" />
-                        <span>Linked Git Repository</span>
-                      </h4>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                        Connect your GitHub or Git repository to enable in-browser code file viewing, autocomplete, and direct downloads.
-                      </p>
-                    </div>
-                    {editRepositoryUrl && (
-                      <Badge variant="primary" size="sm">
-                        Connected
-                      </Badge>
-                    )}
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
-                    <div className="sm:col-span-2 space-y-1">
-                      <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
-                        Repository URL or Owner/Repo
-                      </label>
-                      <Input
-                        value={editRepositoryUrl}
-                        onChange={(e) => setEditRepositoryUrl(e.target.value)}
-                        placeholder="e.g. https://github.com/vraj2kk5/Teamflow or vraj2kk5/Teamflow"
-                        className="font-mono text-xs"
-                      />
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
-                        Default Branch
-                      </label>
-                      <Input
-                        value={editDefaultBranch}
-                        onChange={(e) => setEditDefaultBranch(e.target.value)}
-                        placeholder="main"
-                        className="font-mono text-xs"
-                      />
-                    </div>
-                  </div>
                 </div>
 
                 <div className="pt-2">

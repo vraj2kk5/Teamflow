@@ -37,7 +37,6 @@ import {
   Users,
 } from "lucide-react";
 import { MediaPlayer } from "../media/MediaPlayer";
-import { CodeFileViewer } from "../code/CodeFileViewer";
 import { useRealtime, RealtimeMessage } from "../../hooks/useRealtime";
 import { formatDate, formatDateTime } from "../../lib/utils";
 import { clientCache } from "../../lib/cache";
@@ -57,9 +56,6 @@ export interface IssueDetail {
   expectedResult?: string | null;
   actualResult?: string | null;
   errorLog?: string | null;
-  filePath?: string | null;
-  lineNumber?: number | null;
-  codeSnippet?: string | null;
   resolvedAt?: string | null;
   resolutionNotes?: string | null;
   createdAt: string;
@@ -67,8 +63,6 @@ export interface IssueDetail {
   project: {
     id: string;
     name: string;
-    repositoryUrl?: string | null;
-    defaultBranch?: string | null;
     memberships: {
       user: {
         id: string;
@@ -658,19 +652,6 @@ export function IssueDetailView({ id, expectedType }: IssueDetailViewProps) {
                 </div>
               )}
             </Card>
-          )}
-
-          {/* In-Browser Problematic Code File Viewer & Download */}
-          {(issue.filePath || issue.codeSnippet || (issue.errorLog && issue.errorLog.includes("."))) && (
-            <CodeFileViewer
-              filePath={issue.filePath}
-              lineNumber={issue.lineNumber}
-              codeSnippet={issue.codeSnippet}
-              errorLog={issue.errorLog}
-              projectId={issue.projectId}
-              repositoryUrl={issue.project?.repositoryUrl}
-              defaultBranch={issue.project?.defaultBranch}
-            />
           )}
 
           {/* Media Attachments Section */}

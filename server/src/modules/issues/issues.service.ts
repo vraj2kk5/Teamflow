@@ -140,8 +140,6 @@ export class IssuesService {
             id: true,
             name: true,
             status: true,
-            repositoryUrl: true,
-            defaultBranch: true,
             memberships: {
               include: {
                 user: {
@@ -304,9 +302,6 @@ export class IssuesService {
           expectedResult: input.expectedResult || null,
           actualResult: input.actualResult || null,
           errorLog: input.errorLog || null,
-          filePath: input.filePath || null,
-          lineNumber: input.lineNumber || null,
-          codeSnippet: input.codeSnippet || null,
         },
         include: {
           project: { select: { id: true, name: true } },
@@ -481,9 +476,6 @@ export class IssuesService {
           expectedResult: input.expectedResult !== undefined ? input.expectedResult : existing.expectedResult,
           actualResult: input.actualResult !== undefined ? input.actualResult : existing.actualResult,
           errorLog: input.errorLog !== undefined ? input.errorLog : existing.errorLog,
-          filePath: input.filePath !== undefined ? input.filePath : existing.filePath,
-          lineNumber: input.lineNumber !== undefined ? input.lineNumber : existing.lineNumber,
-          codeSnippet: input.codeSnippet !== undefined ? input.codeSnippet : existing.codeSnippet,
           resolvedAt,
         },
         include: {

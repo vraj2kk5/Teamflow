@@ -16,9 +16,6 @@ export const createIssueSchema = z.object({
   expectedResult: z.string().trim().nullable().optional(),
   actualResult: z.string().trim().nullable().optional(),
   errorLog: z.string().trim().max(25000, "Error log exceeds maximum length").nullable().optional(),
-  filePath: z.string().trim().max(500).nullable().optional(),
-  lineNumber: z.number().int().min(1).nullable().optional(),
-  codeSnippet: z.string().trim().max(50000).nullable().optional(),
 });
 
 export const updateIssueSchema = z.object({
@@ -36,9 +33,6 @@ export const updateIssueSchema = z.object({
   expectedResult: z.string().trim().nullable().optional(),
   actualResult: z.string().trim().nullable().optional(),
   errorLog: z.string().trim().max(25000).nullable().optional(),
-  filePath: z.string().trim().max(500).nullable().optional(),
-  lineNumber: z.number().int().min(1).nullable().optional(),
-  codeSnippet: z.string().trim().max(50000).nullable().optional(),
 });
 
 export const updateIssueStatusSchema = z.object({

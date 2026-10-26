@@ -17,8 +17,6 @@ import { ImageDropzone } from "../../../components/media/ImageDropzone";
 import { formatBytes } from "../../../lib/utils";
 import {
   Bug,
-  FileCode2,
-  FolderGit2,
   ArrowLeft,
   Terminal,
   Paperclip,
@@ -65,45 +63,6 @@ export default function NewBugReportPage() {
   const [expectedResult, setExpectedResult] = useState("");
   const [actualResult, setActualResult] = useState("");
   const [errorLog, setErrorLog] = useState("");
-  const [filePath, setFilePath] = useState("");
-  const [lineNumber, setLineNumber] = useState("");
-  const [codeSnippet, setCodeSnippet] = useState("");
-  const [repoFiles, setRepoFiles] = useState<string[]>([]);
-  const [repoInfo, setRepoInfo] = useState<{ url?: string | null; branch?: string | null }>({});
-  const [isLoadingRepoFiles, setIsLoadingRepoFiles] = useState(false);
-  const [showFileSuggestions, setShowFileSuggestions] = useState(false);
-
-  // Autocomplete suggestions based on repo files
-  const filteredFiles = React.useMemo(() => {
-    if (!repoFiles || repoFiles.length === 0) return [];
-    if (!filePath.trim()) {
-      return repoFiles.slice(0, 8);
-    }
-    const query = filePath.toLowerCase();
-    return repoFiles.filter((f) => f.toLowerCase().includes(query)).slice(0, 8);
-  }, [repoFiles, filePath]);
-
-  // Quick preset chips dynamically derived from repo files or sensible defaults
-  const quickSuggestions = React.useMemo(() => {
-    if (repoFiles && repoFiles.length > 0) {
-      const candidates = repoFiles.filter(
-        (f) =>
-          f.includes("page.tsx") ||
-          f.includes("service.ts") ||
-          f.includes("schema.prisma") ||
-          f.includes("controller.ts") ||
-          f.includes("routes.ts")
-      );
-      return (candidates.length >= 4 ? candidates : repoFiles).slice(0, 5);
-    }
-    return [
-      "client/src/components/board/KanbanBoard.tsx",
-      "client/src/components/issues/IssueDetailView.tsx",
-      "client/src/components/media/MediaPlayer.tsx",
-      "server/src/modules/issues/issues.service.ts",
-      "server/prisma/schema.prisma",
-    ];
-  }, [repoFiles]);
 
   // Media Attachments
   const [attachedFiles, setAttachedFiles] = useState<AttachedMediaItem[]>([]);
@@ -141,27 +100,6 @@ export default function NewBugReportPage() {
     }
     loadProjects();
   }, [toastError]);
-
-  // Load project's linked repository files for intelligent autocomplete
-  useEffect(() => {
-    if (!projectId) return;
-    setIsLoadingRepoFiles(true);
-    api
-      .get<{ data: { files: string[]; repositoryUrl?: string | null; defaultBranch?: string | null } }>(
-        `/projects/${projectId}/files`
-      )
-      .then((res: any) => {
-        const data = res?.data || res;
-        if (data?.files) {
-          setRepoFiles(data.files);
-          setRepoInfo({ url: data.repositoryUrl, branch: data.defaultBranch });
-        }
-      })
-      .catch(() => {
-        // silent fallback
-      })
-      .finally(() => setIsLoadingRepoFiles(false));
-  }, [projectId]);
 
   // Audio callback
   const handleAttachAudio = (file: File, durationSeconds: number) => {
@@ -317,9 +255,6 @@ export default function NewBugReportPage() {
           expectedResult: expectedResult.trim() || undefined,
           actualResult: actualResult.trim() || undefined,
           errorLog: errorLog.trim() || undefined,
-          filePath: filePath.trim() || undefined,
-          lineNumber: lineNumber.trim() ? parseInt(lineNumber.trim(), 10) : undefined,
-          codeSnippet: codeSnippet.trim() || undefined,
         };
 
         const res = await api.post<{ id: string; key: string }>("/issues", issuePayload);
@@ -593,199 +528,12 @@ export default function NewBugReportPage() {
             </div>
             <textarea
               value={errorLog}
-              onChange={(e) => {
-                const val = e.target.value;
-                setErrorLog(val);
-                if (!filePath) {
-                  const match = val.match(/(?:at\s+[\w$.]+\s+\()?(?:[A-Za-z]:[\\/])?([a-zA-Z0-9_\-./\\]+\.(?:tsx|ts|jsx|js|prisma|sql)):(\d+)/i);
-                  if (match) {
-                    let extracted = match[1].replace(/\\/g, "/");
-                    const clientIdx = extracted.indexOf("client/src/");
-                    const serverIdx = extracted.indexOf("server/src/");
-                    const prismaIdx = extracted.indexOf("server/prisma/");
-                    if (clientIdx !== -1) extracted = extracted.substring(clientIdx);
-                    else if (serverIdx !== -1) extracted = extracted.substring(serverIdx);
-                    else if (prismaIdx !== -1) extracted = extracted.substring(prismaIdx);
-                    setFilePath(extracted);
-                    if (!lineNumber) setLineNumber(match[2]);
-                  }
-                }
-              }}
+              onChange={(e) => setErrorLog(e.target.value)}
               placeholder="Paste terminal errors, API response failures, or stack traces here..."
               rows={4}
               disabled={!!createdIssue || isSubmitting}
               className="w-full rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-3 text-xs font-mono text-rose-600 dark:text-rose-300 placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:border-indigo-500"
             />
-          </div>
-
-          {/* Code Location & Target File (Helps developers pinpoint and download file) */}
-          <div className="p-4 rounded-xl bg-indigo-50/50 dark:bg-slate-950/70 border border-indigo-100 dark:border-slate-800 space-y-3">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-                <FileCode2 className="w-4 h-4 text-indigo-500" />
-                <span>Problematic Code File & Line (Auto-detected or Manual)</span>
-              </label>
-              <span className="text-[11px] text-slate-500">
-                Teammates can view and download this file directly
-              </span>
-            </div>
-
-            {/* Repository status badge or link */}
-            <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
-              {repoInfo.url ? (
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-emerald-800 dark:text-emerald-300 text-xs font-medium">
-                    <FolderGit2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                    <span>Repo: {repoInfo.url.replace(/^https:\/\/github\.com\//, "").replace(/\.git$/, "")}</span>
-                    {repoInfo.branch && (
-                      <span className="ml-1 px-1.5 py-0.5 bg-emerald-200 dark:bg-emerald-900 text-emerald-900 dark:text-emerald-100 rounded text-[10px] font-mono">
-                        {repoInfo.branch}
-                      </span>
-                    )}
-                  </span>
-                  {isLoadingRepoFiles ? (
-                    <span className="text-[11px] text-slate-400 flex items-center gap-1">
-                      <RefreshCw className="w-3 h-3 animate-spin text-indigo-500" />
-                      Loading repository files...
-                    </span>
-                  ) : (
-                    <span className="text-[11px] text-slate-500">
-                      ({repoFiles.length} files available)
-                    </span>
-                  )}
-                </div>
-              ) : (
-                <div className="flex items-center gap-2 text-xs text-slate-500">
-                  <FolderGit2 className="w-3.5 h-3.5 text-slate-400" />
-                  <span>Workspace files</span>
-                  {projectId && (
-                    <Link
-                      href={`/projects/${projectId}?tab=settings`}
-                      target="_blank"
-                      className="text-indigo-600 dark:text-indigo-400 hover:underline inline-flex items-center gap-1 text-[11px]"
-                    >
-                      <span>Link GitHub Repository</span>
-                      <ExternalLink className="w-3 h-3" />
-                    </Link>
-                  )}
-                </div>
-              )}
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-              <div className="sm:col-span-3 space-y-1 relative">
-                <label className="text-[11px] font-medium text-slate-600 dark:text-slate-400 flex items-center justify-between">
-                  <span>Relative File Path</span>
-                  {repoFiles.length > 0 && (
-                    <span className="text-[10px] text-indigo-500 dark:text-indigo-400">
-                      Type to filter repository files
-                    </span>
-                  )}
-                </label>
-                <div className="relative">
-                  <Input
-                    value={filePath}
-                    onChange={(e) => {
-                      setFilePath(e.target.value);
-                      setShowFileSuggestions(true);
-                    }}
-                    onFocus={() => setShowFileSuggestions(true)}
-                    onBlur={() => {
-                      setTimeout(() => setShowFileSuggestions(false), 200);
-                    }}
-                    placeholder="e.g. client/src/components/board/KanbanBoard.tsx"
-                    disabled={!!createdIssue || isSubmitting}
-                    className="font-mono text-xs pr-8"
-                  />
-                  {filePath && (
-                    <button
-                      type="button"
-                      onClick={() => setFilePath("")}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs"
-                      title="Clear path"
-                    >
-                      ✕
-                    </button>
-                  )}
-                </div>
-
-                {/* Autocomplete Dropdown */}
-                {showFileSuggestions && filteredFiles.length > 0 && !createdIssue && (
-                  <div className="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl z-30 max-h-60 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800">
-                    <div className="px-3 py-1.5 bg-slate-50 dark:bg-slate-950/80 text-[10px] uppercase font-bold text-slate-400 tracking-wider flex items-center justify-between sticky top-0">
-                      <span>Matching Files ({filteredFiles.length})</span>
-                      <span className="text-[9px] font-normal lowercase">click to select</span>
-                    </div>
-                    {filteredFiles.map((file) => {
-                      const parts = file.split("/");
-                      const fileName = parts.pop();
-                      const dirPath = parts.join("/");
-                      return (
-                        <button
-                          key={file}
-                          type="button"
-                          onMouseDown={() => {
-                            setFilePath(file);
-                            setShowFileSuggestions(false);
-                          }}
-                          className={`w-full text-left px-3 py-2 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 flex items-center justify-between gap-2 group transition-colors ${
-                            filePath === file ? "bg-indigo-50/70 dark:bg-indigo-950/50" : ""
-                          }`}
-                        >
-                          <div className="min-w-0">
-                            <span className="text-xs font-mono font-medium text-slate-800 dark:text-slate-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 truncate block">
-                              {fileName}
-                            </span>
-                            {dirPath && (
-                              <span className="text-[10px] font-mono text-slate-400 truncate block">
-                                {dirPath}/
-                              </span>
-                            )}
-                          </div>
-                          <FileCode2 className="w-3.5 h-3.5 text-slate-400 group-hover:text-indigo-500 shrink-0" />
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-[11px] font-medium text-slate-600 dark:text-slate-400">
-                  Line # (Optional)
-                </label>
-                <Input
-                  type="number"
-                  value={lineNumber}
-                  onChange={(e) => setLineNumber(e.target.value)}
-                  placeholder="e.g. 42"
-                  disabled={!!createdIssue || isSubmitting}
-                  className="font-mono text-xs"
-                />
-              </div>
-            </div>
-
-            {/* Quick Presets / Dynamic Suggestions */}
-            <div className="flex flex-wrap items-center gap-1.5 pt-1">
-              <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
-                {repoFiles.length > 0 ? "Suggested Files:" : "Quick Presets:"}
-              </span>
-              {quickSuggestions.map((preset) => (
-                <button
-                  key={preset}
-                  type="button"
-                  onClick={() => setFilePath(preset)}
-                  className={`text-[11px] font-mono px-2.5 py-1 rounded-md border transition-all ${
-                    filePath === preset
-                      ? "bg-indigo-600 text-white border-indigo-600 font-semibold shadow-sm"
-                      : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:border-indigo-400 dark:hover:border-indigo-600 hover:text-indigo-600 dark:hover:text-indigo-400"
-                  }`}
-                  title={preset}
-                >
-                  {preset.split("/").pop()}
-                </button>
-              ))}
-            </div>
           </div>
         </Card>
 

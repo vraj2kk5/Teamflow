@@ -27,10 +27,6 @@ const uploadLimiter = rateLimit({
 issuesRouter.get("/", IssuesController.getIssues);
 issuesRouter.post("/", IssuesController.createIssue);
 
-// In-browser source code viewer & download for problematic files
-issuesRouter.get("/code-file", IssuesController.getCodeFile);
-issuesRouter.get("/code-file/download", IssuesController.downloadCodeFile);
-
 
 issuesRouter.get("/:id", requireIssueAccess, IssuesController.getIssue);
 issuesRouter.patch("/:id", requireIssueAccess, IssuesController.updateIssue);
