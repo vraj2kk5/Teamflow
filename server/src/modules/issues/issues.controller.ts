@@ -6,7 +6,9 @@ import {
   updateIssueSchema,
   updateIssueStatusSchema,
 } from "./issues.schema";
-import { UnauthorizedError } from "../../lib/errors";
+import path from "path";
+import fs from "fs";
+import { UnauthorizedError, NotFoundError, ForbiddenError, BadRequestError } from "../../lib/errors";
 
 function param(val: string | string[] | undefined): string {
   if (Array.isArray(val)) return val[0];
@@ -131,6 +133,83 @@ export class IssuesController {
         auth.organizationId
       );
       res.status(200).json({ data: activity });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async getCodeFile(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const filePathQuery = req.query.path as string;
+      if (!filePathQuery || typeof filePathQuery !== "string") {
+        throw new BadRequestError("Missing 'path' query parameter");
+      }
+
+      const projectRoot = path.resolve(__dirname, "../../../../");
+      const normalizedRelative = path.normalize(filePathQuery).replace(/^(\.\.(\/|\\|$))+/, "");
+      const fullPath = path.resolve(projectRoot, normalizedRelative);
+
+      if (!fullPath.startsWith(projectRoot)) {
+        throw new ForbiddenError("Access outside workspace is restricted");
+      }
+
+      if (
+        normalizedRelative.includes("node_modules") ||
+        normalizedRelative.includes(".git") ||
+        path.basename(normalizedRelative).startsWith(".env")
+      ) {
+        throw new ForbiddenError("Access to internal files is restricted");
+      }
+
+      if (!fs.existsSync(fullPath) || !fs.statSync(fullPath).isFile()) {
+        throw new NotFoundError(`File "${normalizedRelative}" not found in project repository`);
+      }
+
+      const content = fs.readFileSync(fullPath, "utf-8");
+      const lines = content.split("\n");
+
+      res.status(200).json({
+        data: {
+          relativePath: normalizedRelative.replace(/\\/g, "/"),
+          fileName: path.basename(normalizedRelative),
+          content,
+          lineCount: lines.length,
+          sizeBytes: Buffer.byteLength(content, "utf-8"),
+        },
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async downloadCodeFile(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const filePathQuery = req.query.path as string;
+      if (!filePathQuery || typeof filePathQuery !== "string") {
+        throw new BadRequestError("Missing 'path' query parameter");
+      }
+
+      const projectRoot = path.resolve(__dirname, "../../../../");
+      const normalizedRelative = path.normalize(filePathQuery).replace(/^(\.\.(\/|\\|$))+/, "");
+      const fullPath = path.resolve(projectRoot, normalizedRelative);
+
+      if (!fullPath.startsWith(projectRoot)) {
+        throw new ForbiddenError("Access outside workspace is restricted");
+      }
+
+      if (
+        normalizedRelative.includes("node_modules") ||
+        normalizedRelative.includes(".git") ||
+        path.basename(normalizedRelative).startsWith(".env")
+      ) {
+        throw new ForbiddenError("Access to internal files is restricted");
+      }
+
+      if (!fs.existsSync(fullPath) || !fs.statSync(fullPath).isFile()) {
+        throw new NotFoundError(`File "${normalizedRelative}" not found in project repository`);
+      }
+
+      res.download(fullPath, path.basename(normalizedRelative));
     } catch (err) {
       next(err);
     }

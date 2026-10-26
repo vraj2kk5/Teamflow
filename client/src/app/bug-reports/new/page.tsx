@@ -17,6 +17,7 @@ import { ImageDropzone } from "../../../components/media/ImageDropzone";
 import { formatBytes } from "../../../lib/utils";
 import {
   Bug,
+  FileCode2,
   ArrowLeft,
   Terminal,
   Paperclip,
@@ -63,6 +64,9 @@ export default function NewBugReportPage() {
   const [expectedResult, setExpectedResult] = useState("");
   const [actualResult, setActualResult] = useState("");
   const [errorLog, setErrorLog] = useState("");
+  const [filePath, setFilePath] = useState("");
+  const [lineNumber, setLineNumber] = useState("");
+  const [codeSnippet, setCodeSnippet] = useState("");
 
   // Media Attachments
   const [attachedFiles, setAttachedFiles] = useState<AttachedMediaItem[]>([]);
@@ -255,6 +259,9 @@ export default function NewBugReportPage() {
           expectedResult: expectedResult.trim() || undefined,
           actualResult: actualResult.trim() || undefined,
           errorLog: errorLog.trim() || undefined,
+          filePath: filePath.trim() || undefined,
+          lineNumber: lineNumber.trim() ? parseInt(lineNumber.trim(), 10) : undefined,
+          codeSnippet: codeSnippet.trim() || undefined,
         };
 
         const res = await api.post<{ id: string; key: string }>("/issues", issuePayload);
@@ -528,12 +535,92 @@ export default function NewBugReportPage() {
             </div>
             <textarea
               value={errorLog}
-              onChange={(e) => setErrorLog(e.target.value)}
+              onChange={(e) => {
+                const val = e.target.value;
+                setErrorLog(val);
+                if (!filePath) {
+                  const match = val.match(/(?:at\s+[\w$.]+\s+\()?(?:[A-Za-z]:[\\/])?([a-zA-Z0-9_\-./\\]+\.(?:tsx|ts|jsx|js|prisma|sql)):(\d+)/i);
+                  if (match) {
+                    let extracted = match[1].replace(/\\/g, "/");
+                    const clientIdx = extracted.indexOf("client/src/");
+                    const serverIdx = extracted.indexOf("server/src/");
+                    const prismaIdx = extracted.indexOf("server/prisma/");
+                    if (clientIdx !== -1) extracted = extracted.substring(clientIdx);
+                    else if (serverIdx !== -1) extracted = extracted.substring(serverIdx);
+                    else if (prismaIdx !== -1) extracted = extracted.substring(prismaIdx);
+                    setFilePath(extracted);
+                    if (!lineNumber) setLineNumber(match[2]);
+                  }
+                }
+              }}
               placeholder="Paste terminal errors, API response failures, or stack traces here..."
               rows={4}
               disabled={!!createdIssue || isSubmitting}
               className="w-full rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-3 text-xs font-mono text-rose-600 dark:text-rose-300 placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:border-indigo-500"
             />
+          </div>
+
+          {/* Code Location & Target File (Helps developers pinpoint and download file) */}
+          <div className="p-4 rounded-xl bg-indigo-50/50 dark:bg-slate-950/70 border border-indigo-100 dark:border-slate-800 space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                <FileCode2 className="w-4 h-4 text-indigo-500" />
+                <span>Problematic Code File & Line (Auto-detected or Manual)</span>
+              </label>
+              <span className="text-[11px] text-slate-500">
+                Teammates can view and download this file directly
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+              <div className="sm:col-span-3 space-y-1">
+                <label className="text-[11px] font-medium text-slate-600 dark:text-slate-400">
+                  Relative File Path
+                </label>
+                <Input
+                  value={filePath}
+                  onChange={(e) => setFilePath(e.target.value)}
+                  placeholder="e.g. client/src/components/board/KanbanBoard.tsx"
+                  disabled={!!createdIssue || isSubmitting}
+                  className="font-mono text-xs"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[11px] font-medium text-slate-600 dark:text-slate-400">
+                  Line # (Optional)
+                </label>
+                <Input
+                  type="number"
+                  value={lineNumber}
+                  onChange={(e) => setLineNumber(e.target.value)}
+                  placeholder="e.g. 42"
+                  disabled={!!createdIssue || isSubmitting}
+                  className="font-mono text-xs"
+                />
+              </div>
+            </div>
+
+            {/* Quick Presets */}
+            <div className="flex flex-wrap items-center gap-1.5 pt-1">
+              <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Quick Presets:</span>
+              {[
+                "client/src/components/board/KanbanBoard.tsx",
+                "client/src/components/issues/IssueDetailView.tsx",
+                "client/src/components/media/MediaPlayer.tsx",
+                "server/src/modules/issues/issues.service.ts",
+                "server/prisma/schema.prisma",
+              ].map((preset) => (
+                <button
+                  key={preset}
+                  type="button"
+                  onClick={() => setFilePath(preset)}
+                  className="text-[11px] font-mono px-2 py-0.5 rounded-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:border-indigo-400 dark:hover:border-indigo-600 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                >
+                  {preset.split("/").pop()}
+                </button>
+              ))}
+            </div>
           </div>
         </Card>
 

@@ -179,6 +179,9 @@ model Issue {
   expectedResult   String?
   actualResult     String?
   errorLog         String?   @db.Text
+  filePath         String?
+  lineNumber       Int?
+  codeSnippet      String?   @db.Text
   resolvedAt       DateTime?
   resolutionNotes  String?   @db.Text
 
