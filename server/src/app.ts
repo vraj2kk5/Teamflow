@@ -30,7 +30,13 @@ app.use(
 // CORS configuration
 app.use(
   cors({
-    origin: env.CLIENT_ORIGIN,
+    origin: (requestOrigin, callback) => {
+      if (!requestOrigin) return callback(null, true);
+      if (/^https?:\/\/(localhost|[\w-]+\.localhost)(:\d+)?$/.test(requestOrigin) || requestOrigin === env.CLIENT_ORIGIN) {
+        return callback(null, true);
+      }
+      return callback(new Error("Not allowed by CORS"));
+    },
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Range"],
